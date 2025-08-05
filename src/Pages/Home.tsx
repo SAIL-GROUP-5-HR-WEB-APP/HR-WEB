@@ -1,9 +1,20 @@
 import React from "react";
+import Hero from "../Components/Block/home/Hero";
+import Companies from "../Components/Block/home/Companies";
+import Body from "../Components/Block/home/Body";
+import HowItWorks from "../Components/Block/home/HowItWorks";
+import HowOne from "../Components/Block/home/HowOne";
+import HowTwo from "../Components/Block/home/HowTwo";
 
 const Home = () => {
   return (
     <div>
-      <h1>this is the home page</h1>
+      <Hero />
+      <Companies />
+      <Body />
+      <HowItWorks />
+      <HowOne />
+      <HowTwo />
     </div>
   );
 };
