@@ -1,11 +1,11 @@
 import React from "react";
 
-const Faqs = () => {
+const Onboarding = () => {
   return (
     <div className="pt-30">
-      <h1>faq page</h1>
+      <h1>onboarding page</h1>
     </div>
   );
 };
 
-export default Faqs;
+export default Onboarding;

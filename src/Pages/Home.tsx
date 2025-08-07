@@ -5,6 +5,7 @@ import Body from "../Components/Block/home/Body";
 import HowItWorks from "../Components/Block/home/HowItWorks";
 import HowOne from "../Components/Block/home/HowOne";
 import HowTwo from "../Components/Block/home/HowTwo";
+import Testimonial from "../Components/Block/home/Testimonial";
 
 const Home = () => {
   return (
@@ -15,6 +16,7 @@ const Home = () => {
       <HowItWorks />
       <HowOne />
       <HowTwo />
+      <Testimonial />
     </div>
   );
 };

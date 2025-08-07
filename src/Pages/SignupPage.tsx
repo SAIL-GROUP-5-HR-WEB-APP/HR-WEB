@@ -1,11 +1,11 @@
 import React from "react";
 
-const Faqs = () => {
+const SignupPage = () => {
   return (
     <div className="pt-30">
-      <h1>faq page</h1>
+      <h1>sign ip page</h1>
     </div>
   );
 };
 
-export default Faqs;
+export default SignupPage;
