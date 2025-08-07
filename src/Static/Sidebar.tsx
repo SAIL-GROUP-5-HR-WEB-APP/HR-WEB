@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Button from "../Components/Reuseable/Button";
 
 type SidebarProps = {
   handleToggle: () => void;
@@ -20,6 +21,15 @@ const Sidebar: React.FC<SidebarProps> = ({ handleToggle }) => {
         </li>
         <li onClick={handleToggle}>
           <Link to="/about">About</Link>
+        </li>
+        <li>
+          <Button
+            title="Register"
+            bg="#4338CA"
+            textColor="white"
+            borderColor="white"
+            hoverr=" hover:scale-105"
+          />
         </li>
       </ul>
     </div>
