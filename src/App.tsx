@@ -6,6 +6,10 @@ import Faqs from "./Pages/Faqs";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./Static/Header";
 import Footer from "./Static/Footer";
+import LoginPage from "./Pages/LoginPage";
+import SignupPage from "./Pages/SignupPage";
+import Onboarding from "./Pages/Onboarding";
+import Contact from "./Pages/Contact";
 
 const App = () => {
   return (
@@ -17,6 +21,10 @@ const App = () => {
           <Route path="/about" element={<About />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/faqs" element={<Faqs />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/contact" element={<Contact />} />
         </Routes>
         <Footer />
       </BrowserRouter>

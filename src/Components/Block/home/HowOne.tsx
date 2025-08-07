@@ -1,11 +1,13 @@
 import React from "react";
 import Howitworksimg from "../../../assets/HomePageHowItWorks.png";
+import { Link } from "react-router-dom";
 import {
   LuNetwork,
   LuTrendingUp,
   LuCalendarCheck,
   LuFolderClosed,
 } from "react-icons/lu";
+import { FaArrowRight } from "react-icons/fa";
 
 const HowOne = () => {
   return (
@@ -47,6 +49,14 @@ const HowOne = () => {
             efficiency of your HR processes, freeing up valuable time for other
             strategic activities.
           </p>
+          <div className="flex mt-7 max-[880px]:justify-center  ">
+            <Link to="/signup">
+              <button className="group inline-flex items-center gap-2 px-6 py-3 bg-indigo-700 text-white  font-medium transition-all duration-500 hover:bg-indigo-800 overflow-hidden rounded-full hover:tracking-widest ease-in-out">
+                <span>Get Started</span>
+                <FaArrowRight className="w-5 h-5 transform group-hover:translate-x-5 group-hover:opacity-0 transition-all duration-300 ease-in-out" />
+              </button>
+            </Link>
+          </div>
         </main>
       </div>
     </div>

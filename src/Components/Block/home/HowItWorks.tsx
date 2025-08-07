@@ -1,4 +1,6 @@
 import React from "react";
+import Button from "../../Reuseable/Button";
+import { Link } from "react-router-dom";
 
 const HowItWorks = () => {
   return (
@@ -91,6 +93,19 @@ const HowItWorks = () => {
             <p className="text-xs text-center text-gray-500">
               Create your account within minutes.
             </p>
+            <div className="flex justify-center items-center mt-11">
+              {" "}
+              <Link to="/signup">
+                {" "}
+                <Button
+                  title="Get Started"
+                  bg="#4F46E5"
+                  textColor="white"
+                  borderColor="white"
+                  hoverr=" hover:scale-105"
+                />
+              </Link>
+            </div>
           </div>
         </div>
         {/* start */}
@@ -163,6 +178,19 @@ const HowItWorks = () => {
             <p className="text-xs text-center text-gray-500">
               Tailor the system to your unique needs
             </p>
+            <div className="flex justify-center items-center">
+              {" "}
+              <Link to="/signup">
+                {" "}
+                <Button
+                  title="Get Started"
+                  bg="#4F46E5"
+                  textColor="white"
+                  borderColor="white"
+                  hoverr=" hover:scale-105"
+                />
+              </Link>
+            </div>
           </div>
         </div>
         {/* configure */}
@@ -229,6 +257,19 @@ const HowItWorks = () => {
             <p className="text-xs text-center text-gray-500">
               Streamline operations and get insightful analytics.
             </p>
+            <div className="flex justify-center items-center mt-16">
+              {" "}
+              <Link to="/signup">
+                {" "}
+                <Button
+                  title="Get Started"
+                  bg="#4F46E5"
+                  textColor="white"
+                  borderColor="white"
+                  hoverr=" hover:scale-105"
+                />
+              </Link>
+            </div>
           </div>
         </div>
 
