@@ -6,8 +6,7 @@ import Button from '../Components/Reuseable/Button';
 
 // Define the shape of the form data for type safety
 interface FormData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -17,8 +16,7 @@ interface FormData {
 const SignupPage: React.FC = () => {
   // State for form inputs
   const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -35,11 +33,8 @@ const SignupPage: React.FC = () => {
   // Validate form inputs
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
     }
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
@@ -80,7 +75,7 @@ const SignupPage: React.FC = () => {
 
     try {
       console.log('Form submitted:', formData);
-      // TODO: Replace with API call to backend
+      // TODO: Replace with actual API call
       // Example:
       // const response = await fetch('/api/signup', {
       //   method: 'POST',
@@ -88,8 +83,6 @@ const SignupPage: React.FC = () => {
       //   body: JSON.stringify(formData),
       // });
       // if (!response.ok) throw new Error('Signup failed');
-      // Redirect to dashboard, e.g.:
-      // window.location.href = '/dashboard';
     } catch (error) {
       setSubmitError('An error occurred during signup. Please try again.');
     }
@@ -136,50 +129,26 @@ const SignupPage: React.FC = () => {
 
           {/* Signup Form */}
           <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit} noValidate>
-            {/* First Name Input */}
+            {/* Name Input */}
             <div className="flex flex-col gap-2">
-              <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                First Name
+              <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                Name
               </label>
               <input
                 type="text"
-                id="firstName"
-                name="firstName"
-                placeholder="Tommy"
-                value={formData.firstName}
+                id="name"
+                name="name"
+                placeholder="Tommy Hill"
+                value={formData.name}
                 onChange={handleInputChange}
                 required
-                aria-invalid={!!errors.firstName}
-                aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-                className={`p-3 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                className={`p-3 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
               />
-              {errors.firstName && (
-                <p id="firstName-error" className="text-sm text-red-500 mt-1">
-                  {errors.firstName}
-                </p>
-              )}
-            </div>
-
-            {/* Last Name Input */}
-            <div className="flex flex-col gap-2">
-              <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                placeholder="Hill"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                required
-                aria-invalid={!!errors.lastName}
-                aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-                className={`p-3 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
-              />
-              {errors.lastName && (
-                <p id="lastName-error" className="text-sm text-red-500 mt-1">
-                  {errors.lastName}
+              {errors.name && (
+                <p id="name-error" className="text-sm text-red-500 mt-1">
+                  {errors.name}
                 </p>
               )}
             </div>
@@ -236,7 +205,7 @@ const SignupPage: React.FC = () => {
 
             {/* Submit Button */}
             <Button
-              title="Register"
+              title="Sign Up"
               bg="#5B5CE6"
               textColor="white"
               borderColor="transparent"
@@ -247,7 +216,7 @@ const SignupPage: React.FC = () => {
           {/* Divider */}
           <div className="flex items-center my-6">
             <div className="flex-1 h-px bg-gray-200"></div>
-            <span className="px-4 text-sm text-gray-500 bg-white">Or sign up/register with</span>
+            <span className="px-4 text-sm text-gray-500 bg-white">Or sign up with</span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
 
@@ -292,15 +261,15 @@ const SignupPage: React.FC = () => {
           <div className="text-center text-sm text-gray-600">
             Already have an account?{' '}
             <a href="/login" className="text-indigo-600 font-medium hover:underline">
-              Login
+              Sign In
             </a>
           </div>
         </div>
       </div>
 
       {/* Image Section */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 h-2xl min-h-screen">
-        <div className="text-center text-white max-w-lg w-full">
+      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10">
+        <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.
           </h2>
@@ -309,7 +278,7 @@ const SignupPage: React.FC = () => {
           </p>
           <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-lg">
             <img
-              src="src/assets/dashboard.png"
+              src="src/assets/dashbod.png"
               alt="Dashboard Preview"
               className="w-full h-auto rounded-lg shadow-2xl"
             />

@@ -299,8 +299,8 @@ const SignupPage: React.FC = () => {
       </div>
 
       {/* Image Section */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 h-2xl min-h-screen">
-        <div className="text-center text-white max-w-lg w-full">
+      <div className="lg:w-1/2 w-full h- bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10">
+        <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.
           </h2>
