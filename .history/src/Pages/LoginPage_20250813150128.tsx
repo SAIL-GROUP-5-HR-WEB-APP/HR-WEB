@@ -4,30 +4,30 @@ import PasswordInput from '../Components/Reuseable/PasswordInput';
 import SocialButton from '../Components/Reuseable/SocialButton';
 import Button from '../Components/Reuseable/Button';
 
-// Define the shape of the form data for type safety (interface for form fields)
+// Define the shape of the form data for type safety
 interface FormData {
   email: string;
   password: string;
-  rememberMe: boolean; // Checkbox for remembering login details
+  rememberMe: boolean;
 }
 
-// Main LoginPage component for user authentication (allows users to log in and redirect to dashboards)
-const LoginPage: React.FC = () => {
-  // State for form inputs (stores email, password, and remember me checkbox value)
+// Main Login component for user authentication
+const Login: React.FC = () => {
+  // State for form inputs
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
     rememberMe: false,
   });
 
-  // State for form errors (stores validation errors for each field)
+  // State for form errors
   const [errors, setErrors] = useState<Partial<FormData>>({});
-  // State for password visibility (toggles whether password is shown or hidden)
+  // State for password visibility
   const [showPassword, setShowPassword] = useState(false);
-  // State for submission status (shows general error if submission fails)
+  // State for submission status
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Validate form inputs (checks if fields are filled correctly before submission)
+  // Validate form inputs
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
     if (!formData.email.trim()) {
@@ -44,18 +44,18 @@ const LoginPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle input changes for form fields (updates state when user types or checks box)
+  // Handle input changes for form fields
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    // Clear error for the field being edited (removes error message when user starts fixing it)
+    // Clear error for the field being edited
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  // Handle form submission (validates and submits data, redirects to dashboard on success)
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -66,7 +66,7 @@ const LoginPage: React.FC = () => {
 
     try {
       console.log('Form submitted:', formData);
-      // TODO: Replace with API call to backend for login
+      // TODO: Replace with API call to backend
       // Example:
       // const response = await fetch('/api/login', {
       //   method: 'POST',
@@ -74,44 +74,38 @@ const LoginPage: React.FC = () => {
       //   body: JSON.stringify(formData),
       // });
       // if (!response.ok) throw new Error('Login failed');
-      // Upon successful login, redirect to respective dashboard (employee or admin)
-      // Example redirection based on user role (fetched from API response):
-      // const userRole = response.json().role; // Assume API returns role
-      // if (userRole === 'admin') {
-      //   window.location.href = '/admin-dashboard';
-      // } else {
-      //   window.location.href = '/employee-dashboard';
-      // }
+      // Redirect to dashboard, e.g.:
+      // window.location.href = '/dashboard';
     } catch (error) {
       setSubmitError('An error occurred during login. Please try again.');
     }
   };
 
-  // Handle Google login (triggers Google OAuth for alternative login)
+  // Handle Google login
   const handleGoogleLogin = () => {
     console.log('Login with Google');
-    // TODO: Add Google OAuth integration (redirects to Google login, then to dashboard on success)
+    // TODO: Add Google OAuth integration
   };
 
-  // Handle Apple login (triggers Apple OAuth for alternative login)
+  // Handle Apple login
   const handleAppleLogin = () => {
     console.log('Login with Apple');
-    // TODO: Add Apple OAuth integration (redirects to Apple login, then to dashboard on success)
+    // TODO: Add Apple OAuth integration
   };
 
   return (
-    // Main container with flex layout for form and image sections, padding for header/footer
-    <div className="flex min-h-screen bg-white lg:flex-row flex-col pt-16 pb-16">
-      {/* Form Section (left side for login form) */}
-      <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
-        {/* Logo (displays the company logo at the top) */}
+    // Main container with padding for Header and Footer
+    <div className="flex min-h-screen bg-white pt-16 pb-16">
+      {/* Form Section */}
+      <div className="w-full max-w-md mx-auto p-8 flex flex-col justify-center">
+        {/* Logo */}
         <div className="mb-12">
           <Logo />
         </div>
 
-        {/* Form Content (contains header, form, and links) */}
+        {/* Form Content */}
         <div className="max-w-sm mx-auto w-full">
-          {/* Form Header (welcomes user and provides instructions) */}
+          {/* Form Header */}
           <div className="mb-8 text-left">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
             <p className="text-sm text-gray-600">
@@ -119,16 +113,16 @@ const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Submission Error (displays if login fails) */}
+          {/* Submission Error */}
           {submitError && (
             <p className="text-sm text-red-500 mb-4" role="alert">
               {submitError}
             </p>
           )}
 
-          {/* Login Form (collects user input for login) */}
+          {/* Login Form */}
           <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit} noValidate>
-            {/* Email Input (field for user email) */}
+            {/* Email Input */}
             <div className="flex flex-col gap-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
@@ -137,7 +131,7 @@ const LoginPage: React.FC = () => {
                 type="email"
                 id="email"
                 name="email"
-                placeholder="group5sd@saillab.com"
+                placeholder="tommy@sailsdgroup5.com"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
@@ -152,12 +146,12 @@ const LoginPage: React.FC = () => {
               )}
             </div>
 
-            {/* Password Input (uses reusable component for password with toggle visibility) */}
+            {/* Password Input */}
             <PasswordInput
               label="Password"
               id="password"
               name="password"
-              placeholder="group5sd"
+              placeholder="group5HRsystems"
               value={formData.password}
               onChange={handleInputChange}
               showPassword={showPassword}
@@ -165,7 +159,7 @@ const LoginPage: React.FC = () => {
               error={errors.password}
             />
 
-            {/* Remember Me and Forgot Password (options for user convenience) */}
+            {/* Remember Me and Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center">
                 <input
@@ -182,7 +176,7 @@ const LoginPage: React.FC = () => {
               </a>
             </div>
 
-            {/* Submit Button (uses reusable button for login action) */}
+            {/* Submit Button */}
             <Button
               title="Login"
               bg="#5B5CE6"
@@ -192,14 +186,14 @@ const LoginPage: React.FC = () => {
             />
           </form>
 
-          {/* Divider (separates regular login from social options) */}
+          {/* Divider */}
           <div className="flex items-center my-6">
             <div className="flex-1 h-px bg-gray-200"></div>
             <span className="px-4 text-sm text-gray-500 bg-white">Or login with</span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
 
-          {/* Social Login Buttons (alternative login options using reusable social button) */}
+          {/* Social Login Buttons */}
           <div className="flex gap-3 mb-6 lg:flex-row flex-col">
             <SocialButton
               icon={
@@ -236,31 +230,12 @@ const LoginPage: React.FC = () => {
             />
           </div>
 
-          {/* Sign Up Link (link to signup page for new users) */}
+          {/* Sign Up Link */}
           <div className="text-center text-sm text-gray-600">
             Don’t have an account?{' '}
             <a href="/signup" className="text-indigo-600 font-medium hover:underline">
-              Register
+              Sign Up
             </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Image Section (right side promotional image, same as signup for consistency) */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10">
-        <div className="text-center text-white max-w-lg">
-          <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
-            Effortlessly manage your team and operations.
-          </h2>
-          <p className="text-base opacity-90 mb-10">
-            Log in to access your HR dashboard and manage your team.
-          </p>
-          <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-lg">
-            <img
-              src="src/assets/dashboard.png"
-              alt="Dashboard Preview"
-              className="w-full h-auto rounded-lg shadow-2xl"
-            />
           </div>
         </div>
       </div>
@@ -268,4 +243,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default Login;
