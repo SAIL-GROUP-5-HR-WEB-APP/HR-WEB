@@ -137,7 +137,7 @@ const LoginPage: React.FC = () => {
                 type="email"
                 id="email"
                 name="email"
-                placeholder="group5sd@saillab.com"
+                placeholder="hrcore@company.com"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
               label="Password"
               id="password"
               name="password"
-              placeholder="group5sd"
+              placeholder="hrcore."
               value={formData.password}
               onChange={handleInputChange}
               showPassword={showPassword}

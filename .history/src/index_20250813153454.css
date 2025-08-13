@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* @import "tailwindcss"; */
+
+@theme {
+  --breakpoint-tablet: 800px;
+  --breakpoint-mobile: 500px;
+}
+
+:root {
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+}

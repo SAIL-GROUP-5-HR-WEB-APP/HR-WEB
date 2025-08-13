@@ -157,7 +157,7 @@ const LoginPage: React.FC = () => {
               label="Password"
               id="password"
               name="password"
-              placeholder="group5sd"
+              placeholder=""
               value={formData.password}
               onChange={handleInputChange}
               showPassword={showPassword}
