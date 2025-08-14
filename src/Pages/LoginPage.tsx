@@ -3,6 +3,7 @@ import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
+import { Link } from "react-router-dom";
 
 // Define the shape of the form data for type safety (interface for form fields)
 interface FormData {
@@ -101,12 +102,14 @@ const LoginPage: React.FC = () => {
 
   return (
     // Main container with flex layout for form and image sections, padding for header/footer
-    <div className="flex bg-white lg:flex-row flex-col pt-16">
+    <div className="flex bg-white lg:flex-row flex-col ">
       {/* Form Section (left side for login form) */}
-      <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
+      <div className="lg:w-1/2 w-full max-w-md mx-auto p-8  flex flex-col justify-center">
         {/* Logo (displays the company logo at the top) */}
-        <div className="mb-10 mt-12">
-          <Logo />
+        <div className="mb-10 mt-9">
+          <Link to="/">
+            <Logo />
+          </Link>
         </div>
 
         {/* Form Content (contains header, form, and links) */}
@@ -188,12 +191,12 @@ const LoginPage: React.FC = () => {
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember Me</span>
               </label>
-              <a
-                href="/forgot-password"
-                className="text-sm text-indigo-600 font-medium hover:underline"
-              >
-                Forgot Your Password?
-              </a>
+              <Link to="/forgotpassword">
+                {" "}
+                <a className="text-sm text-indigo-600 font-medium hover:underline">
+                  Forgot Your Password?
+                </a>
+              </Link>
             </div>
 
             {/* Submit Button (uses reusable button for login action) */}
@@ -277,7 +280,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Image Section (right side promotional image, same as signup for consistency) */}
-      <div className="lg:w-1/2   w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10">
+      <div className="lg:w-1/2   w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 max-[900px]:hidden">
         <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.
