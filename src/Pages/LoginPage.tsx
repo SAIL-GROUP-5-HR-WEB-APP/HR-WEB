@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import Logo from '../Components/Reuseable/Logo';
-import PasswordInput from '../Components/Reuseable/PasswordInput';
-import SocialButton from '../Components/Reuseable/SocialButton';
-import Button from '../Components/Reuseable/Button';
+import React, { useState } from "react";
+import Logo from "../Components/Reuseable/Logo";
+import PasswordInput from "../Components/Reuseable/PasswordInput";
+import SocialButton from "../Components/Reuseable/SocialButton";
+import Button from "../Components/Reuseable/Button";
 
 // Define the shape of the form data for type safety (interface for form fields)
 interface FormData {
@@ -15,8 +15,8 @@ interface FormData {
 const LoginPage: React.FC = () => {
   // State for form inputs (stores email, password, and remember me checkbox value)
   const [formData, setFormData] = useState<FormData>({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     rememberMe: false,
   });
 
@@ -31,14 +31,14 @@ const LoginPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
     // Clear error for the field being edited (removes error message when user starts fixing it)
     setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -65,7 +65,7 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      console.log('Form submitted:', formData);
+      console.log("Form submitted:", formData);
       // TODO: Replace with API call to backend for login
       // Example:
       // const response = await fetch('/api/login', {
@@ -83,29 +83,29 @@ const LoginPage: React.FC = () => {
       //   window.location.href = '/employee-dashboard';
       // }
     } catch (error) {
-      setSubmitError('An error occurred during login. Please try again.');
+      setSubmitError("An error occurred during login. Please try again.");
     }
   };
 
   // Handle Google login (triggers Google OAuth for alternative login)
   const handleGoogleLogin = () => {
-    console.log('Login with Google');
+    console.log("Login with Google");
     // TODO: Add Google OAuth integration (redirects to Google login, then to dashboard on success)
   };
 
   // Handle Apple login (triggers Apple OAuth for alternative login)
   const handleAppleLogin = () => {
-    console.log('Login with Apple');
+    console.log("Login with Apple");
     // TODO: Add Apple OAuth integration (redirects to Apple login, then to dashboard on success)
   };
 
   return (
     // Main container with flex layout for form and image sections, padding for header/footer
-    <div className="flex min-h-screen bg-white lg:flex-row flex-col pt-16 pb-16">
+    <div className="flex bg-white lg:flex-row flex-col pt-16">
       {/* Form Section (left side for login form) */}
       <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
         {/* Logo (displays the company logo at the top) */}
-        <div className="mb-12">
+        <div className="mb-10 mt-12">
           <Logo />
         </div>
 
@@ -113,7 +113,9 @@ const LoginPage: React.FC = () => {
         <div className="max-w-sm mx-auto w-full">
           {/* Form Header (welcomes user and provides instructions) */}
           <div className="mb-8 text-left">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome Back
+            </h1>
             <p className="text-sm text-gray-600">
               Enter your email and password to access your account
             </p>
@@ -127,10 +129,17 @@ const LoginPage: React.FC = () => {
           )}
 
           {/* Login Form (collects user input for login) */}
-          <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit} noValidate>
+          <form
+            className="flex flex-col gap-6 mb-8"
+            onSubmit={handleSubmit}
+            noValidate
+          >
             {/* Email Input (field for user email) */}
             <div className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <input
@@ -142,8 +151,10 @@ const LoginPage: React.FC = () => {
                 onChange={handleInputChange}
                 required
                 aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-                className={`p-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                className={`p-3 border ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
               />
               {errors.email && (
                 <p id="email-error" className="text-sm text-red-500 mt-1">
@@ -177,7 +188,10 @@ const LoginPage: React.FC = () => {
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember Me</span>
               </label>
-              <a href="/forgot-password" className="text-sm text-indigo-600 font-medium hover:underline">
+              <a
+                href="/forgot-password"
+                className="text-sm text-indigo-600 font-medium hover:underline"
+              >
                 Forgot Your Password?
               </a>
             </div>
@@ -195,7 +209,9 @@ const LoginPage: React.FC = () => {
           {/* Divider (separates regular login from social options) */}
           <div className="flex items-center my-6">
             <div className="flex-1 h-px bg-gray-200"></div>
-            <span className="px-4 text-sm text-gray-500 bg-white">Or login with</span>
+            <span className="px-4 text-sm text-gray-500 bg-white">
+              Or login with
+            </span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
 
@@ -203,7 +219,12 @@ const LoginPage: React.FC = () => {
           <div className="flex gap-3 mb-6 lg:flex-row flex-col">
             <SocialButton
               icon={
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     fill="#4285F4"
@@ -227,7 +248,13 @@ const LoginPage: React.FC = () => {
             />
             <SocialButton
               icon={
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
                 </svg>
               }
@@ -238,8 +265,11 @@ const LoginPage: React.FC = () => {
 
           {/* Sign Up Link (link to signup page for new users) */}
           <div className="text-center text-sm text-gray-600">
-            Don’t have an account?{' '}
-            <a href="/signup" className="text-indigo-600 font-medium hover:underline">
+            Don’t have an account?{" "}
+            <a
+              href="/signup"
+              className="text-indigo-600 font-medium hover:underline"
+            >
               Register
             </a>
           </div>
@@ -247,7 +277,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Image Section (right side promotional image, same as signup for consistency) */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10">
+      <div className="lg:w-1/2   w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10">
         <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.

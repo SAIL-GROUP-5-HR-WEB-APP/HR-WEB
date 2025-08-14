@@ -1,39 +1,39 @@
 import React from "react";
-import microsoft from "../../../assets/microsoft (1).png";
-import mac from "../../../assets/mcdonalds.png";
-import tesla from "../../../assets/tesla.png";
-import nestle from "../../../assets/nestle.png";
+import opay from "../../../assets/opay.png";
+import flutter from "../../../assets/flutterwave.png";
+import moniepoint from "../../../assets/moniepoint.jpg";
+import interswitch from "../../../assets/interswitch.png";
 import uber from "../../../assets/uber.png";
-import fedex from "../../../assets/fedex.png";
+import jumia from "../../../assets/jumia.png";
 import { FaStar } from "react-icons/fa";
 
 const testimonials = [
   {
-    name: "Microsoft",
+    name: "Opay",
     role: "HR Director",
     text: "This software helped change our HR management.",
-    image: microsoft,
+    image: opay,
     rating: 5,
   },
   {
-    name: "Macdonalds",
+    name: "Flutterwave",
     role: "Regional Manager",
     text: "HRCORE has transformed our HR process and saved us a lot of time.",
-    image: mac,
+    image: flutter,
     rating: 4,
   },
   {
-    name: "Tesla",
+    name: "Interswitch",
     role: "Operations Head",
     text: "HRcore made it easy for us to focus on our goals, not just HR tasks.",
-    image: tesla,
+    image: interswitch,
     rating: 5,
   },
   {
-    name: "Nestle",
+    name: "Jumia",
     role: "People Lead",
     text: "We saw instant results after switching. Totally worth it.",
-    image: nestle,
+    image: jumia,
     rating: 5,
   },
   {
@@ -44,10 +44,10 @@ const testimonials = [
     rating: 4,
   },
   {
-    name: "Fedex",
+    name: "Moniepoint",
     role: "HRBP",
     text: "We saw instant results after switching. Totally worth it.",
-    image: fedex,
+    image: moniepoint,
     rating: 5,
   },
 ];
@@ -95,7 +95,7 @@ const Testimonial = () => {
             <img
               src={data.image}
               alt={data.name}
-              className="w-16 h-16 object-contain mb-4"
+              className="w-24 h-24 object-contain mb-4 rounded-2xl"
             />
             <h2 className="text-xl font-semibold text-gray-800">{data.name}</h2>
             <p className="text-sm text-gray-500 mb-2">{data.role}</p>
