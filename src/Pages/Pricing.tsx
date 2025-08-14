@@ -17,13 +17,13 @@ const Pricing = () => {
             </p>
           </div>
           <div className="w-[450px]">
-            <h1 className="text-5xl font-semibold leading-14 max-[880px]:text-center">
-              For just $19.99/Month{" "}
+            <h1 className="text-5xl font-semibold leading-14 text-center">
+              For just ₦30,000/Month{" "}
             </h1>
-            <p className="text-sm mt-4 leading-6 max-[880px]:text-center">
+            <p className="text-sm mt-4 leading-6 text-center ">
               start your free trial now
             </p>
-            <div className="flex mt-4 max-[880px]:justify-center  ">
+            <div className="flex mt-4 justify-center  ">
               <Link to="/signup">
                 <button className="group inline-flex items-center gap-2 px-6 py-3 bg-indigo-700 text-white  font-medium transition-all duration-500 hover:bg-indigo-800 overflow-hidden rounded-full hover:tracking-widest ease-in-out">
                   <span>Get Started</span>
@@ -53,7 +53,7 @@ const Pricing = () => {
             <main className="grid grid-row-3 gap-5 xl:grid xl:grid-rows-3 drop-shadow-xl border-[1px] border-gray-200 rounded-2xl bg-gray-50 xl:w-100 xl:h-150 p-4">
               <section className="h-[7em] flex flex-col justify-between xl:row-span-1 xl:flex xl:flex-col xl:gap-4">
                 <h4 className="text-indigo-400">Basic plan</h4>
-                <h2 className="text-3xl font-bold">$19.99/month</h2>
+                <h2 className="text-3xl font-bold">₦30,000/Month</h2>
                 <p className="text-sm">Our 30 days offer</p>
                 <div className="border-1 w-[100%] border-gray-200"></div>
               </section>
@@ -122,7 +122,7 @@ const Pricing = () => {
             <main className="grid grid-row-3 gap-5 xl:grid xl:grid-rows-3 drop-shadow-xl border-[1px] border-gray-200 rounded-2xl bg-gray-50 xl:w-100 xl:h-150 p-4">
               <section className="h-[7em] flex flex-col justify-between xl:row-span-1 xl:flex xl:flex-col xl:gap-4">
                 <h4 className="text-indigo-400">Pro plan</h4>
-                <h2 className="text-3xl font-bold">$115.99/ 6month</h2>
+                <h2 className="text-3xl font-bold">₦180,000/6month</h2>
                 <p className="text-sm">Get it exclusive for half a year</p>
                 <div className="border-1 w-[100%] border-gray-200"></div>
               </section>
@@ -190,7 +190,7 @@ const Pricing = () => {
             <main className="grid grid-row-3 gap-5 xl:grid xl:grid-rows-3 drop-shadow-xl border-[1px] border-gray-200 rounded-2xl bg-gray-50 xl:w-100 xl:h-150 p-4">
               <section className="h-[7em] flex flex-col justify-between xl:row-span-1 xl:flex xl:flex-col xl:gap-4">
                 <h4 className="text-indigo-400">Enterprice Plan</h4>
-                <h2 className="text-3xl font-bold">$229.99/Year</h2>
+                <h2 className="text-3xl font-bold">₦345,000/Year</h2>
                 <p className="text-sm">Get our yearly plan</p>
                 <div className="border-1 w-[100%] border-gray-200"></div>
               </section>
