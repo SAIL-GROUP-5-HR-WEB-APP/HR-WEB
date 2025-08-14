@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import Logo from '../Components/Reuseable/Logo';
-import PasswordInput from '../Components/Reuseable/PasswordInput';
-import SocialButton from '../Components/Reuseable/SocialButton';
-import Button from '../Components/Reuseable/Button';
+import React, { useState } from "react";
+import Logo from "../Components/Reuseable/Logo";
+import PasswordInput from "../Components/Reuseable/PasswordInput";
+import SocialButton from "../Components/Reuseable/SocialButton";
+import Button from "../Components/Reuseable/Button";
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -17,11 +17,11 @@ interface FormData {
 const SignupPage: React.FC = () => {
   // State for form inputs
   const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   // State for form errors
@@ -36,23 +36,23 @@ const SignupPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
+      newErrors.firstName = "First name is required";
     }
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+      newErrors.lastName = "Last name is required";
     }
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = "Password must be at least 8 characters";
     }
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,7 +79,7 @@ const SignupPage: React.FC = () => {
     }
 
     try {
-      console.log('Form submitted:', formData);
+      console.log("Form submitted:", formData);
       // TODO: Replace with API call to backend
       // Example:
       // const response = await fetch('/api/signup', {
@@ -91,29 +91,29 @@ const SignupPage: React.FC = () => {
       // Redirect to dashboard, e.g.:
       // window.location.href = '/dashboard';
     } catch (error) {
-      setSubmitError('An error occurred during signup. Please try again.');
+      setSubmitError("An error occurred during signup. Please try again.");
     }
   };
 
   // Handle Google signup
   const handleGoogleSignup = () => {
-    console.log('Signup with Google');
+    console.log("Signup with Google");
     // TODO: Add Google OAuth integration
   };
 
   // Handle Apple signup
   const handleAppleSignup = () => {
-    console.log('Signup with Apple');
+    console.log("Signup with Apple");
     // TODO: Add Apple OAuth integration
   };
 
   return (
     // Main container with padding for Header and Footer
-    <div className="flex min-h-screen bg-white lg:flex-row flex-col pt-16 pb-16">
+    <div className="flex min-h-screen bg-white lg:flex-row flex-col pt-16 ">
       {/* Form Section */}
       <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
         {/* Logo */}
-        <div className="mb-12">
+        <div className="mb-10 mt-12">
           <Logo />
         </div>
 
@@ -121,7 +121,9 @@ const SignupPage: React.FC = () => {
         <div className="max-w-sm mx-auto w-full">
           {/* Form Header */}
           <div className="mb-8 text-left">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create an Account</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Create an Account
+            </h1>
             <p className="text-sm text-gray-600">
               Join now to streamline your HR management experience
             </p>
@@ -135,10 +137,17 @@ const SignupPage: React.FC = () => {
           )}
 
           {/* Signup Form */}
-          <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit} noValidate>
+          <form
+            className="flex flex-col gap-6 mb-8"
+            onSubmit={handleSubmit}
+            noValidate
+          >
             {/* First Name Input */}
             <div className="flex flex-col gap-2">
-              <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="firstName"
+                className="text-sm font-medium text-gray-700"
+              >
                 First Name
               </label>
               <input
@@ -150,8 +159,12 @@ const SignupPage: React.FC = () => {
                 onChange={handleInputChange}
                 required
                 aria-invalid={!!errors.firstName}
-                aria-describedby={errors.firstName ? 'firstName-error' : undefined}
-                className={`p-3 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
+                aria-describedby={
+                  errors.firstName ? "firstName-error" : undefined
+                }
+                className={`p-3 border ${
+                  errors.firstName ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
               />
               {errors.firstName && (
                 <p id="firstName-error" className="text-sm text-red-500 mt-1">
@@ -162,7 +175,10 @@ const SignupPage: React.FC = () => {
 
             {/* Last Name Input */}
             <div className="flex flex-col gap-2">
-              <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="lastName"
+                className="text-sm font-medium text-gray-700"
+              >
                 Last Name
               </label>
               <input
@@ -174,8 +190,12 @@ const SignupPage: React.FC = () => {
                 onChange={handleInputChange}
                 required
                 aria-invalid={!!errors.lastName}
-                aria-describedby={errors.lastName ? 'lastName-error' : undefined}
-                className={`p-3 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
+                aria-describedby={
+                  errors.lastName ? "lastName-error" : undefined
+                }
+                className={`p-3 border ${
+                  errors.lastName ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
               />
               {errors.lastName && (
                 <p id="lastName-error" className="text-sm text-red-500 mt-1">
@@ -186,7 +206,10 @@ const SignupPage: React.FC = () => {
 
             {/* Email Input */}
             <div className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <input
@@ -198,8 +221,10 @@ const SignupPage: React.FC = () => {
                 onChange={handleInputChange}
                 required
                 aria-invalid={!!errors.email}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-                className={`p-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                className={`p-3 border ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
               />
               {errors.email && (
                 <p id="email-error" className="text-sm text-red-500 mt-1">
@@ -230,7 +255,9 @@ const SignupPage: React.FC = () => {
               value={formData.confirmPassword}
               onChange={handleInputChange}
               showPassword={showConfirmPassword}
-              toggleShowPassword={() => setShowConfirmPassword(!showConfirmPassword)}
+              toggleShowPassword={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
               error={errors.confirmPassword}
             />
 
@@ -247,7 +274,9 @@ const SignupPage: React.FC = () => {
           {/* Divider */}
           <div className="flex items-center my-6">
             <div className="flex-1 h-px bg-gray-200"></div>
-            <span className="px-4 text-sm text-gray-500 bg-white">Or sign up/register with</span>
+            <span className="px-4 text-sm text-gray-500 bg-white">
+              Or sign up/register with
+            </span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
 
@@ -255,7 +284,12 @@ const SignupPage: React.FC = () => {
           <div className="flex gap-3 mb-6 lg:flex-row flex-col">
             <SocialButton
               icon={
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     fill="#4285F4"
@@ -279,7 +313,13 @@ const SignupPage: React.FC = () => {
             />
             <SocialButton
               icon={
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
                 </svg>
               }
@@ -290,8 +330,11 @@ const SignupPage: React.FC = () => {
 
           {/* Sign In Link */}
           <div className="text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <a href="/login" className="text-indigo-600 font-medium hover:underline">
+            Already have an account?{" "}
+            <a
+              href="/login"
+              className="text-indigo-600 font-medium hover:underline"
+            >
               Login
             </a>
           </div>
