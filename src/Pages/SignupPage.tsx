@@ -3,6 +3,7 @@ import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
+import { Link } from "react-router-dom";
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -109,12 +110,14 @@ const SignupPage: React.FC = () => {
 
   return (
     // Main container with padding for Header and Footer
-    <div className="flex min-h-screen bg-white lg:flex-row flex-col pt-16 ">
+    <div className="flex min-h-screen bg-white lg:flex-row flex-col  ">
       {/* Form Section */}
       <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
         {/* Logo */}
         <div className="mb-10 mt-12">
-          <Logo />
+          <Link to="/">
+            <Logo />
+          </Link>
         </div>
 
         {/* Form Content */}
@@ -342,7 +345,7 @@ const SignupPage: React.FC = () => {
       </div>
 
       {/* Image Section */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 h-2xl min-h-screen">
+      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 h-2xl min-h-screen max-[900px]:hidden">
         <div className="text-center text-white max-w-lg w-full">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.
