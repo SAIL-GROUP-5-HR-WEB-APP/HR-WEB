@@ -1,10 +1,10 @@
-import { motion } from "framer-motion";
-
+import { motion, type Variants } from "framer-motion";
 import heroImg from "../../../assets/dashboard.png";
 import { Link } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
 
-const headingContainer = {
+// Typed variants
+const headingContainer: Variants = {
   hidden: {},
   show: {
     transition: {
@@ -13,17 +13,17 @@ const headingContainer = {
   },
 };
 
-const lineVariant = {
+const lineVariant: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
-const float = {
+const float: Variants = {
   animate: {
     y: [0, -8, 0], // subtle bob
     transition: {
@@ -47,7 +47,7 @@ const Hero = () => {
             className="space-y-2"
           >
             <motion.h1
-              Variants={lineVariant}
+              variants={lineVariant}
               className="text-7xl font-bold leading-tight max-[550px]:text-6xl max-[450px]:text-5xl px-4"
             >
               Revolutionizing
@@ -77,7 +77,6 @@ const Hero = () => {
           </motion.p>
           <div className="flex mt-7 gap-4">
             <Link to="/login">
-              {" "}
               <button className="group inline-flex items-center gap-2 px-6 py-3 bg-indigo-700 text-white rounded-lg font-medium transition-all duration-500 hover:bg-indigo-800 overflow-hidden hover:rounded-full hover:tracking-widest ease-in-out">
                 <span>Sign In</span>
                 <FaArrowRight className="w-5 h-5 transform group-hover:translate-x-5 group-hover:opacity-0 transition-all duration-300 ease-in-out" />
@@ -85,7 +84,7 @@ const Hero = () => {
             </Link>
 
             <Link to="/signup">
-              <button className="group inline-flex items-center gap-2 px-6 py-3 text-indigo-700 rounded-lg font-medium transition-all duration-300  hover:bg-zinc-50 overflow-hidden border-2 border-indigo-700  hover:rounded-full hover:tracking-widest ease-in-out">
+              <button className="group inline-flex items-center gap-2 px-6 py-3 text-indigo-700 rounded-lg font-medium transition-all duration-300 hover:bg-zinc-50 overflow-hidden border-2 border-indigo-700 hover:rounded-full hover:tracking-widest ease-in-out">
                 <span>Get Started</span>
                 <FaArrowRight className="w-5 h-5 transform group-hover:translate-x-5 group-hover:opacity-0 transition-all duration-300 ease-in-out" />
               </button>
