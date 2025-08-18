@@ -15,21 +15,38 @@ import ScrollToTop from "./Components/ScrollToTop";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
 
+import HrDashboard from "./Pages/HrDashboard"; // dashboard home page
+import Leave from "./Pages/Leave";
+import Departments from "./Pages/Departments";
+import EmployeesDetails from "./Pages/EmployeesDetails";
+import Payroll from "./Pages/Payroll";
+
+import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
+
 const AppContent = () => {
   const location = useLocation();
-  const hideHeaderAndFooter = [
+
+  // Paths where header & footer should be hidden
+  const hideHeaderAndFooterPaths = [
     "/login",
     "/signup",
     "/forgotpassword",
     "/reset",
     "/onboarding",
+    "/dashboard",
   ];
+
+  const shouldHide = hideHeaderAndFooterPaths.some((path) =>
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
-      {!hideHeaderAndFooter.includes(location.pathname) && <Header />}
+      {!shouldHide && <Header />}
       <ScrollToTop />
+
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -40,8 +57,18 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
+
+        {/* Dashboard Routes (with sidebar always visible) */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<HrDashboard />} /> {/* default dashboard */}
+          <Route path="leave" element={<Leave />} />
+          <Route path="department" element={<Departments />} />
+          <Route path="employees" element={<EmployeesDetails />} />
+          <Route path="payroll" element={<Payroll />} />
+        </Route>
       </Routes>
-      {!hideHeaderAndFooter.includes(location.pathname) && <Footer />}
+
+      {!shouldHide && <Footer />}
     </>
   );
 };
