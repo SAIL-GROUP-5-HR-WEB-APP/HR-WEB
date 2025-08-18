@@ -22,6 +22,7 @@ const AppContent = () => {
     "/signup",
     "/forgotpassword",
     "/reset",
+    "/onboarding",
   ];
 
   return (
