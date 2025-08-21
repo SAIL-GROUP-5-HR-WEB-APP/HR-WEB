@@ -1,4 +1,3 @@
-import React from "react";
 import { LuNetwork, LuTrendingUp, LuCalendarCheck } from "react-icons/lu";
 const Body = () => {
   const details = [

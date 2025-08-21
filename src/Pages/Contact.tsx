@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const contactImg = "https://placehold.co/500x300/e9d5ff/6b46c1?text=Contact+Us";
 

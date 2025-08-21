@@ -1,4 +1,3 @@
-import React from "react";
 import mockup from "../../../assets/chatMockup.png";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";

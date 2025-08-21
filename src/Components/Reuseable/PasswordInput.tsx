@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from "react";
 
 // Props interface for type safety
 interface PasswordInputProps {
@@ -34,7 +34,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
       <div className="relative">
         {/* Password Input Field with ARIA attributes */}
         <input
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           id={id}
           name={name}
           placeholder={placeholder}
@@ -43,16 +43,24 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           required
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`p-3 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
+          className={`p-3 border ${
+            error ? "border-red-500" : "border-gray-300"
+          } rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition`}
         />
         {/* Password Visibility Toggle Button */}
         <button
           type="button"
           onClick={toggleShowPassword}
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          aria-label={showPassword ? "Hide password" : "Show password"}
           className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:opacity-70"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
             <path
               d="M1 12S5 4 12 4S23 12 23 12S19 20 12 20S1 12 1 12Z"
               stroke="#9CA3AF"
