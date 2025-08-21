@@ -1,10 +1,9 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import HrDashboardSidebar from "../Components/Reuseable/HrDashboardSidebar";
 
 const DashboardLayout = () => {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen max-w-[1900px] mx-auto">
       {/* Sidebar always visible */}
       <HrDashboardSidebar />
 
