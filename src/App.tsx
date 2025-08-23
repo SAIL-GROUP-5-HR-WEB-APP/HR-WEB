@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Home from "./Pages/Home";
@@ -22,6 +21,8 @@ import EmployeesDetails from "./Pages/EmployeesDetails";
 import Payroll from "./Pages/Payroll";
 
 import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
+import EmployeeDashboard from "./Pages/EmployeeDashboard";
+import OTPmodal from "./Pages/OTPmodal";
 
 const AppContent = () => {
   const location = useLocation();
@@ -34,6 +35,8 @@ const AppContent = () => {
     "/reset",
     "/onboarding",
     "/dashboard",
+    "/EmployeeDashboard",
+    "/OTP",
   ];
 
   const shouldHide = hideHeaderAndFooterPaths.some((path) =>
@@ -57,6 +60,8 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset" element={<ResetPasswordPage />} />
+        <Route path="/EmployeeDashboard" element={<EmployeeDashboard />} />
+        <Route path="/OTP" element={<OTPmodal />} />
 
         {/* Dashboard Routes (with sidebar always visible) */}
         <Route path="/dashboard" element={<DashboardLayout />}>
