@@ -1,4 +1,3 @@
-import { title } from "framer-motion/client";
 import { useState, type FormEvent, type ChangeEvent } from "react";
 import {
   LuUsers,
@@ -93,34 +92,36 @@ const HrDashboard = () => {
   return (
     <div className="px-10">
       {/* dashboard header */}
-      <div className="flex justify-between items-center ">
+      <div className="flex justify-between items-center  max-[890px]:flex-col ">
         <h1 className="text-3xl font-semibold">
           <span className="text-indigo-800">HR</span> DASHBOARD
         </h1>
         <input
           type="text"
-          className="border border-black px-8 rounded-xl py-3"
+          className="border border-black px-8 rounded-xl py-3 max-[890px]:mt-3"
           placeholder="search anything"
         />
-        <h1 className="text-lg font-semibold">Welcome back HR </h1>
+        <h1 className="text-lg font-semibold  max-[890px]:hidden">
+          Welcome back HR{" "}
+        </h1>
       </div>
 
       {/* stat cards */}
-      <div className="grid grid-cols-4 gap-4 mt-6">
+      <div className="grid grid-cols-4 gap-4 mt-6 max-[900px]:grid-cols-2 max-[550px]:grid-cols-1 ">
         {statCard.map((data, i) => (
           <div
             key={i}
-            className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-900 to-indigo-600  text-white hover:bg-indigo-950 "
+            className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-900 to-indigo-600  text-white hover:bg-indigo-950  flex flex-col  max-[550px]:items-center"
           >
             <div>{data.icon}</div>
-            <h1 className="text-xl mt-2">{data.title}</h1>
+            <h1 className="text-xl mt-2 ">{data.title}</h1>
             <p className="text-2xl font-bold">{data.total}</p>
           </div>
         ))}
       </div>
 
       {/* task + chart section */}
-      <div className="grid grid-cols-2 gap-4 mt-5">
+      <div className="grid grid-cols-2 gap-4 mt-5 max-[900px]:grid-cols-1">
         {/* Todo Section */}
         <div className="relative border-2 p-2 border-indigo-800 rounded-lg flex flex-col h-[350px]">
           <div className="flex items-center justify-center">
@@ -218,7 +219,7 @@ const HrDashboard = () => {
         </div>
       </div>
       <div>
-        <div className="grid grid-cols-3  gap-4 mt-6 ">
+        <div className="grid grid-cols-3  gap-4 mt-6  max-[550px]:grid-cols-1 ">
           {leaveCards.map((data, i) => (
             <div
               key={i}

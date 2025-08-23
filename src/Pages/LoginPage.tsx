@@ -102,7 +102,7 @@ const LoginPage: React.FC = () => {
 
   return (
     // Main container with flex layout for form and image sections, padding for header/footer
-    <div className="flex bg-white lg:flex-row flex-col ">
+    <div className="flex bg-white items-center flex-row  ">
       {/* Form Section (left side for login form) */}
       <div className="lg:w-1/2 w-full max-w-md mx-auto p-8  flex flex-col justify-center">
         {/* Logo (displays the company logo at the top) */}
@@ -280,7 +280,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Image Section (right side promotional image, same as signup for consistency) */}
-      <div className="lg:w-1/2   w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 max-[900px]:hidden">
+      <div className="lg:w-1/2 h-screen  w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center  max-[900px]:hidden">
         <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.

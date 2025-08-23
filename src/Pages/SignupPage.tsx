@@ -3,7 +3,8 @@ import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -16,6 +17,7 @@ interface FormData {
 
 // Main SignupPage component for user registration
 const SignupPage: React.FC = () => {
+  const navigate = useNavigate();
   // State for form inputs
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -80,7 +82,12 @@ const SignupPage: React.FC = () => {
     }
 
     try {
-      console.log("Form submitted:", formData);
+      const res = await Api.post("/register", formData);
+      if (res.status === 201) {
+        // Navigate to OTP page, carry email along
+        navigate("/OTP");
+      }
+      // console.log("Form submitted:", formData);
       // TODO: Replace with API call to backend
       // Example:
       // const response = await fetch('/api/signup', {
@@ -93,6 +100,7 @@ const SignupPage: React.FC = () => {
       // window.location.href = '/dashboard';
     } catch (error) {
       setSubmitError("An error occurred during signup. Please try again.");
+      console.log(error);
     }
   };
 
