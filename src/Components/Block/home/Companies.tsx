@@ -1,4 +1,3 @@
-import React from "react";
 import opay from "../../../assets/opay.png";
 import flutter from "../../../assets/flutterwave.png";
 import moniepoint from "../../../assets/moniepoint.jpg";
