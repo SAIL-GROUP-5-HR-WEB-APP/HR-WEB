@@ -1,8 +1,9 @@
 import axios from "axios";
 
 const Api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://zyrahr-backend.onrender.com",
   headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
     "Content-Type": "application/json",
   },
 });
