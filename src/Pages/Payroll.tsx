@@ -1,5 +1,4 @@
 
-
 const Payroll = () => {
   return (
     <section className="px-[30px] max-w-[1240px] mx-auto tablet:px-[100px]">

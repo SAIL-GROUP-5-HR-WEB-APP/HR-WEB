@@ -1,4 +1,3 @@
-import React from "react";
 import Hero from "../Components/Block/home/Hero";
 import Companies from "../Components/Block/home/Companies";
 import Body from "../Components/Block/home/Body";

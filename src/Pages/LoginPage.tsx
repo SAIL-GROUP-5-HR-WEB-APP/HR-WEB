@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
 // Define the shape of the form data for type safety (interface for form fields)
 interface FormData {
   email: string;
@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
     password: "",
     rememberMe: false,
   });
-
+  const navigate = useNavigate();
   // State for form errors (stores validation errors for each field)
   const [errors, setErrors] = useState<Partial<FormData>>({});
   // State for password visibility (toggles whether password is shown or hidden)
@@ -66,23 +66,18 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      console.log("Form submitted:", formData);
-      // TODO: Replace with API call to backend for login
-      // Example:
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // if (!response.ok) throw new Error('Login failed');
-      // Upon successful login, redirect to respective dashboard (employee or admin)
-      // Example redirection based on user role (fetched from API response):
-      // const userRole = response.json().role; // Assume API returns role
-      // if (userRole === 'admin') {
-      //   window.location.href = '/admin-dashboard';
-      // } else {
-      //   window.location.href = '/employee-dashboard';
-      // }
+      const res = await Api.post("/api/v1/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (res.status === 200) {
+        // save token if your backend returns one
+        localStorage.setItem("token", res.data.token);
+
+        // navigate to dashboard
+        navigate("/EmployeeDashboard");
+      }
     } catch (error) {
       setSubmitError("An error occurred during login. Please try again.");
     }
@@ -102,7 +97,7 @@ const LoginPage: React.FC = () => {
 
   return (
     // Main container with flex layout for form and image sections, padding for header/footer
-    <div className="flex bg-white lg:flex-row flex-col ">
+    <div className="flex bg-white items-center flex-row  ">
       {/* Form Section (left side for login form) */}
       <div className="lg:w-1/2 w-full max-w-md mx-auto p-8  flex flex-col justify-center">
         {/* Logo (displays the company logo at the top) */}
@@ -280,7 +275,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       {/* Image Section (right side promotional image, same as signup for consistency) */}
-      <div className="lg:w-1/2   w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 max-[900px]:hidden">
+      <div className="lg:w-1/2 h-screen  w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center  max-[900px]:hidden">
         <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.

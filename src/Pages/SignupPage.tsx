@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -16,6 +17,7 @@ interface FormData {
 
 // Main SignupPage component for user registration
 const SignupPage: React.FC = () => {
+  const navigate = useNavigate();
   // State for form inputs
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -75,24 +77,21 @@ const SignupPage: React.FC = () => {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      console.log("Form submitted:", formData);
-      // TODO: Replace with API call to backend
-      // Example:
-      // const response = await fetch('/api/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // if (!response.ok) throw new Error('Signup failed');
-      // Redirect to dashboard, e.g.:
-      // window.location.href = '/dashboard';
-    } catch (error) {
-      setSubmitError("An error occurred during signup. Please try again.");
+      const res = await Api.post("/api/v1/auth/register", formData);
+
+      if (res.status === 201) {
+        // Navigate to OTP page, carry email along
+        navigate("/OTP", { state: { email: formData.email } });
+      }
+    } catch (err: any) {
+      setSubmitError(
+        err.response?.data?.message ||
+          "An error occurred during signup. Please try again."
+      );
+      console.log(err);
     }
   };
 
