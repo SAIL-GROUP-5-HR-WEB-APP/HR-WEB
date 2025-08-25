@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
@@ -30,10 +31,13 @@ const SignupPage: React.FC = () => {
   // State for form errors
   const [errors, setErrors] = useState<Partial<FormData>>({});
   // State for password visibility
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
   // State for submission status
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // State for loading
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Validate form inputs
   const validateForm = (): boolean => {
@@ -62,7 +66,7 @@ const SignupPage: React.FC = () => {
   };
 
   // Handle input changes for form fields
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -73,11 +77,15 @@ const SignupPage: React.FC = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setSubmitError(null);
+    setIsLoading(true);
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await Api.post("/api/v1/auth/register", formData);
@@ -92,24 +100,26 @@ const SignupPage: React.FC = () => {
           "An error occurred during signup. Please try again."
       );
       console.log(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Handle Google signup
-  const handleGoogleSignup = () => {
+  const handleGoogleSignup = (): void => {
     console.log("Signup with Google");
     // TODO: Add Google OAuth integration
   };
 
   // Handle Apple signup
-  const handleAppleSignup = () => {
+  const handleAppleSignup = (): void => {
     console.log("Signup with Apple");
     // TODO: Add Apple OAuth integration
   };
 
   return (
     // Main container with padding for Header and Footer
-    <div className="flex min-h-screen bg-white lg:flex-row flex-col  ">
+    <div className="flex min-h-screen bg-white lg:flex-row flex-col">
       {/* Form Section */}
       <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
         {/* Logo */}
@@ -263,14 +273,22 @@ const SignupPage: React.FC = () => {
               error={errors.confirmPassword}
             />
 
-            {/* Submit Button */}
-            <Button
-              title="Register"
-              bg="#5B5CE6"
-              textColor="white"
-              borderColor="transparent"
-              hoverr="hover:bg-indigo-700"
-            />
+            {/* Submit Button with Loader */}
+            <div className="relative">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-3 bg-[#5B5CE6] rounded-lg">
+                  <ClipLoader color="#ffffff" size={24} />
+                </div>
+              ) : (
+                <Button
+                  title="Register"
+                  bg="#5B5CE6"
+                  textColor="white"
+                  borderColor="transparent"
+                  hoverr="hover:bg-indigo-700"
+                />
+              )}
+            </div>
           </form>
 
           {/* Divider */}

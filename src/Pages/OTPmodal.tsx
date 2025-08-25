@@ -1,24 +1,26 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Api from "../Components/Reuseable/Api"; // your axios instance
+import { ClipLoader } from "react-spinners";
+import Api from "../Components/Reuseable/Api";
 
-const OtpPage = () => {
+const OtpPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = (location.state as { email: string })?.email; // ✅ get email from signup
+  const email = (location.state as { email: string })?.email;
 
-  const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [otp, setOtp] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  // ✅ if no email (e.g. refresh), redirect back to signup
+  // Redirect to signup if no email (e.g., page refresh)
   useEffect(() => {
     if (!email) {
       navigate("/signup");
     }
   }, [email, navigate]);
 
-  const handleVerify = async () => {
+  const handleVerify = async (): Promise<void> => {
+    if (otp.length < 6) return; // Prevent submission if OTP is incomplete
     setLoading(true);
     setError("");
 
@@ -29,7 +31,7 @@ const OtpPage = () => {
       });
 
       if (res.status === 200) {
-        navigate("/EmployeeDashboard"); // ✅ success → go dashboard
+        navigate("/EmployeeDashboard");
       }
     } catch (err: any) {
       if (err.response) {
@@ -42,7 +44,7 @@ const OtpPage = () => {
     }
   };
 
-  if (!email) return null; // ✅ safeguard to avoid rendering without email
+  if (!email) return null;
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -65,13 +67,22 @@ const OtpPage = () => {
           <p className="text-sm text-red-600 text-center mt-2">{error}</p>
         )}
 
-        <button
-          onClick={handleVerify}
-          disabled={loading || otp.length < 6}
-          className="mt-6 w-full bg-blue-600 text-white rounded-lg py-2 px-4 hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Verifying..." : "Confirm"}
-        </button>
+        <div className="relative mt-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-2 px-4 bg-blue-600 rounded-lg">
+              <ClipLoader color="#ffffff" size={24} />
+            </div>
+          ) : (
+            <button
+              onClick={handleVerify}
+              className={`w-full bg-blue-600 text-white rounded-lg py-2 px-4 hover:bg-blue-700 ${
+                otp.length < 6 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              Confirm
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

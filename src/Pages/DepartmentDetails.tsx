@@ -1,9 +1,11 @@
-// 3. DepartmentDetails.tsx (This is the new file you need to create)
-// File Location: src/Pages/DepartmentDetails.tsx
-// Changes: A brand new file.
-
 import { useParams, Link } from "react-router-dom";
-import { LuBuilding2, LuUsers, LuBriefcase, LuMail, LuArrowLeft } from "react-icons/lu";
+import {
+  LuBuilding2,
+  LuUsers,
+  LuBriefcase,
+  LuMail,
+  LuArrowLeft,
+} from "react-icons/lu";
 import departmentsData from "./DepartmentsData"; // Import the data from the same directory
 
 const DepartmentDetails = () => {
@@ -12,17 +14,21 @@ const DepartmentDetails = () => {
   const departmentId = parseInt(id as string, 10);
 
   // Find the department data based on the ID
-  const department = departmentsData.find(dept => dept.id === departmentId);
+  const department = departmentsData.find((dept) => dept.id === departmentId);
 
   // Handle case where department is not found
   if (!department) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center p-4">
-        <h1 className="text-3xl font-extrabold text-white mb-4">Department Not Found</h1>
-        <p className="text-gray-400 mb-6">The department you are looking for does not exist.</p>
+        <h1 className="text-3xl font-extrabold text-black mb-4">
+          Department Not Found
+        </h1>
+        <p className="text-gray-800 mb-6">
+          The department you are looking for does not exist.
+        </p>
         <Link
           to="/dashboard/department"
-          className="bg-indigo-600 text-white py-3 px-6 rounded-md hover:bg-indigo-700 transition-colors duration-300"
+          className="bg-indigo-600 text-black py-3 px-6 rounded-md hover:bg-indigo-700 transition-colors duration-300"
         >
           Go Back to Departments
         </Link>
@@ -33,8 +39,11 @@ const DepartmentDetails = () => {
   return (
     <div className="min-h-screen w-full flex flex-col p-4 md:p-8">
       <header className="max-w-6xl mx-auto w-full mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <Link to="/dashboard/department" className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-300">
+        <div className="flex justify-center gap-5 items-center mb-6 ">
+          <Link
+            to="/dashboard/department"
+            className="flex items-center space-x-2 text-black hover:text-gray-800 transition-colors duration-300"
+          >
             <LuArrowLeft size={20} />
             <span className="text-lg">Back to Departments</span>
           </Link>
@@ -81,11 +90,20 @@ const DepartmentDetails = () => {
               key={employee.id}
               className="bg-indigo-800 p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
             >
-              <h3 className="text-xl font-extrabold text-white mb-2">{employee.name}</h3>
-              <p className="text-indigo-200 text-sm font-medium mb-1">{employee.title}</p>
+              <h3 className="text-xl font-extrabold text-white mb-2">
+                {employee.name}
+              </h3>
+              <p className="text-indigo-200 text-sm font-medium mb-1">
+                {employee.title}
+              </p>
               <div className="flex items-center space-x-2 text-indigo-300">
                 <LuMail size={16} />
-                <a href={`mailto:${employee.email}`} className="hover:underline">{employee.email}</a>
+                <a
+                  href={`mailto:${employee.email}`}
+                  className="hover:underline"
+                >
+                  {employee.email}
+                </a>
               </div>
             </div>
           ))}

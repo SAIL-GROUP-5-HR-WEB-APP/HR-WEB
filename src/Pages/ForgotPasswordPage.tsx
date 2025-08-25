@@ -1,15 +1,16 @@
 import { useState } from "react";
+import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import { Link } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
 
-const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
+const ForgotPasswordPage: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -90,20 +91,20 @@ const ForgotPasswordPage = () => {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white font-medium ${
-                loading
-                  ? "bg-indigo-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
-            >
-              {loading && (
-                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin border-indigo-500"></span>
+            <div className="relative">
+              {loading ? (
+                <div className="flex items-center justify-center px-4 py-3 bg-indigo-600 rounded-lg">
+                  <ClipLoader color="#ffffff" size={24} />
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white font-medium bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Send Reset Link
+                </button>
               )}
-              {loading ? "Sending..." : "Send Reset Link"}
-            </button>
+            </div>
           </form>
 
           <div className="text-center text-sm text-gray-600">

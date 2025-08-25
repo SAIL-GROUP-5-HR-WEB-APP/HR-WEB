@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
+import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import Button from "../Components/Reuseable/Button";
@@ -11,18 +12,19 @@ interface ResetPasswordData {
   confirmPassword: string;
 }
 
-const ResetPasswordPage = () => {
+const ResetPasswordPage: React.FC = () => {
   const [formData, setFormData] = useState<ResetPasswordData>({
     password: "",
     confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<Partial<ResetPasswordData>>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,13 +50,13 @@ const ResetPasswordPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setSubmitError(null);
     setSuccess(false);
@@ -75,7 +77,7 @@ const ResetPasswordPage = () => {
 
       if (res.status === 200) {
         setSuccess(true);
-        // redirect after 2s
+        // Redirect after 2s
         setTimeout(() => navigate("/login"), 2000);
       }
     } catch (err) {
@@ -146,17 +148,25 @@ const ResetPasswordPage = () => {
               error={errors.confirmPassword}
             />
 
-            <Button
-              title={loading ? "Resetting..." : "Reset Password"}
-              bg="#5B5CE6"
-              textColor="white"
-              borderColor="transparent"
-              hoverr="hover:bg-indigo-700"
-            />
+            <div className="relative">
+              {loading ? (
+                <div className="flex items-center justify-center px-4 py-3 bg-[#5B5CE6] rounded-lg">
+                  <ClipLoader color="#ffffff" size={24} />
+                </div>
+              ) : (
+                <Button
+                  title="Reset Password"
+                  bg="#5B5CE6"
+                  textColor="white"
+                  borderColor="transparent"
+                  hoverr="hover:bg-indigo-700"
+                />
+              )}
+            </div>
           </form>
 
           <div className="text-center text-sm text-gray-600">
-            Remember your password?{" "}
+            Remember your password?
             <a
               href="/login"
               className="text-indigo-600 font-medium hover:underline"
@@ -168,7 +178,7 @@ const ResetPasswordPage = () => {
       </div>
 
       {/* Image Section */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 lg:h-full  max-[900px]:hidden">
+      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 lg:h-full max-[900px]:hidden">
         <div className="text-center text-white max-w-lg w-full">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Secure your account.
