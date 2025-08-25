@@ -13,14 +13,12 @@ import Contact from "./Pages/Contact";
 import ScrollToTop from "./Components/ScrollToTop";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
-
 import HrDashboard from "./Pages/HrDashboard"; // dashboard home page
 import Leave from "./Pages/Leave";
 import Departments from "./Pages/Departments";
-import EmployeeDetails from "./Pages/EmployeesDetails"; 
+import EmployeesDetails from "./Pages/EmployeesDetails";
 import Payroll from "./Pages/Payroll";
 import DepartmentDetails from "./Pages/DepartmentDetails"; // This import is crucial for the routing to work
-
 import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
 import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
@@ -33,9 +31,9 @@ const AppContent = () => {
     "/login",
     "/signup",
     "/forgotpassword",
-    "/reset",
+    "/reset-password",
     "/onboarding",
-    "/dashboard", 
+    "/dashboard",
     "/EmployeeDashboard",
     "/OTP",
   ];
@@ -60,7 +58,7 @@ const AppContent = () => {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
-        <Route path="/reset" element={<ResetPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/EmployeeDashboard" element={<EmployeeDashboard />} />
         <Route path="/OTP" element={<OTPmodal />} />
 
@@ -71,7 +69,7 @@ const AppContent = () => {
           <Route path="department" element={<Departments />} />
           <Route path="department/:id" element={<DepartmentDetails />} />
           <Route path="payroll" element={<Payroll />} />
-          <Route path="employees/:id" element={<EmployeeDetails />} />
+          <Route path="employees" element={<EmployeesDetails />} />
         </Route>
       </Routes>
 

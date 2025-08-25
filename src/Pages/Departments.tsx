@@ -1,7 +1,3 @@
-// 1. departments.tsx (This file displays all departments)
-// File Location: src/Pages/departments.tsx
-// Changes: Corrected the import path for departmentsData.
-
 import DepartmentCard from "./DepartmentCard";
 import { LuBuilding2 } from "react-icons/lu";
 import departmentsData from "./DepartmentsData"; // Corrected import path
@@ -35,7 +31,7 @@ const Departments = () => {
           ))}
         </div>
       </main>
-      
+
       {/* Same style block as employee dashboard for animations */}
       <style>{`
         @keyframes pulse-once {
