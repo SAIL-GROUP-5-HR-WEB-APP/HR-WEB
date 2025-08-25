@@ -1,37 +1,38 @@
-// src/pages/OtpPage.tsx
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import Api from "../Components/Reuseable/Api";
-interface LocationState {
-  email: string;
-}
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import Api from "../Components/Reuseable/Api"; // your axios instance
 
-const OTPmodal = () => {
-  const location = useLocation();
+const OtpPage = () => {
   const navigate = useNavigate();
-  const { email } = (location.state || {}) as LocationState;
+  const location = useLocation();
+  const email = (location.state as { email: string })?.email; // ✅ get email from signup
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ if no email (e.g. refresh), redirect back to signup
+  useEffect(() => {
+    if (!email) {
+      navigate("/signup");
+    }
+  }, [email, navigate]);
 
   const handleVerify = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const res = await Api.post(
-        "/verify-otp",
-        { email, otp } // backend expects both
-      );
+      const res = await Api.post("/api/v1/auth/verify-otp", {
+        email,
+        otp,
+      });
 
       if (res.status === 200) {
-        // OTP success → go to dashboard
-        navigate("/EmployeeDashboard");
+        navigate("/EmployeeDashboard"); // ✅ success → go dashboard
       }
     } catch (err: any) {
       if (err.response) {
-        console.log(err);
         setError(err.response.data.message || "OTP verification failed");
       } else {
         setError("Network error, please try again");
@@ -41,12 +42,14 @@ const OTPmodal = () => {
     }
   };
 
+  if (!email) return null; // ✅ safeguard to avoid rendering without email
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-sm">
-        <h2 className="text-xl font-semibold text-center mb-2">Enter OTP</h2>
-        <p className="text-gray-600 text-sm text-center mb-4">
-          We sent a 6-digit OTP to <strong>{email}</strong>
+    <div className="flex items-center justify-center h-screen bg-gray-100">
+      <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+        <h2 className="text-xl font-semibold text-center mb-4">Verify OTP</h2>
+        <p className="text-sm text-gray-600 text-center mb-4">
+          Enter the 6-digit OTP sent to <strong>{email}</strong>
         </p>
 
         <input
@@ -54,22 +57,24 @@ const OTPmodal = () => {
           maxLength={6}
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
-          className="w-full border rounded-lg py-2 px-3 tracking-widest text-center text-lg font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border rounded-lg py-2 px-3 tracking-widest text-center text-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="••••••"
         />
 
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {error && (
+          <p className="text-sm text-red-600 text-center mt-2">{error}</p>
+        )}
 
         <button
           onClick={handleVerify}
           disabled={loading || otp.length < 6}
-          className="mt-4 w-full bg-indigo-600 text-white rounded-lg py-2 px-4 hover:bg-indigo-700 disabled:opacity-50"
+          className="mt-6 w-full bg-blue-600 text-white rounded-lg py-2 px-4 hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? "Verifying..." : "Verify OTP"}
+          {loading ? "Verifying..." : "Confirm"}
         </button>
       </div>
     </div>
   );
 };
 
-export default OTPmodal;
+export default OtpPage;

@@ -1,18 +1,20 @@
 import { useState } from "react";
 import Logo from "../Components/Reuseable/Logo";
-import Button from "../Components/Reuseable/Button";
 import { Link } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(false);
+    setSuccess(null);
 
+    // Validation
     if (!email.trim()) {
       setError("Email is required");
       return;
@@ -21,10 +23,21 @@ const ForgotPasswordPage = () => {
       return;
     }
 
-    // TODO: API call to send password reset link
-    console.log("Password reset requested for:", email);
+    try {
+      setLoading(true);
+      const res = await Api.post("/api/v1/auth/forgot-password", { email });
 
-    setSuccess(true);
+      if (res.status === 201 || res.status === 200) {
+        setSuccess("Reset link has been sent to your email");
+      }
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || "An error occurred, please try again."
+      );
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,11 +65,7 @@ const ForgotPasswordPage = () => {
               {error}
             </p>
           )}
-          {success && (
-            <p className="text-sm text-green-600 mb-4">
-              If this email is registered, you’ll receive a reset link shortly.
-            </p>
-          )}
+          {success && <p className="text-sm text-green-600 mb-4">{success}</p>}
 
           <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit}>
             {/* Email Input */}
@@ -80,15 +89,21 @@ const ForgotPasswordPage = () => {
                 } rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
               />
             </div>
-            <Link to="/reset">
-              <Button
-                title="Send Reset Link"
-                bg="#5B5CE6"
-                textColor="white"
-                borderColor="transparent"
-                hoverr="hover:bg-indigo-700"
-              />
-            </Link>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white font-medium ${
+                loading
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
+              }`}
+            >
+              {loading && (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin border-indigo-500"></span>
+              )}
+              {loading ? "Sending..." : "Send Reset Link"}
+            </button>
           </form>
 
           <div className="text-center text-sm text-gray-600">
@@ -104,7 +119,7 @@ const ForgotPasswordPage = () => {
       </div>
 
       {/* Image Section */}
-      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 lg:h-full  max-[900px]:hidden">
+      <div className="lg:w-1/2 w-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 lg:h-full max-[900px]:hidden">
         <div className="text-center text-white max-w-lg w-full">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Reset your password easily.
