@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ChangeEvent } from "react";
+import { Link } from "react-router-dom"; // Import Link
 import {
   LuUsers,
   LuBuilding2,
@@ -62,6 +63,7 @@ const HrDashboard = () => {
   const deleteTask = (id: number) => {
     setTasks(tasks.filter((task) => task.id !== id));
   };
+
   const leaveCards = [
     { title: "Employees on Leave", total: "5", icon: <LuPlane size={30} /> },
     {
@@ -74,12 +76,14 @@ const HrDashboard = () => {
       icon: <LuClock size={30} />,
     },
   ];
+
   const statCard = [
-    { title: "Total employees", total: "100", icon: <LuUsers size={30} /> },
-    { title: "Departments", total: "7", icon: <LuBuilding2 size={30} /> },
-    { title: "Present", total: "55", icon: <LuUserCheck size={30} /> },
-    { title: "Absent", total: "35", icon: <LuUserX size={30} /> },
+    { title: "Total employees", total: "100", icon: <LuUsers size={30} />, path: "" },
+    { title: "Departments", total: "7", icon: <LuBuilding2 size={30} />, path: "/dashboard/department" },
+    { title: "Present", total: "55", icon: <LuUserCheck size={30} />, path: "" },
+    { title: "Absent", total: "35", icon: <LuUserX size={30} />, path: "" },
   ];
+
   const barData = [
     { name: "Jan", employees: 30 },
     { name: "Feb", employees: 45 },
@@ -92,7 +96,7 @@ const HrDashboard = () => {
   return (
     <div className="px-10">
       {/* dashboard header */}
-      <div className="flex justify-between items-center  max-[890px]:flex-col ">
+      <div className="flex justify-between items-center  max-[890px]:flex-col ">
         <h1 className="text-3xl font-semibold">
           <span className="text-indigo-800">HR</span> DASHBOARD
         </h1>
@@ -101,7 +105,7 @@ const HrDashboard = () => {
           className="border border-black px-8 rounded-xl py-3 max-[890px]:mt-3"
           placeholder="search anything"
         />
-        <h1 className="text-lg font-semibold  max-[890px]:hidden">
+        <h1 className="text-lg font-semibold  max-[890px]:hidden">
           Welcome back HR{" "}
         </h1>
       </div>
@@ -109,14 +113,15 @@ const HrDashboard = () => {
       {/* stat cards */}
       <div className="grid grid-cols-4 gap-4 mt-6 max-[900px]:grid-cols-2 max-[550px]:grid-cols-1 ">
         {statCard.map((data, i) => (
-          <div
+          <Link
+            to={data.path}
             key={i}
-            className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-900 to-indigo-600  text-white hover:bg-indigo-950  flex flex-col  max-[550px]:items-center"
+            className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-900 to-indigo-600 hover:bg-indigo-950  flex flex-col  max-[550px]:items-center"
           >
             <div>{data.icon}</div>
-            <h1 className="text-xl mt-2 ">{data.title}</h1>
-            <p className="text-2xl font-bold">{data.total}</p>
-          </div>
+            <h1 className="text-xl mt-2 text-white">{data.title}</h1>
+            <p className="text-2xl font-bold text-white">{data.total}</p>
+          </Link>
         ))}
       </div>
 
@@ -219,11 +224,11 @@ const HrDashboard = () => {
         </div>
       </div>
       <div>
-        <div className="grid grid-cols-3  gap-4 mt-6  max-[550px]:grid-cols-1 ">
+        <div className="grid grid-cols-3  gap-4 mt-6  max-[550px]:grid-cols-1 ">
           {leaveCards.map((data, i) => (
             <div
               key={i}
-              className="hover:shadow-2xs shadow-2xl rounded-lg p-5  bg-gradient-to-r from-indigo-300 to-indigo-200  text-black text-center "
+              className="hover:shadow-2xs shadow-2xl rounded-lg p-5  bg-gradient-to-r from-indigo-300 to-indigo-200  text-black text-center "
             >
               <div className="place-items-center">{data.icon}</div>
               <h1 className="text-xl mt-2">{data.title}</h1>
