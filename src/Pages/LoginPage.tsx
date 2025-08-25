@@ -3,8 +3,8 @@ import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
 // Define the shape of the form data for type safety (interface for form fields)
 interface FormData {
   email: string;
@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
     password: "",
     rememberMe: false,
   });
-
+  const navigate = useNavigate();
   // State for form errors (stores validation errors for each field)
   const [errors, setErrors] = useState<Partial<FormData>>({});
   // State for password visibility (toggles whether password is shown or hidden)
@@ -66,23 +66,18 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      console.log("Form submitted:", formData);
-      // TODO: Replace with API call to backend for login
-      // Example:
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // if (!response.ok) throw new Error('Login failed');
-      // Upon successful login, redirect to respective dashboard (employee or admin)
-      // Example redirection based on user role (fetched from API response):
-      // const userRole = response.json().role; // Assume API returns role
-      // if (userRole === 'admin') {
-      //   window.location.href = '/admin-dashboard';
-      // } else {
-      //   window.location.href = '/employee-dashboard';
-      // }
+      const res = await Api.post("/api/v1/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (res.status === 200) {
+        // save token if your backend returns one
+        localStorage.setItem("token", res.data.token);
+
+        // navigate to dashboard
+        navigate("/EmployeeDashboard");
+      }
     } catch (error) {
       setSubmitError("An error occurred during login. Please try again.");
     }

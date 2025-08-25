@@ -8,7 +8,10 @@ import {
   LuCalendar,
   LuCheck,
   LuBaggageClaim,
+  LuLogOut, // Added for logout icon
 } from "react-icons/lu";
+import Api from "../Components/Reuseable/Api";
+import { useNavigate } from "react-router-dom";
 
 interface LeaveRequest {
   id: number;
@@ -43,23 +46,55 @@ const EmployeeDashboard = () => {
     setEndDate("");
   };
 
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      // Call the backend logout endpoint
+      await Api.post("/api/v1/auth/logout");
+
+      // Clear any client-side tokens or session data
+      localStorage.removeItem("token");
+      sessionStorage.clear(); //  if you store any session data
+
+      // Navigate to login page, replace history to prevent back navigation
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error(
+        "Logout failed:",
+        (error as any).response?.data || (error as any).message
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col">
       {/* Profile Section */}
       <header className="p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
           <div className="relative bg-white/10 backdrop-blur-md p-6 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all duration-300 transform hover:scale-105 max-w-sm mx-auto">
-            <div className="flex items-center space-x-4">
-              <div className="h-16 w-16 rounded-full shadpw- bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
-                JD
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
+                  JD
+                </div>
+                <div className="text-gray-700">
+                  <h1 className="text-2xl font-extrabold text-shadow">
+                    John Doe
+                  </h1>
+                  <p className="text-sm font-medium">Frontend Engineer</p>
+                  <p className="text-xs opacity-80">johndoe@email.com</p>
+                </div>
               </div>
-              <div className="text-gray-700">
-                <h1 className="text-2xl font-extrabold text-shadow">
-                  John Doe
-                </h1>
-                <p className="text-sm font-medium">Frontend Engineer</p>
-                <p className="text-xs opacity-80">johndoe@email.com</p>
-              </div>
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl"
+                aria-label="Log out"
+              >
+                <LuLogOut size={15} />
+                <span className="text-sm">Log Out</span>
+              </button>
             </div>
           </div>
         </div>
@@ -91,7 +126,7 @@ const EmployeeDashboard = () => {
           ].map((stat, index) => (
             <div
               key={index}
-              className={` backdrop-blur-md p-6 rounded-2xl border border-white/20 animate-pulse-once bg-gradient-to-r from-indigo-700 to-indigo-400 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] transition-all duration-300`}
+              className={`backdrop-blur-md p-6 rounded-2xl border border-white/20 animate-pulse-once bg-gradient-to-r from-indigo-700 to-indigo-400 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] transition-all duration-300`}
             >
               <div className="text-white">{stat.icon}</div>
               <p className="text-sm font-medium text-white/80">{stat.label}</p>
@@ -158,7 +193,7 @@ const EmployeeDashboard = () => {
         {/* Leave Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Leave Form */}
-          <section className=" backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
+          <section className="backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
             <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6">
               <LuCalendar className="text-gray-600" size={28} />
               <span>Request Leave</span>
@@ -175,7 +210,7 @@ const EmployeeDashboard = () => {
                   id="leaveReason"
                   type="text"
                   placeholder="Enter reason for leave"
-                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors "
+                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   value={leaveReason}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     setLeaveReason(e.target.value)
@@ -232,7 +267,7 @@ const EmployeeDashboard = () => {
           </section>
 
           {/* Leave History */}
-          <section className="  p-6 rounded-2xl border border-indigo-800">
+          <section className="p-6 rounded-2xl border border-indigo-800">
             <h2 className="font-extrabold text-xl md:text-2xl text-gray-600 mb-6">
               Pending Leave Requests
             </h2>

@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import Button from "../Components/Reuseable/Button";
-import { Link } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
+import { AxiosError } from "axios";
 
 interface ResetPasswordData {
   password: string;
@@ -20,6 +22,14 @@ const ResetPasswordPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract token from query string
+  const queryParams = new URLSearchParams(location.search);
+  const token = queryParams.get("token");
 
   const validateForm = (): boolean => {
     const newErrors: Partial<ResetPasswordData> = {};
@@ -44,20 +54,38 @@ const ResetPasswordPage = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     setSuccess(false);
 
     if (!validateForm()) return;
+    if (!token) {
+      setSubmitError("Invalid or expired reset link");
+      return;
+    }
 
     try {
-      // TODO: Call your API with the reset token + new password
-      console.log("Password reset submitted:", formData.password);
+      setLoading(true);
 
-      setSuccess(true);
-    } catch (error) {
-      setSubmitError("An error occurred. Please try again.");
+      const res = await Api.post("/api/v1/auth/reset-password", {
+        token,
+        newPassword: formData.password,
+      });
+
+      if (res.status === 200) {
+        setSuccess(true);
+        // redirect after 2s
+        setTimeout(() => navigate("/login"), 2000);
+      }
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      setSubmitError(
+        error.response?.data?.message || "An error occurred. Please try again."
+      );
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,11 +114,8 @@ const ResetPasswordPage = () => {
           )}
           {success && (
             <p className="text-sm text-green-600 mb-4">
-              Your password has been reset. You can now{" "}
-              <a href="/login" className="underline font-medium">
-                log in
-              </a>
-              .
+              Your password has been reset. Redirecting to{" "}
+              <span className="font-medium">Login</span>...
             </p>
           )}
 
@@ -122,7 +147,7 @@ const ResetPasswordPage = () => {
             />
 
             <Button
-              title="Reset Password"
+              title={loading ? "Resetting..." : "Reset Password"}
               bg="#5B5CE6"
               textColor="white"
               borderColor="transparent"

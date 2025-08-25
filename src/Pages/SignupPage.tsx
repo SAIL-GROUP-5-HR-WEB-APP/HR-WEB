@@ -77,30 +77,21 @@ const SignupPage: React.FC = () => {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      const res = await Api.post("/register", formData);
+      const res = await Api.post("/api/v1/auth/register", formData);
+
       if (res.status === 201) {
         // Navigate to OTP page, carry email along
-        navigate("/OTP");
+        navigate("/OTP", { state: { email: formData.email } });
       }
-      // console.log("Form submitted:", formData);
-      // TODO: Replace with API call to backend
-      // Example:
-      // const response = await fetch('/api/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // if (!response.ok) throw new Error('Signup failed');
-      // Redirect to dashboard, e.g.:
-      // window.location.href = '/dashboard';
-    } catch (error) {
-      setSubmitError("An error occurred during signup. Please try again.");
-      console.log(error);
+    } catch (err: any) {
+      setSubmitError(
+        err.response?.data?.message ||
+          "An error occurred during signup. Please try again."
+      );
+      console.log(err);
     }
   };
 
