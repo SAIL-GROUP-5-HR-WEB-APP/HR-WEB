@@ -17,8 +17,9 @@ import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import HrDashboard from "./Pages/HrDashboard"; // dashboard home page
 import Leave from "./Pages/Leave";
 import Departments from "./Pages/Departments";
-import EmployeesDetails from "./Pages/EmployeesDetails";
+import EmployeeDetails from "./Pages/EmployeesDetails"; 
 import Payroll from "./Pages/Payroll";
+import DepartmentDetails from "./Pages/DepartmentDetails"; // This import is crucial for the routing to work
 
 import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
 import EmployeeDashboard from "./Pages/EmployeeDashboard";
@@ -34,7 +35,7 @@ const AppContent = () => {
     "/forgotpassword",
     "/reset",
     "/onboarding",
-    "/dashboard",
+    "/dashboard", 
     "/EmployeeDashboard",
     "/OTP",
   ];
@@ -68,8 +69,9 @@ const AppContent = () => {
           <Route index element={<HrDashboard />} /> {/* default dashboard */}
           <Route path="leave" element={<Leave />} />
           <Route path="department" element={<Departments />} />
-          <Route path="employees" element={<EmployeesDetails />} />
+          <Route path="department/:id" element={<DepartmentDetails />} />
           <Route path="payroll" element={<Payroll />} />
+          <Route path="employees/:id" element={<EmployeeDetails />} />
         </Route>
       </Routes>
 
