@@ -51,19 +51,10 @@ const EmployeeDashboard = () => {
   const handleLogout = async () => {
     try {
       // Call the backend logout endpoint
-      await Api.post("/api/v1/auth/logout");
-
-      // Clear any client-side tokens or session data
-      localStorage.removeItem("token");
-      sessionStorage.clear(); //  if you store any session data
-
-      // Navigate to login page, replace history to prevent back navigation
+      await Api.post("/api/v1/auth/logout", {}, { withCredentials: true });
       navigate("/login", { replace: true });
-    } catch (error) {
-      console.error(
-        "Logout failed:",
-        (error as any).response?.data || (error as any).message
-      );
+    } catch (error: any) {
+      console.error("Logout failed:", error.response?.data || error.message);
     }
   };
 

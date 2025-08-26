@@ -62,6 +62,7 @@ const LoginPage: React.FC = () => {
   };
 
   // Handle form submission
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setSubmitError(null);
@@ -73,19 +74,22 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      const res = await Api.post("/api/v1/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
+      const res = await Api.post(
+        "/api/v1/auth/login",
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        { withCredentials: true }
+      );
 
       if (res.status === 200) {
-        // Save token if your backend returns one
-        localStorage.setItem("token", res.data.token);
-        // Navigate to dashboard
         navigate("/EmployeeDashboard");
       }
-    } catch (error) {
-      setSubmitError("An error occurred during login. Please try again.");
+    } catch (error: any) {
+      setSubmitError(
+        error.response?.data?.message || "An error occurred during login."
+      );
     } finally {
       setIsLoading(false);
     }

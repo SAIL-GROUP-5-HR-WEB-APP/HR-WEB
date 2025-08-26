@@ -23,6 +23,7 @@ import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
 import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
 import EditProfile from "./Pages/EditProfile";
+import ProtectedRoute from "./Components/Reuseable/ProtectedRoute";
 
 const AppContent = () => {
   const location = useLocation();
@@ -57,23 +58,24 @@ const AppContent = () => {
         <Route path="/faqs" element={<Faqs />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/EmployeeDashboard" element={<EmployeeDashboard />} />
-        <Route path="/setting" element={<EditProfile />} />
-
         <Route path="/OTP" element={<OTPmodal />} />
 
-        {/* Dashboard Routes (with sidebar always visible) */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<HrDashboard />} /> {/* default dashboard */}
-          <Route path="leave" element={<Leave />} />
-          <Route path="department" element={<Departments />} />
-          <Route path="department/:id" element={<DepartmentDetails />} />
-          <Route path="payroll" element={<Payroll />} />
-          <Route path="employees" element={<EmployeesDetails />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/EmployeeDashboard" element={<EmployeeDashboard />} />
+          <Route path="/setting" element={<EditProfile />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          {/* Dashboard Routes (with sidebar always visible) */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<HrDashboard />} /> {/* default dashboard */}
+            <Route path="leave" element={<Leave />} />
+            <Route path="department" element={<Departments />} />
+            <Route path="department/:id" element={<DepartmentDetails />} />
+            <Route path="payroll" element={<Payroll />} />
+            <Route path="employees" element={<EmployeesDetails />} />
+          </Route>
         </Route>
       </Routes>
 
