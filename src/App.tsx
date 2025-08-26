@@ -22,6 +22,7 @@ import DepartmentDetails from "./Pages/DepartmentDetails"; // This import is cru
 import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
 import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
+import EditProfile from "./Pages/EditProfile";
 
 const AppContent = () => {
   const location = useLocation();
@@ -36,6 +37,7 @@ const AppContent = () => {
     "/dashboard",
     "/EmployeeDashboard",
     "/OTP",
+    "/setting",
   ];
 
   const shouldHide = hideHeaderAndFooterPaths.some((path) =>
@@ -60,6 +62,8 @@ const AppContent = () => {
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/EmployeeDashboard" element={<EmployeeDashboard />} />
+        <Route path="/setting" element={<EditProfile />} />
+
         <Route path="/OTP" element={<OTPmodal />} />
 
         {/* Dashboard Routes (with sidebar always visible) */}
