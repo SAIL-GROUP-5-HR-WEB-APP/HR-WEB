@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Home from "./Pages/Home";
@@ -14,14 +13,16 @@ import Contact from "./Pages/Contact";
 import ScrollToTop from "./Components/ScrollToTop";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
-
 import HrDashboard from "./Pages/HrDashboard"; // dashboard home page
 import Leave from "./Pages/Leave";
 import Departments from "./Pages/Departments";
 import EmployeesDetails from "./Pages/EmployeesDetails";
 import Payroll from "./Pages/Payroll";
-
+import DepartmentDetails from "./Pages/DepartmentDetails"; // This import is crucial for the routing to work
 import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
+import EmployeeDashboard from "./Pages/EmployeeDashboard";
+import OTPmodal from "./Pages/OTPmodal";
+import EditProfile from "./Pages/EditProfile";
 
 const AppContent = () => {
   const location = useLocation();
@@ -31,9 +32,12 @@ const AppContent = () => {
     "/login",
     "/signup",
     "/forgotpassword",
-    "/reset",
+    "/reset-password",
     "/onboarding",
     "/dashboard",
+    "/EmployeeDashboard",
+    "/OTP",
+    "/setting",
   ];
 
   const shouldHide = hideHeaderAndFooterPaths.some((path) =>
@@ -56,15 +60,20 @@ const AppContent = () => {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
-        <Route path="/reset" element={<ResetPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/EmployeeDashboard" element={<EmployeeDashboard />} />
+        <Route path="/setting" element={<EditProfile />} />
+
+        <Route path="/OTP" element={<OTPmodal />} />
 
         {/* Dashboard Routes (with sidebar always visible) */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<HrDashboard />} /> {/* default dashboard */}
           <Route path="leave" element={<Leave />} />
           <Route path="department" element={<Departments />} />
-          <Route path="employees" element={<EmployeesDetails />} />
+          <Route path="department/:id" element={<DepartmentDetails />} />
           <Route path="payroll" element={<Payroll />} />
+          <Route path="employees" element={<EmployeesDetails />} />
         </Route>
       </Routes>
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   FiSearch,
@@ -11,30 +10,29 @@ import {
 
 interface Employee {
   _id: string;
-  name: string;
-  role: string;
-  department: string;
-  hiredDate: string;
+  username: string;
+  bio?: string;
+  address?: string;
+  age?: number;
   email: string;
-  phone: string;
   status: "online" | "offline";
-  avatar: string;
+  avatar?: string;
 }
 
-export default function EmployeeDashboard() {
-  const [employees, setEmployees] = useState<Employee>([]);
+const EmployeesDetails = () => {
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-
-
 
   // Fetch from API
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await fetch("https://user-data-ci61.onrender.com/user/viewallUser");
+        const res = await fetch(
+          "https://user-data-ci61.onrender.com/user/viewallUser"
+        );
         const data = await res.json();
-        setEmployees(data.data || []);   // assumes API returns an array of employees
+        setEmployees(data.data || []); // assumes API returns an array
       } catch (err) {
         console.error("Error fetching employees:", err);
       } finally {
@@ -47,8 +45,8 @@ export default function EmployeeDashboard() {
 
   // Search filter
   const filteredEmployees = employees.filter((emp) =>
-  emp.username?.toLowerCase().includes(search.toLowerCase())
-);
+    emp.username?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="p-6">
@@ -83,57 +81,55 @@ export default function EmployeeDashboard() {
       {loading && <p className="text-gray-500">Loading employees...</p>}
 
       {/* Employee Cards */}
-     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-  {filteredEmployees.map((emp) => (
-    <div
-      key={emp._id}
-      className="bg-white p-4 rounded-2xl shadow hover:shadow-md transition"
-    >
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <img
-              src={emp.avatar || "https://via.placeholder.com/150"}
-              alt={emp.username}
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <span
-              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                emp.status === "online" ? "bg-green-500" : "bg-red-500"
-              }`}
-            ></span>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredEmployees.map((emp) => (
+          <div
+            key={emp._id}
+            className="bg-white p-4 rounded-2xl shadow hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <img
+                    src={emp.avatar || "https://via.placeholder.com/150"}
+                    alt={emp.username}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <span
+                    className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                      emp.status === "online" ? "bg-green-500" : "bg-red-500"
+                    }`}
+                  ></span>
+                </div>
+                <div>
+                  <h3 className="font-semibold">{emp.username}</h3>
+                  <p className="text-sm text-gray-500">{emp.bio || "No role"}</p>
+                </div>
+              </div>
+              <FiMoreHorizontal className="text-gray-400 cursor-pointer" />
+            </div>
+
+            <div className="mt-4 space-y-2 text-sm text-gray-600">
+              <p>
+                <span className="font-medium">Address:</span>{" "}
+                {emp.address || "N/A"}
+              </p>
+              <p>
+                <span className="font-medium">Age:</span> {emp.age || "N/A"}
+              </p>
+            </div>
+
+            <div className="mt-4 space-y-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <FiMail className="text-indigo-900" /> {emp.email || "N/A"}
+              </div>
+              <div className="flex items-center gap-2">
+                <FiPhone className="text-indigo-900" /> N/A
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold">{emp.username}</h3>
-            <p className="text-sm text-gray-500">{emp.bio || "No role"}</p>
-          </div>
-        </div>
-        <FiMoreHorizontal className="text-gray-400 cursor-pointer" />
+        ))}
       </div>
-
-      <div className="mt-4 space-y-2 text-sm text-gray-600">
-        <p>
-          <span className="font-medium">Address:</span>{" "}
-          {emp.address || "N/A"}
-        </p>
-        <p>
-          <span className="font-medium">Age:</span>{" "}
-          {emp.age || "N/A"}
-        </p>
-      </div>
-
-      <div className="mt-4 space-y-2 text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <FiMail className="text-indigo-900" /> {emp.email || "N/A"}
-        </div>
-        <div className="flex items-center gap-2">
-          <FiPhone className="text-indigo-900" /> N/A
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
-
 
       {/* Empty State */}
       {!loading && filteredEmployees.length === 0 && (
@@ -141,13 +137,6 @@ export default function EmployeeDashboard() {
       )}
     </div>
   );
-}
-// const EmployeesDetails = () => {
-//   return (
-//     <div>
-//       <h1>This is the employee page</h1>
-//     </div>
-//   );
-// };
+};
 
-// 
+export default EmployeesDetails;
