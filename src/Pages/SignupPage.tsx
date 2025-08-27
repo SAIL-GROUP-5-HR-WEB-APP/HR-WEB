@@ -77,7 +77,7 @@ const SignupPage: React.FC = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     setIsLoading(true);
@@ -91,20 +91,15 @@ const SignupPage: React.FC = () => {
       const res = await Api.post("/api/v1/auth/register", formData);
 
       if (res.status === 201) {
-        // Navigate to OTP page, carry email along
+        // Signup successful → go to OTP verification
         navigate("/OTP", { state: { email: formData.email } });
       }
     } catch (err: any) {
-      setSubmitError(
-        err.response?.data?.message ||
-          "An error occurred during signup. Please try again."
-      );
-      console.log(err);
+      setSubmitError(err.response?.data?.message || "Signup failed");
     } finally {
       setIsLoading(false);
     }
   };
-
   // Handle Google signup
   const handleGoogleSignup = (): void => {
     console.log("Signup with Google");

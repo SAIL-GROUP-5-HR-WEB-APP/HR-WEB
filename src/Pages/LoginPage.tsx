@@ -74,29 +74,27 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      const res = await Api.post(
-        "/api/v1/auth/login",
-        {
-          email: formData.email,
-          password: formData.password,
-        },
-        { withCredentials: true }
-      );
+      // use formData state values
+      const { data } = await Api.post("/api/v1/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
 
-      if (res.status === 200) {
-        navigate("/EmployeeDashboard");
-        //set your token to either local storage or cookies
-        // save and make it available via context
-      }
+      // ✅ Store JWT token in localStorage
+      localStorage.setItem("authToken", data.token);
+
+      console.log("✅ Login success:", data);
+
+      navigate("/EmployeeDashboard");
     } catch (error: any) {
+      console.error("Login error:", error.response?.data || error.message);
       setSubmitError(
-        error.response?.data?.message || "An error occurred during login."
+        error.response?.data?.message || "Login failed. Try again."
       );
     } finally {
       setIsLoading(false);
     }
   };
-
   // Handle Google login
   const handleGoogleLogin = (): void => {
     console.log("Login with Google");
