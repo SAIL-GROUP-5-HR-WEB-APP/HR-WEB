@@ -31,7 +31,7 @@ const OtpPage: React.FC = () => {
       });
 
       if (res.status === 200) {
-        navigate("/EmployeeDashboard");
+        navigate("/onboarding");
       }
     } catch (err: any) {
       if (err.response) {

@@ -50,9 +50,12 @@ const EmployeeDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      // Call the backend logout endpoint
-      await Api.post("/api/v1/auth/logout", {}, { withCredentials: true });
-      //clear the token
+      await Api.post("/api/v1/auth/logout");
+
+      // ✅ Remove JWT from localStorage
+      localStorage.removeItem("authToken");
+
+      // Redirect to login page and replace history
       navigate("/login", { replace: true });
     } catch (error: any) {
       console.error("Logout failed:", error.response?.data || error.message);
