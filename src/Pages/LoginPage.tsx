@@ -63,39 +63,40 @@ const LoginPage: React.FC = () => {
 
   // Handle form submission
   // Handle form submission
-const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-  e.preventDefault();
-  setSubmitError(null);
-  setIsLoading(true);
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    setSubmitError(null);
+    setIsLoading(true);
 
-  if (!validateForm()) {
-    setIsLoading(false);
-    return;
-  }
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
 
-  try {
-    // use formData state values
-    const { data } = await Api.post("/api/v1/auth/login", {
-      email: formData.email,
-      password: formData.password,
-    });
+    try {
+      // use formData state values
+      const { data } = await Api.post("/api/v1/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
 
-    // ✅ Store JWT token + user in localStorage
-    localStorage.setItem("authToken", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+      // ✅ Store JWT token in localStorage
+      localStorage.setItem("authToken", data.token);
+     
 
-    console.log("✅ Login success:", data);
 
-    navigate("/EmployeeDashboard");
-  } catch (error: any) {
-    console.error("Login error:", error.response?.data || error.message);
-    setSubmitError(
-      error.response?.data?.message || "Login failed. Try again."
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+      console.log("✅ Login success:", data);
+
+      navigate("/EmployeeDashboard");
+    } catch (error: any) {
+      console.error("Login error:", error.response?.data || error.message);
+      setSubmitError(
+        error.response?.data?.message || "Login failed. Try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle Google login
   const handleGoogleLogin = (): void => {
