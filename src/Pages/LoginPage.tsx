@@ -85,6 +85,8 @@ const LoginPage: React.FC = () => {
 
       if (res.status === 200) {
         navigate("/EmployeeDashboard");
+        //set your token to either local storage or cookies
+        // save and make it available via context
       }
     } catch (error: any) {
       setSubmitError(
