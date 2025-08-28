@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import {
   LuClipboardList,
   LuUserX,
@@ -8,7 +8,7 @@ import {
   LuCalendar,
   LuCheck,
   LuBaggageClaim,
-  LuLogOut, // Added for logout icon
+  LuLogOut,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +29,28 @@ const EmployeeDashboard = () => {
     null
   );
 
+  // ✅ User state
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    role?: string;
+  } | null>(null);
+
+  const navigate = useNavigate();
+
+  // ✅ On mount, check localStorage
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+      navigate("/login", { replace: true }); // route guard
+      return;
+    }
+
+    setUser(JSON.parse(storedUser));
+  }, [navigate]);
+
   const submitLeaveRequest = (e: FormEvent) => {
     e.preventDefault();
     if (!leaveReason || !startDate || !endDate) return;
@@ -46,16 +68,13 @@ const EmployeeDashboard = () => {
     setEndDate("");
   };
 
-  const navigate = useNavigate();
-
   const handleLogout = async () => {
     try {
       await Api.post("/api/v1/auth/logout");
 
-      // ✅ Remove JWT from localStorage
       localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
 
-      // Redirect to login page and replace history
       navigate("/login", { replace: true });
     } catch (error: any) {
       console.error("Logout failed:", error.response?.data || error.message);
@@ -71,14 +90,18 @@ const EmployeeDashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
-                  JD
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
                 </div>
                 <div className="text-gray-700">
                   <h1 className="text-2xl font-extrabold text-shadow">
-                    John Doe
+                    {user?.name || "Employee"}
                   </h1>
-                  <p className="text-sm font-medium">Frontend Engineer</p>
-                  <p className="text-xs opacity-80">johndoe@email.com</p>
+                  <p className="text-sm font-medium">
+                    {user?.role || "Employee Role"}
+                  </p>
+                  <p className="text-xs opacity-80">
+                    {user?.email || "No email found"}
+                  </p>
                 </div>
               </div>
               {/* Logout Button */}
