@@ -30,9 +30,6 @@ const Header: React.FC = () => {
             alt="ZYRA Logo"
             className="w-[200px] h-[200px] object-contain transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
           />
-          {/* <span className="font-extrabold text-3xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-500 tracking-wide group-hover:tracking-wider transition-all">
-            ZYRA
-          </span> */}
         </Link>
 
         {/* Navigation Links */}

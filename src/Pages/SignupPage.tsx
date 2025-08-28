@@ -77,6 +77,7 @@ const SignupPage: React.FC = () => {
   };
 
   // Handle form submission
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
@@ -91,7 +92,13 @@ const SignupPage: React.FC = () => {
       const res = await Api.post("/api/v1/auth/register", formData);
 
       if (res.status === 201) {
-        // Signup successful → go to OTP verification
+        // ✅ Save token + user in localStorage
+        localStorage.setItem("authToken", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        console.log("✅ Signup success:", res.data);
+
+        // Redirect to OTP (keeping your existing flow)
         navigate("/OTP", { state: { email: formData.email } });
       }
     } catch (err: any) {
@@ -100,6 +107,7 @@ const SignupPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   // Handle Google signup
   const handleGoogleSignup = (): void => {
     console.log("Signup with Google");

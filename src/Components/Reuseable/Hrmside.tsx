@@ -1,40 +1,21 @@
 import { NavLink } from "react-router-dom";
-import { RxHamburgerMenu, RxCross1 } from "react-icons/rx";
-import { useState } from "react";
+import { motion } from "framer-motion";
 
-const HrDashboardSidebar = () => {
-  const [toggle, setToggle] = useState(false);
+type Side = {
+  handleToggle: () => void;
+};
 
-  const handleToggle = () => {
-    setToggle((prev) => !prev);
-  };
+const Hrmside: React.FC<Side> = ({ handleToggle }) => {
   return (
-    <div className="bg-gray-100 h-screen w-[220px] px-5 py-10 ">
-      <div>
-        {" "}
-        <div>
-          {" "}
-          <button
-            className="lg:hidden text-white focus:outline-none"
-            onClick={handleToggle}
-            aria-label="Toggle menu"
-          >
-            {toggle ? (
-              <RxCross1
-                size={32}
-                className="text-white/90 hover:text-indigo-400 transition-colors duration-200"
-              />
-            ) : (
-              <RxHamburgerMenu
-                size={32}
-                className="text-white/90 hover:text-indigo-400 transition-colors duration-200"
-              />
-            )}
-          </button>
-        </div>
-      </div>
+    <motion.div
+      initial={{ x: -250 }} // hidden off-screen
+      animate={{ x: 0 }} // slide into view
+      exit={{ x: -250 }} // slide out when closed
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="bg-white h-screen w-full px-5 py-10 shadow-lg"
+    >
       <ul className="space-y-6">
-        <li>
+        <li onClick={handleToggle}>
           <NavLink
             to="/dashboard"
             end
@@ -46,7 +27,7 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
 
-        <li>
+        <li onClick={handleToggle}>
           <NavLink
             to="/dashboard/employees"
             className={({ isActive }) =>
@@ -57,7 +38,7 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
 
-        <li>
+        <li onClick={handleToggle}>
           <NavLink
             to="/dashboard/leave"
             className={({ isActive }) =>
@@ -68,7 +49,7 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
 
-        <li>
+        <li onClick={handleToggle}>
           <NavLink
             to="/dashboard/department"
             className={({ isActive }) =>
@@ -79,7 +60,7 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
 
-        <li>
+        <li onClick={handleToggle}>
           <NavLink
             to="/dashboard/payroll"
             className={({ isActive }) =>
@@ -90,8 +71,8 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
       </ul>
-    </div>
+    </motion.div>
   );
 };
 
-export default HrDashboardSidebar;
+export default Hrmside;

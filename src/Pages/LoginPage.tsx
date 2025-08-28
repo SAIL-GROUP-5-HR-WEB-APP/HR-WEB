@@ -80,8 +80,9 @@ const LoginPage: React.FC = () => {
         password: formData.password,
       });
 
-      // ✅ Store JWT token in localStorage
+      // ✅ Store JWT token + user in localStorage
       localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       console.log("✅ Login success:", data);
 
@@ -95,6 +96,7 @@ const LoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   // Handle Google login
   const handleGoogleLogin = (): void => {
     console.log("Login with Google");
