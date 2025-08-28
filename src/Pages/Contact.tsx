@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 const contactImg = "https://placehold.co/500x300/e9d5ff/6b46c1?text=Contact+Us";
 
@@ -194,7 +194,7 @@ const Contact = () => {
       </section>
 
       {/* Contact Details Section */}
-      <section className="py-12 px-6 bg-stone-100 shadow-sm max-w-5xl mx-auto rounded-lg mt-16">
+      <section className="py-12 px-6 bg-stone-100 shadow-sm max-w-5xl mx-auto rounded-lg mt-16 mb-6">
         <h2 className="text-2xl font-semibold text-gray-700 mb-8 text-center">
           Our Contact Details
         </h2>
@@ -217,7 +217,7 @@ const Contact = () => {
             </svg>
             <h3 className="text-xl font-bold text-gray-700">Email Us</h3>
             <p className="mt-2 text-purple-900 font-medium">
-              support@hrcore.com
+              zyrahr.ng@gmail.com
             </p>
           </div>
 

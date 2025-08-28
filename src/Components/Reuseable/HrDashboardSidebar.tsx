@@ -1,3 +1,4 @@
+
 import { NavLink } from 'react-router-dom';
 import {
   HomeIcon,
@@ -6,6 +7,9 @@ import {
   BuildingOfficeIcon,
   BanknotesIcon,
 } from '@heroicons/react/24/outline';
+
+import { NavLink } from "react-router-dom";
+
 
 const HrDashboardSidebar = () => {
   return (
