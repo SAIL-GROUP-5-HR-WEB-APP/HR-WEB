@@ -31,7 +31,7 @@ const EmployeeDashboard = () => {
 
   // ✅ User state
   const [user, setUser] = useState<{
-    name: string;
+    firstname: string;
     email: string;
     role?: string;
   } | null>(null);
@@ -90,11 +90,13 @@ const EmployeeDashboard = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
+                  {user?.firstname
+                    ? user.firstname.charAt(0).toUpperCase()
+                    : "?"}
                 </div>
                 <div className="text-gray-700">
                   <h1 className="text-2xl font-extrabold text-shadow">
-                    {user?.name || "Employee"}
+                    {user?.firstname || "Employee"}
                   </h1>
                   <p className="text-sm font-medium">
                     {user?.role || "Employee Role"}
