@@ -24,6 +24,7 @@ import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
 import EditProfile from "./Pages/EditProfile";
 import ProtectedRoute from "./Components/Reuseable/ProtectedRoute";
+import SuperAdmin from "./Pages/SuperAdmin";
 
 const AppContent = () => {
   const location = useLocation();
@@ -39,6 +40,7 @@ const AppContent = () => {
     "/EmployeeDashboard",
     "/OTP",
     "/setting",
+    "/admin",
   ];
 
   const shouldHide = hideHeaderAndFooterPaths.some((path) =>
@@ -64,6 +66,9 @@ const AppContent = () => {
         <Route path="/OTP" element={<OTPmodal />} />
 
         {/* Protected Routes */}
+
+        <Route path="/admin" element={<SuperAdmin />} />
+
         <Route
           path="/EmployeeDashboard"
           element={
