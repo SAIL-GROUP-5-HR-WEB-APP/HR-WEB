@@ -1,38 +1,8 @@
 import { NavLink } from "react-router-dom";
-import { RxHamburgerMenu, RxCross1 } from "react-icons/rx";
-import { useState } from "react";
 
 const HrDashboardSidebar = () => {
-  const [toggle, setToggle] = useState(false);
-
-  const handleToggle = () => {
-    setToggle((prev) => !prev);
-  };
   return (
     <div className="bg-gray-100 h-screen w-[220px] px-5 py-10 ">
-      <div>
-        {" "}
-        <div>
-          {" "}
-          <button
-            className="lg:hidden text-white focus:outline-none"
-            onClick={handleToggle}
-            aria-label="Toggle menu"
-          >
-            {toggle ? (
-              <RxCross1
-                size={32}
-                className="text-white/90 hover:text-indigo-400 transition-colors duration-200"
-              />
-            ) : (
-              <RxHamburgerMenu
-                size={32}
-                className="text-white/90 hover:text-indigo-400 transition-colors duration-200"
-              />
-            )}
-          </button>
-        </div>
-      </div>
       <ul className="space-y-6">
         <li>
           <NavLink
