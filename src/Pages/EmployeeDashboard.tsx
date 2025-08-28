@@ -111,7 +111,6 @@ const EmployeeDashboard = () => {
                 aria-label="Log out"
               >
                 <LuLogOut size={15} />
-                <span className="text-sm">Log Out</span>
               </button>
             </div>
           </div>
