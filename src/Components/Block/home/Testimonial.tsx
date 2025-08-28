@@ -1,4 +1,3 @@
-import React from "react";
 import opay from "../../../assets/opay.png";
 import flutter from "../../../assets/flutterwave.png";
 import moniepoint from "../../../assets/moniepoint.jpg";
@@ -18,14 +17,14 @@ const testimonials = [
   {
     name: "Flutterwave",
     role: "Regional Manager",
-    text: "HRCORE has transformed our HR process and saved us a lot of time.",
+    text: "zyraHR has transformed our HR process and saved us a lot of time.",
     image: flutter,
     rating: 4,
   },
   {
     name: "Interswitch",
     role: "Operations Head",
-    text: "HRcore made it easy for us to focus on our goals, not just HR tasks.",
+    text: "zyraHR made it easy for us to focus on our goals, not just HR tasks.",
     image: interswitch,
     rating: 5,
   },
@@ -86,7 +85,7 @@ const Testimonial = () => {
         {[...testimonials, ...testimonials].map((data, i) => (
           <div
             key={i}
-            className="w-[600px] max-[800px]:w-[450px] mx-6 p-6 bg-indigo-50 rounded-xl shadow-lg border border-gray-200 shrink-0 flex flex-col items-center text-center animate-[fadeInUp_0.6s_ease-in-out]"
+            className="w-[600px] max-[800px]:w-[450px] mx-6 p-6  rounded-xl shadow-lg border border-gray-200 shrink-0 flex flex-col items-center text-center animate-[fadeInUp_0.6s_ease-in-out]"
             style={{
               animationDelay: `${i * 0.15}s`,
               animationFillMode: "both",

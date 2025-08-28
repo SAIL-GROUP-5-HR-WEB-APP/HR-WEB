@@ -37,7 +37,7 @@ const float: Variants = {
 const Hero = () => {
   return (
     <div className="">
-      <div className="bg-gradient-to-b from-indigo-100 via-gray-50 to-white ">
+      <div className="bg-gradient-to-b from-indigo-300 via-gray-50 to-white ">
         <div className="max-w-[1280px] mx-auto px-10 pt-30 flex flex-col items-center text-center relative ">
           {/* Text Content */}
           <motion.div

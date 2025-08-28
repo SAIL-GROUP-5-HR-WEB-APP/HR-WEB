@@ -1,34 +1,39 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Api from "../Components/Reuseable/Api";
 
-// Define the shape of the form data for type safety (interface for form fields)
+// Define the shape of the form data for type safety
 interface FormData {
   email: string;
   password: string;
-  rememberMe: boolean; // Checkbox for remembering login details
+  rememberMe: boolean;
 }
 
-// Main LoginPage component for user authentication (allows users to log in and redirect to dashboards)
+// Main LoginPage component for user authentication
 const LoginPage: React.FC = () => {
-  // State for form inputs (stores email, password, and remember me checkbox value)
+  const navigate = useNavigate();
+  // State for form inputs
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
     rememberMe: false,
   });
 
-  // State for form errors (stores validation errors for each field)
+  // State for form errors
   const [errors, setErrors] = useState<Partial<FormData>>({});
-  // State for password visibility (toggles whether password is shown or hidden)
-  const [showPassword, setShowPassword] = useState(false);
-  // State for submission status (shows general error if submission fails)
+  // State for password visibility
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  // State for submission status
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // State for loading
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Validate form inputs (checks if fields are filled correctly before submission)
+  // Validate form inputs
   const validateForm = (): boolean => {
     const newErrors: Partial<FormData> = {};
     if (!formData.email.trim()) {
@@ -45,76 +50,80 @@ const LoginPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle input changes for form fields (updates state when user types or checks box)
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle input changes for form fields
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    // Clear error for the field being edited (removes error message when user starts fixing it)
+    // Clear error for the field being edited
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  // Handle form submission (validates and submits data, redirects to dashboard on success)
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle form submission
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setSubmitError(null);
+    setIsLoading(true);
 
     if (!validateForm()) {
+      setIsLoading(false);
       return;
     }
 
     try {
-      console.log("Form submitted:", formData);
-      // TODO: Replace with API call to backend for login
-      // Example:
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
-      // if (!response.ok) throw new Error('Login failed');
-      // Upon successful login, redirect to respective dashboard (employee or admin)
-      // Example redirection based on user role (fetched from API response):
-      // const userRole = response.json().role; // Assume API returns role
-      // if (userRole === 'admin') {
-      //   window.location.href = '/admin-dashboard';
-      // } else {
-      //   window.location.href = '/employee-dashboard';
-      // }
-    } catch (error) {
-      setSubmitError("An error occurred during login. Please try again.");
+      // use formData state values
+      const { data } = await Api.post("/api/v1/auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // ✅ Store JWT token + user in localStorage
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      console.log("✅ Login success:", data);
+
+      navigate("/EmployeeDashboard");
+    } catch (error: any) {
+      console.error("Login error:", error.response?.data || error.message);
+      setSubmitError(
+        error.response?.data?.message || "Login failed. Try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Handle Google login (triggers Google OAuth for alternative login)
-  const handleGoogleLogin = () => {
+  // Handle Google login
+  const handleGoogleLogin = (): void => {
     console.log("Login with Google");
-    // TODO: Add Google OAuth integration (redirects to Google login, then to dashboard on success)
+    // TODO: Add Google OAuth integration
   };
 
-  // Handle Apple login (triggers Apple OAuth for alternative login)
-  const handleAppleLogin = () => {
+  // Handle Apple login
+  const handleAppleLogin = (): void => {
     console.log("Login with Apple");
-    // TODO: Add Apple OAuth integration (redirects to Apple login, then to dashboard on success)
+    // TODO: Add Apple OAuth integration
   };
 
   return (
-    // Main container with flex layout for form and image sections, padding for header/footer
-    <div className="flex bg-white lg:flex-row flex-col ">
-      {/* Form Section (left side for login form) */}
-      <div className="lg:w-1/2 w-full max-w-md mx-auto p-8  flex flex-col justify-center">
-        {/* Logo (displays the company logo at the top) */}
+    // Main container with flex layout for form and image sections
+    <div className="flex bg-white items-center flex-row">
+      {/* Form Section */}
+      <div className="lg:w-1/2 w-full max-w-md mx-auto p-8 flex flex-col justify-center">
+        {/* Logo */}
         <div className="mb-10 mt-9">
           <Link to="/">
             <Logo />
           </Link>
         </div>
 
-        {/* Form Content (contains header, form, and links) */}
+        {/* Form Content */}
         <div className="max-w-sm mx-auto w-full">
-          {/* Form Header (welcomes user and provides instructions) */}
+          {/* Form Header */}
           <div className="mb-8 text-left">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Welcome Back
@@ -124,20 +133,20 @@ const LoginPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Submission Error (displays if login fails) */}
+          {/* Submission Error */}
           {submitError && (
             <p className="text-sm text-red-500 mb-4" role="alert">
               {submitError}
             </p>
           )}
 
-          {/* Login Form (collects user input for login) */}
+          {/* Login Form */}
           <form
             className="flex flex-col gap-6 mb-8"
             onSubmit={handleSubmit}
             noValidate
           >
-            {/* Email Input (field for user email) */}
+            {/* Email Input */}
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="email"
@@ -166,7 +175,7 @@ const LoginPage: React.FC = () => {
               )}
             </div>
 
-            {/* Password Input (uses reusable component for password with toggle visibility) */}
+            {/* Password Input */}
             <PasswordInput
               label="Password"
               id="password"
@@ -179,7 +188,7 @@ const LoginPage: React.FC = () => {
               error={errors.password}
             />
 
-            {/* Remember Me and Forgot Password (options for user convenience) */}
+            {/* Remember Me and Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center">
                 <input
@@ -192,24 +201,31 @@ const LoginPage: React.FC = () => {
                 <span className="ml-2 text-sm text-gray-600">Remember Me</span>
               </label>
               <Link to="/forgotpassword">
-                {" "}
                 <a className="text-sm text-indigo-600 font-medium hover:underline">
                   Forgot Your Password?
                 </a>
               </Link>
             </div>
 
-            {/* Submit Button (uses reusable button for login action) */}
-            <Button
-              title="Login"
-              bg="#5B5CE6"
-              textColor="white"
-              borderColor="transparent"
-              hoverr="hover:bg-indigo-700"
-            />
+            {/* Submit Button with Loader */}
+            <div className="relative">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-3 bg-[#5B5CE6] rounded-lg">
+                  <ClipLoader color="#ffffff" size={24} />
+                </div>
+              ) : (
+                <Button
+                  title="Login"
+                  bg="#5B5CE6"
+                  textColor="white"
+                  borderColor="transparent"
+                  hoverr="hover:bg-indigo-700"
+                />
+              )}
+            </div>
           </form>
 
-          {/* Divider (separates regular login from social options) */}
+          {/* Divider */}
           <div className="flex items-center my-6">
             <div className="flex-1 h-px bg-gray-200"></div>
             <span className="px-4 text-sm text-gray-500 bg-white">
@@ -218,7 +234,7 @@ const LoginPage: React.FC = () => {
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
 
-          {/* Social Login Buttons (alternative login options using reusable social button) */}
+          {/* Social Login Buttons */}
           <div className="flex gap-3 mb-6 lg:flex-row flex-col">
             <SocialButton
               icon={
@@ -266,7 +282,7 @@ const LoginPage: React.FC = () => {
             />
           </div>
 
-          {/* Sign Up Link (link to signup page for new users) */}
+          {/* Sign Up Link */}
           <div className="text-center text-sm text-gray-600">
             Don’t have an account?{" "}
             <a
@@ -279,8 +295,8 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Image Section (right side promotional image, same as signup for consistency) */}
-      <div className="lg:w-1/2   w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center p-10 max-[900px]:hidden">
+      {/* Image Section */}
+      <div className="lg:w-1/2 h-screen w-[100%] bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center max-[900px]:hidden">
         <div className="text-center text-white max-w-lg">
           <h2 className="text-3xl font-bold mb-4 lg:text-4xl">
             Effortlessly manage your team and operations.

@@ -110,6 +110,7 @@ const Onboarding = () => {
                 variants={fieldVariants}
                 initial="hidden"
                 animate="visible"
+                className="relative group"
               >
                 <label
                   htmlFor={item.id}
@@ -127,6 +128,7 @@ const Onboarding = () => {
                     handleInputChange(e, item.field as keyof ProfileData)
                   }
                 />
+                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full" />
               </motion.div>
             ))}
             <motion.div
@@ -134,6 +136,7 @@ const Onboarding = () => {
               variants={fieldVariants}
               initial="hidden"
               animate="visible"
+              className="relative group"
             >
               <label
                 htmlFor="image"
@@ -147,6 +150,7 @@ const Onboarding = () => {
                 className="w-full p-3 border border-indigo-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-700 file:text-white hover:file:bg-indigo-800 transition-colors duration-300"
                 onChange={(e) => handleInputChange(e, "image")}
               />
+              <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full" />
             </motion.div>
             <motion.div
               custom={6}

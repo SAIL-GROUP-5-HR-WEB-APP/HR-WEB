@@ -1,4 +1,3 @@
-import React from "react";
 import Howitworksimg from "../../../assets/HomePageHowItWorks.png";
 import { Link } from "react-router-dom";
 import {
