@@ -16,7 +16,7 @@ const About = () => {
               We make office interactions, leave management, payments, and HR
               processes seamless saving time, cutting costs, and boosting
               productivity,with the aim of making the work environment more
-              comfortable and enjoyable
+              comfortable and enjoyablef
             </p>
           </div>
           <div>
