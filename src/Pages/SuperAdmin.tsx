@@ -43,7 +43,7 @@ const SuperAdmin = () => {
     setMessage("");
 
     try {
-      const token = localStorage.getItem("token"); // or sessionStorage.getItem("token")
+      const token = localStorage.getItem("authToken"); // or sessionStorage.getItem("token")
 
       const res = await Api.post<{ message: string }>(
         "/api/v1/admin/create-user",
