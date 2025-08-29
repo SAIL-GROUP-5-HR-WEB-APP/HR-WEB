@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  FiSearch,
-  FiFilter,
-  FiMail,
-  FiPhone,
-  FiMoreHorizontal,
-  FiUserPlus,
-} from "react-icons/fi";
+import { FiSearch, FiMail, FiPhone, FiMoreHorizontal } from "react-icons/fi";
 import ClipLoader from "react-spinners/ClipLoader";
 
 interface Employee {
