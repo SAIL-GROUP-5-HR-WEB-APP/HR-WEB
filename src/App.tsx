@@ -22,11 +22,11 @@ import DepartmentDetails from "./Pages/DepartmentDetails"; // This import is cru
 import DashboardLayout from "./Pages/DashboardLayout"; // layout wrapper
 import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
-import EditProfile from "./Pages/EditProfile";
 import ProtectedRoute from "./Components/Reuseable/ProtectedRoute";
 import SuperAdmin from "./Pages/SuperAdmin";
 import Unauthorized from "./Pages/Unauthorized";
 import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
+import Settings from "./Pages/Settings";
 
 const AppContent = () => {
   const location = useLocation();
@@ -97,7 +97,7 @@ const AppContent = () => {
           path="/setting"
           element={
             <ProtectedRoute allowedRoles={["employee"]}>
-              <EditProfile />
+              <Settings />
             </ProtectedRoute>
           }
         />
