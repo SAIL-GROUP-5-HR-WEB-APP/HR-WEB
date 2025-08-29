@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
+import Api from "../Components/Reuseable/Api";
 
 interface ProfileData {
   phone: string;
@@ -8,10 +10,11 @@ interface ProfileData {
   position: string;
   emergencyContact: string;
   image: File | null;
-  dob: string; // ✅ Added Date of Birth
+  dob: string;
 }
 
 const Onboarding = () => {
+  const navigate = useNavigate();
   const [ProfileData, setProfileData] = useState<ProfileData>({
     phone: "",
     address: "",
@@ -19,8 +22,11 @@ const Onboarding = () => {
     position: "",
     emergencyContact: "",
     image: null,
-    dob: "", // initial empty
+    dob: "",
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -31,12 +37,41 @@ const Onboarding = () => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Profile Data:", ProfileData); // Replace with your submit logic
+    setLoading(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const formData = new FormData();
+
+      Object.entries(ProfileData).forEach(([key, value]) => {
+        formData.append(key, value as any);
+      });
+
+      await Api.put("/api/v1/users/profile", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Mark user as onboarded
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      user.isOnboarded = true;
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Redirect to employee dashboard
+      navigate("/EmployeeDashboard");
+    } catch (err: any) {
+      console.error(err);
+      setError(
+        err.response?.data?.message || "Something went wrong. Try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Animation variants for the container
+  // Animation variants
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -46,7 +81,6 @@ const Onboarding = () => {
     },
   };
 
-  // Animation variants for form fields
   const fieldVariants: Variants = {
     hidden: { opacity: 0, x: -20 },
     visible: (i: number) => ({
@@ -73,6 +107,9 @@ const Onboarding = () => {
           >
             Welcome! Let's Get You Settled
           </motion.h2>
+
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {[
               {
@@ -110,7 +147,7 @@ const Onboarding = () => {
                 label: "Date of Birth",
                 placeholder: "",
                 field: "dob",
-                type: "date", // date input
+                type: "date",
               },
             ].map((item, index) => (
               <motion.div
@@ -129,7 +166,7 @@ const Onboarding = () => {
                 </label>
                 <input
                   id={item.id}
-                  type={item.type || "text"} // default to text
+                  type={item.type || "text"}
                   className="w-full p-3 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300 hover:border-indigo-700"
                   placeholder={item.placeholder}
                   value={ProfileData[item.field as keyof ProfileData] as string}
@@ -137,11 +174,9 @@ const Onboarding = () => {
                     handleInputChange(e, item.field as keyof ProfileData)
                   }
                 />
-                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full" />
               </motion.div>
             ))}
 
-            {/* Profile Image Input */}
             <motion.div
               custom={6}
               variants={fieldVariants}
@@ -161,10 +196,8 @@ const Onboarding = () => {
                 className="w-full p-3 border border-indigo-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-700 file:text-white hover:file:bg-indigo-800 transition-colors duration-300"
                 onChange={(e) => handleInputChange(e, "image")}
               />
-              <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full" />
             </motion.div>
 
-            {/* Submit Button */}
             <motion.div
               custom={7}
               variants={fieldVariants}
@@ -174,9 +207,12 @@ const Onboarding = () => {
             >
               <button
                 type="submit"
-                className="bg-indigo-700 text-white px-8 py-3 rounded-lg hover:bg-indigo-800"
+                className={`bg-indigo-700 text-white px-8 py-3 rounded-lg hover:bg-indigo-800 ${
+                  loading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+                disabled={loading}
               >
-                Save
+                {loading ? "Saving..." : "Save"}
               </button>
             </motion.div>
           </form>
