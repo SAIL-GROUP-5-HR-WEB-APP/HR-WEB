@@ -67,7 +67,14 @@ const AppContent = () => {
 
         {/* Protected Routes */}
 
-        <Route path="/admin" element={<SuperAdmin />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <SuperAdmin />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/EmployeeDashboard"
