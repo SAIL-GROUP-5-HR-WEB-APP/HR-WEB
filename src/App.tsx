@@ -114,9 +114,9 @@ const AppContent = () => {
         <Route
           path="/dashboard/*"
           element={
-            // <ProtectedRoute allowedRoles={["hr"]}>
-            <DashboardLayout />
-            // </ProtectedRoute>
+            <ProtectedRoute allowedRoles={["hr"]}>
+              <DashboardLayout />
+            </ProtectedRoute>
           }
         >
           <Route index element={<HrDashboard />} /> {/* default dashboard */}
