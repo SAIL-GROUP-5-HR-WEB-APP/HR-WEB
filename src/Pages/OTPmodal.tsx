@@ -29,8 +29,16 @@ const OtpPage: React.FC = () => {
         email,
         otp,
       });
-
       if (res.status === 200) {
+        const { token, user } = res.data;
+
+        localStorage.setItem("authToken", token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ ...user, isOnboarded: false })
+        );
+        localStorage.setItem("role", "employee"); // only employees signup
+
         navigate("/onboarding");
       }
     } catch (err: any) {
