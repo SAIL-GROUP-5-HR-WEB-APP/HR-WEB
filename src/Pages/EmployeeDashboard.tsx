@@ -13,6 +13,10 @@ import {
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate, Link } from "react-router-dom";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 interface LeaveRequest {
   id: number;
@@ -68,20 +72,44 @@ const EmployeeDashboard = () => {
     setStartDate("");
     setEndDate("");
   };
-
   const handleLogout = async () => {
-    try {
-      await Api.post("/api/v1/auth/logout");
+    const result = await MySwal.fire({
+      title: "Are you sure?",
+      text: "Do you want to logout?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, logout",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
 
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
+    if (result.isConfirmed) {
+      MySwal.fire({
+        title: "Logging out...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading(); // 🔄 spinner here
+        },
+      });
 
-      navigate("/login", { replace: true });
-    } catch (error: any) {
-      console.error("Logout failed:", error.response?.data || error.message);
+      try {
+        await Api.post("/api/v1/auth/logout");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+
+        Swal.close(); // stop spinner
+        MySwal.fire("Logged out!", "You have been logged out.", "success");
+
+        navigate("/login", { replace: true });
+      } catch (error: any) {
+        Swal.fire({
+          title: "Error",
+          text: error.response?.data?.message || "Logout failed",
+          icon: "error",
+        });
+      }
     }
   };
-
   return (
     <div className="min-h-screen w-full flex flex-col">
       {/* Profile Section */}
