@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
@@ -6,6 +6,7 @@ import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
 import { Link, useNavigate } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
+import { AxiosError } from "axios";
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -61,7 +62,7 @@ const LoginPage: React.FC = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setSubmitError(null);
     setIsLoading(true);
@@ -72,37 +73,35 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      const { data } = await Api.post("/api/v1/auth/login", {
+      const { data } = await Api.post<{
+        token: string;
+        user: { role: string; [key: string]: any };
+      }>("/api/v1/auth/login", {
         email: formData.email,
         password: formData.password,
       });
 
-      // Store JWT token + user in localStorage
+      // ✅ Store JWT + user info
       localStorage.setItem("authToken", data.token);
-      localStorage.setItem("role", data.user.role); // store role separately
+      localStorage.setItem("role", data.user.role);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       console.log("✅ Login success:", data);
 
-      // Navigate based on role
-      switch (data.user.role) {
-        case "hr":
-          navigate("/dashboard");
-          break;
-        case "admin":
-          navigate("/admin");
-          break;
-        case "employee":
-          navigate("/EmployeeDashboard");
-          break;
-        default:
-          navigate("/unauthorized");
+      // ✅ Navigate based on role
+      if (data.user.role === "hr") {
+        navigate("/dashboard", { replace: true });
+      } else if (data.user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (data.user.role === "employee") {
+        navigate("/EmployeeDashboard", { replace: true });
+      } else {
+        navigate("/unauthorized", { replace: true });
       }
-    } catch (error: any) {
-      console.error("Login error:", error.response?.data || error.message);
-      setSubmitError(
-        error.response?.data?.message || "Login failed. Try again."
-      );
+    } catch (error) {
+      const err = error as AxiosError<{ message: string }>;
+      console.error("❌ Login error:", err.response?.data || err.message);
+      setSubmitError(err.response?.data?.message || "Login failed. Try again.");
     } finally {
       setIsLoading(false);
     }
