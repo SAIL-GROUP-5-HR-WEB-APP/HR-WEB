@@ -1,23 +1,27 @@
-// ProtectedRoute.tsx
+// src/components/ProtectedRoute.tsx
 import React from "react";
 import { Navigate } from "react-router-dom";
 
 interface Props {
   children: React.ReactNode;
+  allowedRoles?: string[]; // optional prop for role-based protection
 }
 
-const ProtectedRoute: React.FC<Props> = ({ children }) => {
-  //  Get token from localStorage
+const ProtectedRoute: React.FC<Props> = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("authToken");
+  const role = localStorage.getItem("role"); // 👈 you should store role after login
 
-  //  Check if token exists
+  // 🔒 check if logged in
   if (!token) {
-    // No token → redirect to login
     return <Navigate to="/login" replace />;
   }
 
-  //  Token exists → allow access to the protected page
-  return children;
+  // 🔑 check if user has permission
+  if (allowedRoles && !allowedRoles.includes(role || "")) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

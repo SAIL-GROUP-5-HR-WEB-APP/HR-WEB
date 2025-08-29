@@ -61,8 +61,6 @@ const LoginPage: React.FC = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  // Handle form submission
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setSubmitError(null);
@@ -74,19 +72,32 @@ const LoginPage: React.FC = () => {
     }
 
     try {
-      // use formData state values
       const { data } = await Api.post("/api/v1/auth/login", {
         email: formData.email,
         password: formData.password,
       });
 
-      // ✅ Store JWT token + user in localStorage
+      // Store JWT token + user in localStorage
       localStorage.setItem("authToken", data.token);
+      localStorage.setItem("role", data.user.role); // store role separately
       localStorage.setItem("user", JSON.stringify(data.user));
 
       console.log("✅ Login success:", data);
 
-      navigate("/EmployeeDashboard");
+      // Navigate based on role
+      switch (data.user.role) {
+        case "hr":
+          navigate("/dashboard");
+          break;
+        case "admin":
+          navigate("/admin");
+          break;
+        case "employee":
+          navigate("/EmployeeDashboard");
+          break;
+        default:
+          navigate("/unauthorized");
+      }
     } catch (error: any) {
       console.error("Login error:", error.response?.data || error.message);
       setSubmitError(

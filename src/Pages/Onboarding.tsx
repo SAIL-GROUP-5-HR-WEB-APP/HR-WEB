@@ -8,6 +8,7 @@ interface ProfileData {
   position: string;
   emergencyContact: string;
   image: File | null;
+  dob: string; // ✅ Added Date of Birth
 }
 
 const Onboarding = () => {
@@ -18,6 +19,7 @@ const Onboarding = () => {
     position: "",
     emergencyContact: "",
     image: null,
+    dob: "", // initial empty
   });
 
   const handleInputChange = (
@@ -103,6 +105,13 @@ const Onboarding = () => {
                 placeholder: "83/84 Osapa London, Lekki",
                 field: "address",
               },
+              {
+                id: "dob",
+                label: "Date of Birth",
+                placeholder: "",
+                field: "dob",
+                type: "date", // date input
+              },
             ].map((item, index) => (
               <motion.div
                 key={item.id}
@@ -120,7 +129,7 @@ const Onboarding = () => {
                 </label>
                 <input
                   id={item.id}
-                  type="text"
+                  type={item.type || "text"} // default to text
                   className="w-full p-3 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300 hover:border-indigo-700"
                   placeholder={item.placeholder}
                   value={ProfileData[item.field as keyof ProfileData] as string}
@@ -131,8 +140,10 @@ const Onboarding = () => {
                 <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full" />
               </motion.div>
             ))}
+
+            {/* Profile Image Input */}
             <motion.div
-              custom={5}
+              custom={6}
               variants={fieldVariants}
               initial="hidden"
               animate="visible"
@@ -152,8 +163,10 @@ const Onboarding = () => {
               />
               <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-500 transition-all duration-300 group-hover:w-full" />
             </motion.div>
+
+            {/* Submit Button */}
             <motion.div
-              custom={6}
+              custom={7}
               variants={fieldVariants}
               initial="hidden"
               animate="visible"
