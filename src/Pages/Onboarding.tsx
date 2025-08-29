@@ -9,8 +9,8 @@ interface ProfileData {
   department: string;
   position: string;
   emergencyContact: string;
-  image: File | null;
-  dob: string; // YYYY-MM-DD
+  avatar: File | null; // renamed from image to match backend
+  dateOfBirth: string; // matches backend field
 }
 
 const Onboarding = () => {
@@ -21,21 +21,19 @@ const Onboarding = () => {
     department: "",
     position: "",
     emergencyContact: "",
-    image: null,
-    dob: "",
+    avatar: null,
+    dateOfBirth: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement>,
     field: keyof ProfileData
   ) => {
     const value =
-      field === "image"
-        ? (e.target as HTMLInputElement).files?.[0] || null
-        : e.target.value;
+      field === "avatar" ? e.target.files?.[0] || null : e.target.value;
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -48,21 +46,18 @@ const Onboarding = () => {
       const token = localStorage.getItem("authToken");
       const formData = new FormData();
 
+      // Append all fields to formData
       Object.entries(profileData).forEach(([key, value]) => {
-        if (key === "image" && value instanceof File) {
-          formData.append(key, value);
-        } else {
-          formData.append(key, value as string);
+        if (value !== null) {
+          formData.append(key, value as any);
         }
       });
 
       await Api.put("/api/v1/users/profile", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Navigate to employee dashboard
       navigate("/EmployeeDashboard");
     } catch (err: any) {
       console.error(err);
@@ -74,6 +69,7 @@ const Onboarding = () => {
     }
   };
 
+  // Animation variants
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -129,13 +125,13 @@ const Onboarding = () => {
               {
                 id: "phone",
                 label: "Phone Number",
-                placeholder: "+234 0000000000",
+                placeholder: "+234 00000000",
                 field: "phone",
               },
               {
                 id: "emergencyContact",
                 label: "Emergency Phone Number",
-                placeholder: "+234 0000000000",
+                placeholder: "+234 00000000",
                 field: "emergencyContact",
               },
               {
@@ -144,12 +140,11 @@ const Onboarding = () => {
                 placeholder: "83/84 Osapa London, Lekki",
                 field: "address",
               },
-
               {
-                id: "dob",
+                id: "dateOfBirth",
                 label: "Date of Birth",
                 placeholder: "",
-                field: "dob",
+                field: "dateOfBirth",
                 type: "date",
               },
             ].map((item, index) => (
@@ -180,7 +175,6 @@ const Onboarding = () => {
               </motion.div>
             ))}
 
-            {/* Profile Image */}
             <motion.div
               custom={6}
               variants={fieldVariants}
@@ -189,16 +183,16 @@ const Onboarding = () => {
               className="relative group"
             >
               <label
-                htmlFor="image"
+                htmlFor="avatar"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Profile Image
               </label>
               <input
-                id="image"
+                id="avatar"
                 type="file"
                 className="w-full p-3 border border-indigo-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-700 file:text-white hover:file:bg-indigo-800 transition-colors duration-300"
-                onChange={(e) => handleInputChange(e, "image")}
+                onChange={(e) => handleInputChange(e, "avatar")}
               />
             </motion.div>
 
