@@ -9,8 +9,9 @@ interface ProfileData {
   department: string;
   position: string;
   emergencyContact: string;
-  avatar: File | null; // renamed from image to match backend
-  dateOfBirth: string; // matches backend field
+  avatar: File | null;
+  dateOfBirth: string;
+  documents: File[] | null; // Added to support multiple document uploads
 }
 
 const Onboarding = () => {
@@ -23,6 +24,7 @@ const Onboarding = () => {
     emergencyContact: "",
     avatar: null,
     dateOfBirth: "",
+    documents: null, // Initialize documents as null
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,11 @@ const Onboarding = () => {
     field: keyof ProfileData
   ) => {
     const value =
-      field === "avatar" ? e.target.files?.[0] || null : e.target.value;
+      field === "avatar"
+        ? e.target.files?.[0] || null
+        : field === "documents"
+        ? Array.from(e.target.files || []) // Handle multiple files
+        : e.target.value;
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -46,14 +52,31 @@ const Onboarding = () => {
       const token = localStorage.getItem("authToken");
       const formData = new FormData();
 
-      // Append all fields to formData
+      // Append text fields
       Object.entries(profileData).forEach(([key, value]) => {
-        if (value !== null) {
-          formData.append(key, value as any);
+        if (
+          key !== "avatar" &&
+          key !== "documents" &&
+          value !== null &&
+          value !== ""
+        ) {
+          formData.append(key, value as string);
         }
       });
 
-      await Api.put("/api/v1/users/profile", formData, {
+      // Append avatar
+      if (profileData.avatar) {
+        formData.append("avatar", profileData.avatar);
+      }
+
+      // Append documents (multiple files)
+      if (profileData.documents && profileData.documents.length > 0) {
+        profileData.documents.forEach((doc) => {
+          formData.append("documents", doc); // Append each file under "documents" key
+        });
+      }
+
+      await Api.put("/api/profile/update", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -191,6 +214,7 @@ const Onboarding = () => {
               <input
                 id="avatar"
                 type="file"
+                accept="image/*"
                 className="w-full p-3 border border-indigo-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-700 file:text-white hover:file:bg-indigo-800 transition-colors duration-300"
                 onChange={(e) => handleInputChange(e, "avatar")}
               />
@@ -198,6 +222,29 @@ const Onboarding = () => {
 
             <motion.div
               custom={7}
+              variants={fieldVariants}
+              initial="hidden"
+              animate="visible"
+              className="relative group"
+            >
+              <label
+                htmlFor="documents"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Documents
+              </label>
+              <input
+                id="documents"
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx"
+                className="w-full p-3 border border-indigo-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-700 file:text-white hover:file:bg-indigo-800 transition-colors duration-300"
+                onChange={(e) => handleInputChange(e, "documents")}
+              />
+            </motion.div>
+
+            <motion.div
+              custom={8}
               variants={fieldVariants}
               initial="hidden"
               animate="visible"
