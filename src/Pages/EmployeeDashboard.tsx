@@ -9,10 +9,10 @@ import {
   LuCheck,
   LuBaggageClaim,
   LuLogOut,
-  LuPen, // Added for edit icon
+  LuPen,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 interface LeaveRequest {
   id: number;
@@ -30,6 +30,7 @@ const EmployeeDashboard = () => {
     null
   );
 
+  // ✅ User state
   const [user, setUser] = useState<{
     firstname: string;
     email: string;
@@ -38,12 +39,13 @@ const EmployeeDashboard = () => {
 
   const navigate = useNavigate();
 
+  // ✅ On mount, check localStorage
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
 
     if (!token || !storedUser) {
-      navigate("/login", { replace: true });
+      navigate("/login", { replace: true }); // route guard
       return;
     }
 
@@ -70,60 +72,54 @@ const EmployeeDashboard = () => {
   const handleLogout = async () => {
     try {
       await Api.post("/api/v1/auth/logout");
+
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
+
       navigate("/login", { replace: true });
     } catch (error: any) {
       console.error("Logout failed:", error.response?.data || error.message);
     }
   };
 
-  const handleEditProfile = () => {
-    navigate("/setting"); // Navigate to edit profile page
-  };
-
   return (
-    <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-indigo-100 to-gray-100">
+    <div className="min-h-screen w-full flex flex-col">
       {/* Profile Section */}
       <header className="p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="relative bg-white/90 backdrop-blur-lg p-6 rounded-2xl shadow-[0_0_25px_rgba(124,58,237,0.4)] hover:shadow-[0_0_35px_rgba(124,58,237,0.6)] transition-all duration-300 transform hover:scale-[1.02] max-w-md mx-auto">
+          <div className="relative bg-white/10 backdrop-blur-md p-6 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all duration-300 transform hover:scale-105 max-w-sm mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 rounded-full shadow-lg bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-2xl font-extrabold text-white">
+                <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
                   {user?.firstname
                     ? user.firstname.charAt(0).toUpperCase()
                     : "?"}
                 </div>
-                <div className="text-gray-800">
+                <div className="text-gray-700">
                   <h1 className="text-2xl font-extrabold text-shadow">
                     {user?.firstname || "Employee"}
                   </h1>
-                  <p className="text-sm font-medium text-gray-600">
+                  <p className="text-sm font-medium">
                     {user?.role || "Employee Role"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs opacity-80">
                     {user?.email || "No email found"}
                   </p>
                 </div>
               </div>
-              {/* Action Buttons */}
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handleEditProfile}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:rounded-xl shadow-sm hover:shadow-md"
-                  aria-label="Edit Profile"
-                >
-                  <LuPen size={15} />
-                  <span className="text-sm">Edit</span>
-                </button>
+              <div className="flex flex-col items center gap-3">
+                <Link to={"/setting"}>
+                  {" "}
+                  <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl">
+                    <LuPen size={15} />
+                  </button>
+                </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-3 py-2 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 hover:rounded-xl shadow-sm hover:shadow-md"
+                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl"
                   aria-label="Log out"
                 >
                   <LuLogOut size={15} />
-                  <span className="text-sm">Logout</span>
                 </button>
               </div>
             </div>
@@ -157,7 +153,7 @@ const EmployeeDashboard = () => {
           ].map((stat, index) => (
             <div
               key={index}
-              className={`backdrop-blur-md p-6 rounded-2xl border border-white/20 animate-pulse-once bg-gradient-to-r from-indigo-600 to-purple-500 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-300`}
+              className={`backdrop-blur-md p-6 rounded-2xl border border-white/20 animate-pulse-once bg-gradient-to-r from-indigo-700 to-indigo-400 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] transition-all duration-300`}
             >
               <div className="text-white">{stat.icon}</div>
               <p className="text-sm font-medium text-white/80">{stat.label}</p>
@@ -169,9 +165,9 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Attendance Section */}
-        <section className="bg-white/90 backdrop-blur-lg p-6 rounded-2xl border border-white/20 mb-8 shadow-sm">
-          <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-700 mb-6 justify-center">
-            <LuClipboardList className="text-gray-700" size={28} />
+        <section className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+          <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6 justify-center">
+            <LuClipboardList className="text-gray-600" size={28} />
             <span>Attendance</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
@@ -224,16 +220,16 @@ const EmployeeDashboard = () => {
         {/* Leave Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Leave Form */}
-          <section className="backdrop-blur-lg p-6 rounded-2xl border border-indigo-800 bg-white/90 shadow-sm">
-            <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-700 mb-6">
-              <LuCalendar className="text-gray-700" size={28} />
+          <section className="backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
+            <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6">
+              <LuCalendar className="text-gray-600" size={28} />
               <span>Request Leave</span>
             </h2>
             <form onSubmit={submitLeaveRequest} className="space-y-4">
               <div>
                 <label
                   htmlFor="leaveReason"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-white/80"
                 >
                   Reason for Leave
                 </label>
@@ -241,7 +237,7 @@ const EmployeeDashboard = () => {
                   id="leaveReason"
                   type="text"
                   placeholder="Enter reason for leave"
-                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                   value={leaveReason}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     setLeaveReason(e.target.value)
@@ -253,14 +249,14 @@ const EmployeeDashboard = () => {
                 <div className="w-1/2">
                   <label
                     htmlFor="startDate"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-white/80"
                   >
                     Start Date
                   </label>
                   <input
                     id="startDate"
                     type="date"
-                    className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     value={startDate}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setStartDate(e.target.value)
@@ -271,14 +267,14 @@ const EmployeeDashboard = () => {
                 <div className="w-1/2">
                   <label
                     htmlFor="endDate"
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-medium text-white/80"
                   >
                     End Date
                   </label>
                   <input
                     id="endDate"
                     type="date"
-                    className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     value={endDate}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setEndDate(e.target.value)
@@ -289,7 +285,7 @@ const EmployeeDashboard = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl shadow-sm hover:shadow-md"
+                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-2xl"
                 aria-label="Submit Leave Request"
               >
                 Submit Leave Request
@@ -298,8 +294,8 @@ const EmployeeDashboard = () => {
           </section>
 
           {/* Leave History */}
-          <section className="p-6 rounded-2xl border border-indigo-800 bg-white/90 shadow-sm">
-            <h2 className="font-extrabold text-xl md:text-2xl text-gray-700 mb-6">
+          <section className="p-6 rounded-2xl border border-indigo-800">
+            <h2 className="font-extrabold text-xl md:text-2xl text-gray-600 mb-6">
               Pending Leave Requests
             </h2>
             {leaveRequests.length === 0 ? (
@@ -315,10 +311,10 @@ const EmployeeDashboard = () => {
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-semibold text-gray-600">
+                        <p className="font-semibold text-gray-500">
                           {req.reason}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {req.startDate} → {req.endDate}
                         </p>
                       </div>
