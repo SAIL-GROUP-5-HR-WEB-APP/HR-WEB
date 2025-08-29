@@ -41,11 +41,20 @@ const SuperAdmin = () => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
     try {
+      const token = localStorage.getItem("token"); // or sessionStorage.getItem("token")
+
       const res = await Api.post<{ message: string }>(
         "/api/v1/admin/create-user",
-        form
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
+
       setMessage(res.data.message);
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;

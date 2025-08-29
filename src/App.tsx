@@ -25,6 +25,8 @@ import OTPmodal from "./Pages/OTPmodal";
 import EditProfile from "./Pages/EditProfile";
 import ProtectedRoute from "./Components/Reuseable/ProtectedRoute";
 import SuperAdmin from "./Pages/SuperAdmin";
+import Unauthorized from "./Pages/Unauthorized";
+import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
 
 const AppContent = () => {
   const location = useLocation();
@@ -41,6 +43,8 @@ const AppContent = () => {
     "/OTP",
     "/setting",
     "/admin",
+    "/unauthorized",
+    "/SingleEmployeedetails",
   ];
 
   const shouldHide = hideHeaderAndFooterPaths.some((path) =>
@@ -64,13 +68,18 @@ const AppContent = () => {
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/OTP" element={<OTPmodal />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route
+          path="/SingleEmployeedetails/:id"
+          element={<SingleEmployeedetails />}
+        />
 
         {/* Protected Routes */}
 
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <SuperAdmin />
             </ProtectedRoute>
           }
@@ -79,7 +88,7 @@ const AppContent = () => {
         <Route
           path="/EmployeeDashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["employee"]}>
               <EmployeeDashboard />
             </ProtectedRoute>
           }
@@ -87,7 +96,7 @@ const AppContent = () => {
         <Route
           path="/setting"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["employee"]}>
               <EditProfile />
             </ProtectedRoute>
           }
@@ -95,7 +104,7 @@ const AppContent = () => {
         <Route
           path="/onboarding"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["employee"]}>
               <Onboarding />
             </ProtectedRoute>
           }
@@ -105,9 +114,9 @@ const AppContent = () => {
         <Route
           path="/dashboard/*"
           element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
+            // <ProtectedRoute allowedRoles={["hr"]}>
+            <DashboardLayout />
+            // </ProtectedRoute>
           }
         >
           <Route index element={<HrDashboard />} /> {/* default dashboard */}
