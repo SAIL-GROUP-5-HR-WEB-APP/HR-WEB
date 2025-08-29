@@ -10,12 +10,12 @@ interface ProfileData {
   position: string;
   emergencyContact: string;
   image: File | null;
-  dob: string;
+  dob: string; // YYYY-MM-DD
 }
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const [ProfileData, setProfileData] = useState<ProfileData>({
+  const [profileData, setProfileData] = useState<ProfileData>({
     phone: "",
     address: "",
     department: "",
@@ -29,11 +29,13 @@ const Onboarding = () => {
   const [error, setError] = useState("");
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof ProfileData
   ) => {
     const value =
-      field === "image" ? e.target.files?.[0] || null : e.target.value;
+      field === "image"
+        ? (e.target as HTMLInputElement).files?.[0] || null
+        : e.target.value;
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -46,20 +48,26 @@ const Onboarding = () => {
       const token = localStorage.getItem("authToken");
       const formData = new FormData();
 
-      Object.entries(ProfileData).forEach(([key, value]) => {
-        formData.append(key, value as any);
+      Object.entries(profileData).forEach(([key, value]) => {
+        if (key === "image" && value instanceof File) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, value as string);
+        }
       });
 
       await Api.put("/api/v1/users/profile", formData, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      // Mark user as onboarded
-      // const user = JSON.parse(localStorage.getItem("user") || "{}");
-      // user.isOnboarded = true;
-      // localStorage.setItem("user", JSON.stringify(user));
+      // Mark user as onboarded locally
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      user.isOnboarded = true;
+      localStorage.setItem("user", JSON.stringify(user));
 
-      // Redirect to employee dashboard
       navigate("/EmployeeDashboard");
     } catch (err: any) {
       console.error(err);
@@ -71,7 +79,6 @@ const Onboarding = () => {
     }
   };
 
-  // Animation variants
   const containerVariants: Variants = {
     hidden: { opacity: 0, y: 50 },
     visible: {
@@ -127,13 +134,13 @@ const Onboarding = () => {
               {
                 id: "phone",
                 label: "Phone Number",
-                placeholder: "+234 00000000",
+                placeholder: "+234 0000000000",
                 field: "phone",
               },
               {
                 id: "emergencyContact",
                 label: "Emergency Phone Number",
-                placeholder: "+234 00000000",
+                placeholder: "+234 0000000000",
                 field: "emergencyContact",
               },
               {
@@ -142,6 +149,7 @@ const Onboarding = () => {
                 placeholder: "83/84 Osapa London, Lekki",
                 field: "address",
               },
+
               {
                 id: "dob",
                 label: "Date of Birth",
@@ -169,7 +177,7 @@ const Onboarding = () => {
                   type={item.type || "text"}
                   className="w-full p-3 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-300 hover:border-indigo-700"
                   placeholder={item.placeholder}
-                  value={ProfileData[item.field as keyof ProfileData] as string}
+                  value={profileData[item.field as keyof ProfileData] as string}
                   onChange={(e) =>
                     handleInputChange(e, item.field as keyof ProfileData)
                   }
@@ -177,6 +185,7 @@ const Onboarding = () => {
               </motion.div>
             ))}
 
+            {/* Profile Image */}
             <motion.div
               custom={6}
               variants={fieldVariants}
