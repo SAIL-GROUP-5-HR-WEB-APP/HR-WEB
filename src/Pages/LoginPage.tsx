@@ -93,11 +93,9 @@ const LoginPage: React.FC = () => {
         navigate("/dashboard", { replace: true });
       } else if (data.user.role === "admin") {
         navigate("/admin", { replace: true });
-      } else if (data.user.role === "employee") {
+      } else (data.user.role === "employee") {
         navigate("/EmployeeDashboard", { replace: true });
-      } else {
-        navigate("/unauthorized", { replace: true });
-      }
+      } 
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
       console.error("❌ Login error:", err.response?.data || err.message);
