@@ -63,11 +63,6 @@ const Onboarding = () => {
         },
       });
 
-      // Mark user as onboarded locally
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      user.isOnboarded = true;
-      localStorage.setItem("user", JSON.stringify(user));
-
       navigate("/EmployeeDashboard");
     } catch (err: any) {
       console.error(err);
