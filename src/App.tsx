@@ -27,6 +27,7 @@ import SuperAdmin from "./Pages/SuperAdmin";
 
 import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
 import Settings from "./Pages/Settings";
+import Attendance from "./Pages/Attendance";
 
 const AppContent = () => {
   const location = useLocation();
@@ -125,6 +126,7 @@ const AppContent = () => {
           <Route path="department/:id" element={<DepartmentDetails />} />
           <Route path="payroll" element={<Payroll />} />
           <Route path="employees" element={<EmployeesDetails />} />
+          <Route path="attendance" element={<Attendance />} />
         </Route>
       </Routes>
 

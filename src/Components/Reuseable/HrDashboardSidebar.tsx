@@ -109,6 +109,11 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
         <li>
+          <NavLink to="/dashboard/attendance">
+            <li>Attendance</li>
+          </NavLink>
+        </li>
+        <li>
           <NavLink
             to="/dashboard/department"
             className={({ isActive }) =>

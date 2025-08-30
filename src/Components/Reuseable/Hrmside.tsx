@@ -48,7 +48,11 @@ const Hrmside: React.FC<Side> = ({ handleToggle }) => {
             Leave
           </NavLink>
         </li>
-
+        <li>
+          <NavLink to="/dashboard/attendance">
+            <li>Attendance</li>
+          </NavLink>
+        </li>
         <li onClick={handleToggle}>
           <NavLink
             to="/dashboard/department"
