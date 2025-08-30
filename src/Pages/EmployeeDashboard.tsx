@@ -27,46 +27,43 @@ interface LeaveRequest {
 }
 
 const EmployeeDashboard = () => {
-  const [leaveType, setLeaveType] = useState<string>("Sick Leave");
+  const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-
-  // ✅ Attendance state (restored)
   const [attendance, setAttendance] = useState<"Present" | "Absent" | null>(
     null
   );
 
-  // ✅ User state
   const [user, setUser] = useState<{
     firstname: string;
     email: string;
     role?: string;
   } | null>(null);
-
   const navigate = useNavigate();
 
-  // ✅ On mount, check localStorage
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
 
     if (!token || !storedUser) {
-      navigate("/login", { replace: true }); // route guard
+      navigate("/login", { replace: true });
       return;
     }
 
     setUser(JSON.parse(storedUser));
   }, [navigate]);
 
-  // ✅ Submit Leave Request API call
+  // ✅ Submit Leave Request
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
-    if (!leaveReason || !startDate || !endDate || !leaveType) {
+
+    if (!leaveReason || !startDate || !endDate) {
       MySwal.fire("Missing fields", "Please fill all fields.", "warning");
       return;
     }
+
     if (new Date(endDate) < new Date(startDate)) {
       MySwal.fire(
         "Invalid dates",
@@ -77,12 +74,23 @@ const EmployeeDashboard = () => {
     }
 
     try {
-      const res = await Api.post("/api/v1/leave/request", {
-        type: leaveType,
-        reason: leaveReason,
-        startDate,
-        endDate,
-      });
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("Authentication token missing");
+
+      const res = await Api.post(
+        "/api/v1/leave/request",
+        {
+          type: leaveType,
+          reason: leaveReason,
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       MySwal.fire(
         "Success",
@@ -90,6 +98,7 @@ const EmployeeDashboard = () => {
         "success"
       );
 
+      // update local state
       const newRequest: LeaveRequest = {
         id: Date.now(),
         type: leaveType,
@@ -99,14 +108,17 @@ const EmployeeDashboard = () => {
       };
 
       setLeaveRequests((prev) => [...prev, newRequest]);
-      setLeaveType("Sick Leave");
+      setLeaveType("sick");
       setLeaveReason("");
       setStartDate("");
       setEndDate("");
     } catch (error: any) {
       Swal.fire({
         title: "Error",
-        text: error.response?.data?.message || "Leave request failed",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Leave request failed",
         icon: "error",
       });
     }
@@ -127,19 +139,19 @@ const EmployeeDashboard = () => {
       MySwal.fire({
         title: "Logging out...",
         allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
+        didOpen: () => Swal.showLoading(),
       });
-
       try {
-        await Api.post("/api/v1/auth/logout");
+        const token = localStorage.getItem("authToken");
+        await Api.post(
+          "/api/v1/auth/logout",
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         localStorage.removeItem("authToken");
         localStorage.removeItem("user");
-
         Swal.close();
         MySwal.fire("Logged out!", "You have been logged out.", "success");
-
         navigate("/login", { replace: true });
       } catch (error: any) {
         Swal.fire({
@@ -185,7 +197,6 @@ const EmployeeDashboard = () => {
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl"
-                  aria-label="Log out"
                 >
                   <LuLogOut size={15} />
                 </button>
@@ -232,10 +243,10 @@ const EmployeeDashboard = () => {
           ))}
         </div>
 
-        {/* Attendance Section (restored) */}
+        {/* Attendance Section */}
         <section className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
           <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6 justify-center">
-            <LuClipboardList className="text-gray-600" size={28} />
+            <LuClipboardList className="text-gray-600" size={28} />{" "}
             <span>Attendance</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
@@ -248,8 +259,7 @@ const EmployeeDashboard = () => {
               }`}
               aria-label="Mark as Present"
             >
-              <LuUserCheck size={36} className="mb-2" />
-              Present
+              <LuUserCheck size={36} className="mb-2" /> Present
             </button>
             <button
               onClick={() => setAttendance("Absent")}
@@ -260,8 +270,7 @@ const EmployeeDashboard = () => {
               }`}
               aria-label="Mark as Absent"
             >
-              <LuUserX size={36} className="mb-2" />
-              Absent
+              <LuUserX size={36} className="mb-2" /> Absent
             </button>
           </div>
 
@@ -278,19 +287,18 @@ const EmployeeDashboard = () => {
                   <LuThumbsUp size={36} className="mb-2" />
                 ) : (
                   <LuThumbsDown size={36} className="mb-2" />
-                )}
+                )}{" "}
                 You have been marked {attendance} for today
               </p>
             </div>
           )}
         </section>
 
-        {/* Leave Section */}
+        {/* Leave Form & History */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          {/* Leave Form */}
           <section className="backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
             <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6">
-              <LuCalendar className="text-gray-600" size={28} />
+              <LuCalendar className="text-gray-600" size={28} />{" "}
               <span>Request Leave</span>
             </h2>
             <form onSubmit={submitLeaveRequest} className="space-y-4">
@@ -309,9 +317,9 @@ const EmployeeDashboard = () => {
                     setLeaveType(e.target.value)
                   }
                 >
-                  <option value="Sick Leave">Sick Leave</option>
-                  <option value="Casual Leave">Casual Leave</option>
-                  <option value="Annual Leave">Annual Leave</option>
+                  <option value="sick">Sick Leave</option>
+                  <option value="casual">Casual Leave</option>
+                  <option value="annual">Annual Leave</option>
                 </select>
               </div>
               <div>
@@ -374,7 +382,6 @@ const EmployeeDashboard = () => {
               <button
                 type="submit"
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-2xl"
-                aria-label="Submit Leave Request"
               >
                 Submit Leave Request
               </button>
@@ -420,33 +427,14 @@ const EmployeeDashboard = () => {
         </div>
       </main>
 
-      {/* Custom Animations */}
       <style>{`
-        @keyframes pulse-once {
-          0% { opacity: 0.8; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes check {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); }
-        }
-        .animate-pulse-once {
-          animation: pulse-once 0.5s ease-in-out;
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-in-out;
-        }
-        .animate-check {
-          animation: check 0.3s ease-in-out;
-        }
-        .text-shadow {
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
+        @keyframes pulse-once {0% { opacity: 0.8; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); }}
+        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes check { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .animate-pulse-once { animation: pulse-once 0.5s ease-in-out; }
+        .animate-slide-up { animation: slide-up 0.3s ease-in-out; }
+        .animate-check { animation: check 0.3s ease-in-out; }
+        .text-shadow { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
       `}</style>
     </div>
   );
