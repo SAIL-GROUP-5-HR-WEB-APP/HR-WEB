@@ -20,12 +20,14 @@ const MySwal = withReactContent(Swal);
 
 interface LeaveRequest {
   id: number;
+  type: string;
   reason: string;
   startDate: string;
   endDate: string;
 }
 
 const EmployeeDashboard = () => {
+  const [leaveType, setLeaveType] = useState<string>("Sick Leave");
   const [leaveReason, setLeaveReason] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -56,22 +58,43 @@ const EmployeeDashboard = () => {
     setUser(JSON.parse(storedUser));
   }, [navigate]);
 
-  const submitLeaveRequest = (e: FormEvent) => {
+  // ✅ Submit Leave Request API call
+  const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
-    if (!leaveReason || !startDate || !endDate) return;
+    if (!leaveReason || !startDate || !endDate || !leaveType) return;
 
-    const newRequest: LeaveRequest = {
-      id: Date.now(),
-      reason: leaveReason,
-      startDate,
-      endDate,
-    };
+    try {
+      const res = await Api.post("/api/v1/leave/request", {
+        type: leaveType,
+        reason: leaveReason,
+        startDate,
+        endDate,
+      });
 
-    setLeaveRequests([...leaveRequests, newRequest]);
-    setLeaveReason("");
-    setStartDate("");
-    setEndDate("");
+      MySwal.fire("Success", res.data.message, "success");
+
+      const newRequest: LeaveRequest = {
+        id: Date.now(),
+        type: leaveType,
+        reason: leaveReason,
+        startDate,
+        endDate,
+      };
+
+      setLeaveRequests([...leaveRequests, newRequest]);
+      setLeaveType("Sick Leave");
+      setLeaveReason("");
+      setStartDate("");
+      setEndDate("");
+    } catch (error: any) {
+      Swal.fire({
+        title: "Error",
+        text: error.response?.data?.message || "Leave request failed",
+        icon: "error",
+      });
+    }
   };
+
   const handleLogout = async () => {
     const result = await MySwal.fire({
       title: "Are you sure?",
@@ -88,7 +111,7 @@ const EmployeeDashboard = () => {
         title: "Logging out...",
         allowOutsideClick: false,
         didOpen: () => {
-          Swal.showLoading(); // 🔄 spinner here
+          Swal.showLoading();
         },
       });
 
@@ -97,7 +120,7 @@ const EmployeeDashboard = () => {
         localStorage.removeItem("authToken");
         localStorage.removeItem("user");
 
-        Swal.close(); // stop spinner
+        Swal.close();
         MySwal.fire("Logged out!", "You have been logged out.", "success");
 
         navigate("/login", { replace: true });
@@ -110,6 +133,7 @@ const EmployeeDashboard = () => {
       }
     }
   };
+
   return (
     <div className="min-h-screen w-full flex flex-col">
       {/* Profile Section */}
@@ -137,7 +161,6 @@ const EmployeeDashboard = () => {
               </div>
               <div className="flex flex-col items center gap-3">
                 <Link to={"/setting"}>
-                  {" "}
                   <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl">
                     <LuPen size={15} />
                   </button>
@@ -192,59 +215,6 @@ const EmployeeDashboard = () => {
           ))}
         </div>
 
-        {/* Attendance Section */}
-        <section className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
-          <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6 justify-center">
-            <LuClipboardList className="text-gray-600" size={28} />
-            <span>Attendance</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-            <button
-              onClick={() => setAttendance("Present")}
-              className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
-                attendance === "Present"
-                  ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-                  : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:scale-105"
-              }`}
-              aria-label="Mark as Present"
-            >
-              <LuUserCheck size={36} className="mb-2" />
-              Present
-            </button>
-            <button
-              onClick={() => setAttendance("Absent")}
-              className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
-                attendance === "Absent"
-                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
-                  : "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:scale-105"
-              }`}
-              aria-label="Mark as Absent"
-            >
-              <LuUserX size={36} className="mb-2" />
-              Absent
-            </button>
-          </div>
-
-          {attendance && (
-            <div
-              className={`mt-6 text-center p-5 rounded-xl text-white animate-slide-up ${
-                attendance === "Present"
-                  ? "bg-gradient-to-r from-green-500 to-green-700"
-                  : "bg-gradient-to-r from-red-500 to-red-700"
-              }`}
-            >
-              <p className="text-lg font-semibold flex flex-col items-center">
-                {attendance === "Present" ? (
-                  <LuThumbsUp size={36} className="mb-2" />
-                ) : (
-                  <LuThumbsDown size={36} className="mb-2" />
-                )}
-                You have been marked {attendance} for today
-              </p>
-            </div>
-          )}
-        </section>
-
         {/* Leave Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Leave Form */}
@@ -254,6 +224,26 @@ const EmployeeDashboard = () => {
               <span>Request Leave</span>
             </h2>
             <form onSubmit={submitLeaveRequest} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="leaveType"
+                  className="text-sm font-medium text-white/80"
+                >
+                  Leave Type
+                </label>
+                <select
+                  id="leaveType"
+                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  value={leaveType}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                    setLeaveType(e.target.value)
+                  }
+                >
+                  <option value="Sick Leave">Sick Leave</option>
+                  <option value="Casual Leave">Casual Leave</option>
+                  <option value="Annual Leave">Annual Leave</option>
+                </select>
+              </div>
               <div>
                 <label
                   htmlFor="leaveReason"
@@ -340,7 +330,7 @@ const EmployeeDashboard = () => {
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold text-gray-500">
-                          {req.reason}
+                          {req.type} - {req.reason}
                         </p>
                         <p className="text-sm text-gray-600">
                           {req.startDate} → {req.endDate}
