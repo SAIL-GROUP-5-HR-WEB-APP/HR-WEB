@@ -31,7 +31,7 @@ const EmployeesDetails = () => {
     setError(null);
     try {
       const res = await Api.get("/api/v1/users/all");
-      setEmployees(res.data.data || []);
+      setEmployees(res.data || []);
     } catch (err: any) {
       console.error("Error fetching employees:", err);
       setError("Failed to fetch employees.");
