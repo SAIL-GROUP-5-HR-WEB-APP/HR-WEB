@@ -1,17 +1,25 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
+import Api from "../Components/Reuseable/Api";
 
 interface Employee {
   _id: string;
-  username: string;
-  bio?: string;
-  address?: string;
-  age?: number;
+  firstName: string;
+  lastName: string;
   email: string;
-  status: "online" | "offline";
-  avatar?: string;
+  role: "admin" | "hr" | "employee";
+  verified: boolean;
+  profile?: {
+    phone?: string;
+    address?: string;
+    department?: string;
+    position?: string;
+    emergencyContact?: string;
+    dateOfBirth?: string;
+    avatarUrl?: string;
+    documents?: string[];
+  };
 }
 
 const SingleEmployeedetails = () => {
@@ -24,10 +32,8 @@ const SingleEmployeedetails = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get<{ data: Employee }>(
-        `https://user-data-ci61.onrender.com/user/viewoneuser/${id}`
-      );
-      setGetSingleUser(res.data.data);
+      const res = await Api.get(`/api/v1/users/${id}`);
+      setGetSingleUser(res.data); // assuming your backend returns the user directly
     } catch (err) {
       console.error("Error fetching user:", err);
       setGetSingleUser(null);
@@ -72,44 +78,99 @@ const SingleEmployeedetails = () => {
   }
 
   return (
-    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col justify-center items-centers">
+    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
-        User Detail
+        Employee Profile
       </h1>
 
       <section className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center text-center">
         {/* Avatar */}
-        <div className="h-24 w-24 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex justify-center items-center text-white text-4xl font-bold mb-4">
-          {getSingleUser.username?.charAt(0).toUpperCase()}
-        </div>
+        {getSingleUser.profile?.avatarUrl ? (
+          <img
+            src={getSingleUser.profile.avatarUrl}
+            alt="Profile"
+            className="h-24 w-24 rounded-full object-cover mb-4 border-4 border-indigo-500 shadow-md"
+          />
+        ) : (
+          <div className="h-24 w-24 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex justify-center items-center text-white text-4xl font-bold mb-4">
+            {getSingleUser.firstName?.charAt(0).toUpperCase()}
+          </div>
+        )}
 
         {/* Name & Email */}
         <h2 className="text-2xl font-semibold text-gray-800 mb-1">
-          {getSingleUser.username}
+          {getSingleUser.firstName} {getSingleUser.lastName}
         </h2>
-        <p className="text-gray-500 mb-6">{getSingleUser.email}</p>
+        <p className="text-gray-500 mb-2">{getSingleUser.email}</p>
+        <span className="px-3 py-1 text-sm rounded-full bg-indigo-100 text-indigo-700 font-medium">
+          {getSingleUser.role}
+        </span>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full max-w-2xl mt-8">
+          <div>
+            <p className="text-sm text-gray-500">Phone</p>
+            <p className="font-medium text-gray-800">
+              {getSingleUser.profile?.phone || "N/A"}
+            </p>
+          </div>
           <div>
             <p className="text-sm text-gray-500">Address</p>
             <p className="font-medium text-gray-800">
-              {getSingleUser.address || "N/A"}
+              {getSingleUser.profile?.address || "N/A"}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Age</p>
+            <p className="text-sm text-gray-500">Department</p>
             <p className="font-medium text-gray-800">
-              {getSingleUser.age ?? "N/A"}
+              {getSingleUser.profile?.department || "N/A"}
             </p>
           </div>
-          <div className="sm:col-span-2">
-            <p className="text-sm text-gray-500">Bio</p>
+          <div>
+            <p className="text-sm text-gray-500">Position</p>
             <p className="font-medium text-gray-800">
-              {getSingleUser.bio || "No bio provided."}
+              {getSingleUser.profile?.position || "N/A"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Emergency Contact</p>
+            <p className="font-medium text-gray-800">
+              {getSingleUser.profile?.emergencyContact || "N/A"}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Date of Birth</p>
+            <p className="font-medium text-gray-800">
+              {getSingleUser.profile?.dateOfBirth
+                ? new Date(
+                    getSingleUser.profile.dateOfBirth
+                  ).toLocaleDateString()
+                : "N/A"}
             </p>
           </div>
         </div>
+
+        {/* Documents */}
+        {getSingleUser.profile?.documents &&
+          getSingleUser.profile.documents.length > 0 && (
+            <div className="mt-8 w-full max-w-2xl text-left">
+              <p className="text-sm text-gray-500 mb-2">Documents</p>
+              <ul className="list-disc pl-5 space-y-1">
+                {getSingleUser.profile.documents.map((doc, i) => (
+                  <li key={i}>
+                    <a
+                      href={doc}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:underline"
+                    >
+                      Document {i + 1}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
       </section>
     </div>
   );
