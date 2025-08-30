@@ -80,6 +80,110 @@ const EmployeeDashboard = () => {
     fetchLeaveRequests();
   }, [navigate]);
 
+  //handle clock out
+  const handleClockOut = async () => {
+    if (!navigator.geolocation) {
+      return MySwal.fire(
+        "Error",
+        "Geolocation is not supported by your browser",
+        "error"
+      );
+    }
+
+    MySwal.fire({
+      title: "Clocking out...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await Api.post(
+            "/api/v1/attendance/clock-out",
+            { lat: latitude, long: longitude },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          Swal.close();
+          MySwal.fire(
+            "Success",
+            res.data.isWithinGeofence
+              ? "Clock-Out successful within office area!"
+              : "Clock-Out recorded but outside geofence",
+            "success"
+          );
+          setAttendance("ClockOut");
+        } catch (err: any) {
+          Swal.close();
+          MySwal.fire(
+            "Error",
+            err.response?.data?.message || "Clock-Out failed",
+            "error"
+          );
+        }
+      },
+      (error) => {
+        Swal.close();
+        MySwal.fire("Error", "Unable to get your location", "error");
+        console.error("Geolocation error:", error);
+      }
+    );
+  };
+
+  //handle clockin
+  const handleClockIn = async () => {
+    if (!navigator.geolocation) {
+      return MySwal.fire(
+        "Error",
+        "Geolocation is not supported by your browser",
+        "error"
+      );
+    }
+
+    MySwal.fire({
+      title: "Clocking in...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await Api.post(
+            "/api/v1/attendance/clock-in",
+            { lat: latitude, long: longitude },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          Swal.close();
+          MySwal.fire(
+            "Success",
+            res.data.isWithinGeofence
+              ? "Clock-In successful within office area!"
+              : "Clock-In recorded but outside geofence",
+            "success"
+          );
+          setAttendance(res.data.isWithinGeofence ? "ClockIn" : "ClockOut"); // Optional fallback
+        } catch (err: any) {
+          Swal.close();
+          MySwal.fire(
+            "Error",
+            err.response?.data?.message || "Clock-In failed",
+            "error"
+          );
+        }
+      },
+      (error) => {
+        Swal.close();
+        MySwal.fire("Error", "Unable to get your location", "error");
+        console.error("Geolocation error:", error);
+      }
+    );
+  };
+
   // Submit leave request
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
@@ -269,7 +373,7 @@ const EmployeeDashboard = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             <button
-              onClick={() => setAttendance("ClockIn")}
+              onClick={handleClockIn} // call the API and verify geolocation
               className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
                 attendance === "ClockIn"
                   ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
@@ -279,7 +383,7 @@ const EmployeeDashboard = () => {
               <LuClock10 size={36} className="mb-2" /> Clock-In
             </button>
             <button
-              onClick={() => setAttendance("ClockOut")}
+              onClick={handleClockOut} // call API with geolocation
               className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
                 attendance === "ClockOut"
                   ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
