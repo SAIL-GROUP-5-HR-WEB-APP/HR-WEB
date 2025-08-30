@@ -32,6 +32,8 @@ const EmployeeDashboard = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+
+  // ✅ Attendance state (restored)
   const [attendance, setAttendance] = useState<"Present" | "Absent" | null>(
     null
   );
@@ -61,7 +63,18 @@ const EmployeeDashboard = () => {
   // ✅ Submit Leave Request API call
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
-    if (!leaveReason || !startDate || !endDate || !leaveType) return;
+    if (!leaveReason || !startDate || !endDate || !leaveType) {
+      MySwal.fire("Missing fields", "Please fill all fields.", "warning");
+      return;
+    }
+    if (new Date(endDate) < new Date(startDate)) {
+      MySwal.fire(
+        "Invalid dates",
+        "End date cannot be before start date.",
+        "warning"
+      );
+      return;
+    }
 
     try {
       const res = await Api.post("/api/v1/leave/request", {
@@ -71,7 +84,11 @@ const EmployeeDashboard = () => {
         endDate,
       });
 
-      MySwal.fire("Success", res.data.message, "success");
+      MySwal.fire(
+        "Success",
+        res.data?.message || "Leave request submitted",
+        "success"
+      );
 
       const newRequest: LeaveRequest = {
         id: Date.now(),
@@ -81,7 +98,7 @@ const EmployeeDashboard = () => {
         endDate,
       };
 
-      setLeaveRequests([...leaveRequests, newRequest]);
+      setLeaveRequests((prev) => [...prev, newRequest]);
       setLeaveType("Sick Leave");
       setLeaveReason("");
       setStartDate("");
@@ -214,6 +231,59 @@ const EmployeeDashboard = () => {
             </div>
           ))}
         </div>
+
+        {/* Attendance Section (restored) */}
+        <section className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+          <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6 justify-center">
+            <LuClipboardList className="text-gray-600" size={28} />
+            <span>Attendance</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+            <button
+              onClick={() => setAttendance("Present")}
+              className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
+                attendance === "Present"
+                  ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                  : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:scale-105"
+              }`}
+              aria-label="Mark as Present"
+            >
+              <LuUserCheck size={36} className="mb-2" />
+              Present
+            </button>
+            <button
+              onClick={() => setAttendance("Absent")}
+              className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
+                attendance === "Absent"
+                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                  : "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:scale-105"
+              }`}
+              aria-label="Mark as Absent"
+            >
+              <LuUserX size={36} className="mb-2" />
+              Absent
+            </button>
+          </div>
+
+          {attendance && (
+            <div
+              className={`mt-6 text-center p-5 rounded-xl text-white animate-slide-up ${
+                attendance === "Present"
+                  ? "bg-gradient-to-r from-green-500 to-green-700"
+                  : "bg-gradient-to-r from-red-500 to-red-700"
+              }`}
+            >
+              <p className="text-lg font-semibold flex flex-col items-center">
+                {attendance === "Present" ? (
+                  <LuThumbsUp size={36} className="mb-2" />
+                ) : (
+                  <LuThumbsDown size={36} className="mb-2" />
+                )}
+                You have been marked {attendance} for today
+              </p>
+            </div>
+          )}
+        </section>
 
         {/* Leave Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
