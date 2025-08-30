@@ -97,7 +97,7 @@ const EmployeesDetails = () => {
           {filteredEmployees.map((emp) => {
             const avatar =
               emp.profile?.avatarUrl ||
-              `https://ui-avatars.com/api/?name=${emp.firstName}+${emp.lastName}&background=0D8ABC&color=fff`;
+              "https://www.pngkey.com/png/full/115-1150152_default-profile-picture-avatar-png-green.png";
 
             return (
               <div
