@@ -48,8 +48,13 @@ const Hrmside: React.FC<Side> = ({ handleToggle }) => {
             Leave
           </NavLink>
         </li>
-        <li>
-          <NavLink to="/dashboard/attendance">
+        <li onClick={handleToggle}>
+          <NavLink
+            to="/dashboard/attendance"
+            className={({ isActive }) =>
+              isActive ? "text-blue-600 font-bold" : "text-gray-800"
+            }
+          >
             <li>Attendance</li>
           </NavLink>
         </li>

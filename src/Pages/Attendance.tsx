@@ -43,7 +43,7 @@ const Attendance: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-green-500 text-xl">
+      <div className="flex justify-center items-center h-screen text-gray-700 text-xl">
         Loading attendance...
       </div>
     );
@@ -51,38 +51,38 @@ const Attendance: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-white mb-6">Attendance Records</h1>
+      <h1 className="text-2xl font-bold text-black mb-6">Attendance Records</h1>
 
       {/* Card Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {attendance.map((log) => (
           <div
             key={log._id}
-            className="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-lg hover:shadow-green-500/20 transition transform hover:scale-[1.02]"
+            className="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-lg hover:shadow-2xl transition transform hover:scale-[1.02]"
           >
             {/* User Info */}
             <div className="flex items-center gap-3 mb-4">
-              <div className="bg-green-500/20 p-3 rounded-full">
-                <User className="text-green-400" size={24} />
+              <div className="bg-indigo-400 p-3 rounded-full">
+                <User className="text-indigo-600" size={24} />
               </div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-gray-800">
                 {log.userId?.firstName} {log.userId?.lastName}
               </h2>
             </div>
 
             {/* Clock In / Out */}
-            <div className="space-y-2 text-sm text-gray-300">
+            <div className="space-y-2 text-sm text-gray-800">
               <div className="flex items-center gap-2">
-                <Clock size={16} className="text-green-400" />
+                <Clock size={16} className="text-green-600" />
                 <span>
-                  <span className="text-gray-400">Clock-In:</span>{" "}
+                  <span className="text-gray-600">Clock-In:</span>{" "}
                   {log.clockIn ? new Date(log.clockIn).toLocaleString() : "—"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock size={16} className="text-red-400" />
+                <Clock size={16} className="text-red-600" />
                 <span>
-                  <span className="text-gray-400">Clock-Out:</span>{" "}
+                  <span className="text-gray-800">Clock-Out:</span>{" "}
                   {log.clockOut ? new Date(log.clockOut).toLocaleString() : "—"}
                 </span>
               </div>
@@ -93,8 +93,8 @@ const Attendance: React.FC = () => {
               <span
                 className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
                   log.location?.isWithinGeofence
-                    ? "bg-green-600/30 text-green-400"
-                    : "bg-red-600/30 text-red-400"
+                    ? "bg-green-900 text-white"
+                    : "bg-red-950 text-white"
                 }`}
               >
                 <MapPin size={14} />
@@ -106,8 +106,8 @@ const Attendance: React.FC = () => {
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   log.status === "present"
-                    ? "bg-green-600/30 text-green-400"
-                    : "bg-red-600/30 text-red-400"
+                    ? "bg-green-900 text-white"
+                    : "bg-red-950 text-white"
                 }`}
               >
                 {log.status}

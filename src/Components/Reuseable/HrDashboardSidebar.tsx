@@ -5,6 +5,7 @@ import {
   CalendarDaysIcon,
   BuildingOfficeIcon,
   BanknotesIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { LuLogOut } from "react-icons/lu";
 import Api from "./Api";
@@ -109,7 +110,15 @@ const HrDashboardSidebar = () => {
           </NavLink>
         </li>
         <li>
-          <NavLink to="/dashboard/attendance">
+          <NavLink
+            to="/dashboard/attendance"
+            className={({ isActive }) =>
+              `flex items-center p-2 rounded-lg transition-colors duration-200 ${
+                isActive ? "bg-indigo-600 text-white" : "hover:bg-gray-700"
+              }`
+            }
+          >
+            <CalendarIcon className="h-5 w-5 mr-3" />
             <li>Attendance</li>
           </NavLink>
         </li>
