@@ -7,6 +7,7 @@ import Button from "../Components/Reuseable/Button";
 import { Link, useNavigate } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
 import { AxiosError } from "axios";
+import dash from "../assets/dashboard.png";
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -315,7 +316,7 @@ const LoginPage: React.FC = () => {
           </p>
           <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-lg">
             <img
-              src="src/assets/dashboard.png"
+              src={dash}
               alt="Dashboard Preview"
               className="w-full h-auto rounded-lg shadow-2xl"
             />

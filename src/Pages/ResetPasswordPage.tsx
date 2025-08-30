@@ -6,7 +6,7 @@ import PasswordInput from "../Components/Reuseable/PasswordInput";
 import Button from "../Components/Reuseable/Button";
 import Api from "../Components/Reuseable/Api";
 import { AxiosError } from "axios";
-
+import dash from "../assets/dashboard.png";
 interface ResetPasswordData {
   password: string;
   confirmPassword: string;
@@ -188,7 +188,7 @@ const ResetPasswordPage: React.FC = () => {
           </p>
           <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-lg">
             <img
-              src="src/assets/dashboard.png"
+              src={dash}
               alt="Password Reset Illustration"
               className="w-full h-auto rounded-lg shadow-2xl"
             />
