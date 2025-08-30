@@ -1,0 +1,123 @@
+// src/pages/AdminAttendancePage.tsx
+import React, { useEffect, useState } from "react";
+import Api from "../Components/Reuseable/Api";
+import { MapPin, Clock, User } from "lucide-react";
+
+interface Attendance {
+  _id: string;
+  userId: {
+    firstName: string;
+    lastName: string;
+  };
+  clockIn: string;
+  clockOut: string;
+  status: string;
+  location: {
+    lat: number;
+    long: number;
+    isWithinGeofence: boolean;
+  };
+}
+
+const Attendance: React.FC = () => {
+  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await Api.get("/api/v1/attendance/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAttendance(res.data);
+      } catch (err) {
+        console.error("Failed to fetch attendance:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendance();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-green-500 text-xl">
+        Loading attendance...
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-white mb-6">Attendance Records</h1>
+
+      {/* Card Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {attendance.map((log) => (
+          <div
+            key={log._id}
+            className="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-lg hover:shadow-green-500/20 transition transform hover:scale-[1.02]"
+          >
+            {/* User Info */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-green-500/20 p-3 rounded-full">
+                <User className="text-green-400" size={24} />
+              </div>
+              <h2 className="text-lg font-semibold text-white">
+                {log.userId?.firstName} {log.userId?.lastName}
+              </h2>
+            </div>
+
+            {/* Clock In / Out */}
+            <div className="space-y-2 text-sm text-gray-300">
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-green-400" />
+                <span>
+                  <span className="text-gray-400">Clock-In:</span>{" "}
+                  {log.clockIn ? new Date(log.clockIn).toLocaleString() : "—"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-red-400" />
+                <span>
+                  <span className="text-gray-400">Clock-Out:</span>{" "}
+                  {log.clockOut ? new Date(log.clockOut).toLocaleString() : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Location + Status */}
+            <div className="mt-4 flex items-center justify-between">
+              <span
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+                  log.location?.isWithinGeofence
+                    ? "bg-green-600/30 text-green-400"
+                    : "bg-red-600/30 text-red-400"
+                }`}
+              >
+                <MapPin size={14} />
+                {log.location?.isWithinGeofence
+                  ? "Within Zone"
+                  : "Outside Zone"}
+              </span>
+
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  log.status === "present"
+                    ? "bg-green-600/30 text-green-400"
+                    : "bg-red-600/30 text-red-400"
+                }`}
+              >
+                {log.status}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Attendance;
