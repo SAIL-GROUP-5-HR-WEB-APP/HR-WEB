@@ -30,31 +30,32 @@ const Setting = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const res = await Api.get("/api/v1/users/profile", {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+        if (!user?._id) {
+          console.error("No user ID found in localStorage");
+          return;
+        }
+
+        const res = await Api.get(`/api/v1/users/${user._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const profileData = res.data.profile || {};
+        const userData = res.data;
 
         setProfile({
-          phone: profileData.phone || "",
-          address: profileData.address || "",
-          department: profileData.department || "",
-          position: profileData.position || "",
-          emergencyContact: profileData.emergencyContact || "",
-          dob: profileData.dateOfBirth
-            ? profileData.dateOfBirth.split("T")[0]
+          phone: userData.profile?.phone || "",
+          address: userData.profile?.address || "",
+          department: userData.profile?.department || "",
+          position: userData.profile?.position || "",
+          emergencyContact: userData.profile?.emergencyContact || "",
+          dob: userData.profile?.dateOfBirth
+            ? userData.profile.dateOfBirth.split("T")[0]
             : "",
           image: null,
         });
-
-        // update localStorage
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        user.profile = profileData;
-        localStorage.setItem("user", JSON.stringify(user));
       } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        alert("Failed to load profile data");
+        console.error("Failed to load profile", err);
       }
     };
 
