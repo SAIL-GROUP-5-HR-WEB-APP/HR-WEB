@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 import ClipLoader from "react-spinners/ClipLoader";
 import Api from "../Components/Reuseable/Api";
 
@@ -23,6 +24,7 @@ interface Employee {
 
 const SingleEmployeedetails = () => {
   const { id } = useParams();
+
   const [user, setUser] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +87,16 @@ const SingleEmployeedetails = () => {
 
   return (
     <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col justify-center items-center">
+      {/* Back arrow */}
+      <div className="w-full mb-6 flex items-center">
+        <Link to={"/employees"}>
+          {" "}
+          <button className="flex items-center gap-2 text-indigo-700 hover:text-indigo-900">
+            <FiArrowLeft size={20} /> Back
+          </button>
+        </Link>
+      </div>
+
       <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
         Employee Details
       </h1>
