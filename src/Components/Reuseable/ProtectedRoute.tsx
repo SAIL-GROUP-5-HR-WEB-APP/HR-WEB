@@ -10,7 +10,6 @@ interface Props {
 const ProtectedRoute: React.FC<Props> = ({ children, allowedRoles }) => {
   const token = localStorage.getItem("authToken");
   const role = localStorage.getItem("role");
-  // const user = JSON.parse(localStorage.getItem("user") || "{}"); // 👈 grab full user object
 
   // 🔒 Check if logged in
   if (!token) {
@@ -21,11 +20,6 @@ const ProtectedRoute: React.FC<Props> = ({ children, allowedRoles }) => {
   if (allowedRoles && !allowedRoles.includes(role || "")) {
     return <Navigate to="/" replace />;
   }
-
-  // // 🚦 Special case: employees must complete onboarding before dashboard
-  // if (role === "employee" && !user.isOnboarded) {
-  //   return <Navigate to="/onboarding" replace />;
-  // }
 
   return <>{children}</>;
 };

@@ -24,7 +24,7 @@ import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
 import ProtectedRoute from "./Components/Reuseable/ProtectedRoute";
 import SuperAdmin from "./Pages/SuperAdmin";
-import Unauthorized from "./Pages/Unauthorized";
+
 import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
 import Settings from "./Pages/Settings";
 
@@ -43,7 +43,7 @@ const AppContent = () => {
     "/OTP",
     "/setting",
     "/admin",
-    "/unauthorized",
+
     "/SingleEmployeedetails",
   ];
 
@@ -68,7 +68,7 @@ const AppContent = () => {
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/OTP" element={<OTPmodal />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
+
         <Route
           path="/SingleEmployeedetails/:id"
           element={<SingleEmployeedetails />}
