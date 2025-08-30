@@ -25,41 +25,34 @@ const Setting = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Fetch user profile from backend when page loads
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (!user?.id) {
+      console.error("No user ID found in localStorage");
+      return;
+    }
 
-        if (!user?._id) {
-          console.error("No user ID found in localStorage");
-          return;
-        }
-
-        const res = await Api.get(`/api/v1/users/${user._id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const userData = res.data;
-
+    const token = localStorage.getItem("authToken");
+    Api.get(`/api/v1/users/${user._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        const u = res.data;
         setProfile({
-          phone: userData.profile?.phone || "",
-          address: userData.profile?.address || "",
-          department: userData.profile?.department || "",
-          position: userData.profile?.position || "",
-          emergencyContact: userData.profile?.emergencyContact || "",
-          dob: userData.profile?.dateOfBirth
-            ? userData.profile.dateOfBirth.split("T")[0]
+          phone: u.profile?.phone || "",
+          address: u.profile?.address || "",
+          department: u.profile?.department || "",
+          position: u.profile?.position || "",
+          emergencyContact: u.profile?.emergencyContact || "",
+          dob: u.profile?.dateOfBirth
+            ? u.profile.dateOfBirth.split("T")[0]
             : "",
           image: null,
         });
-      } catch (err) {
+      })
+      .catch((err) => {
         console.error("Failed to load profile", err);
-      }
-    };
-
-    fetchProfile();
+      });
   }, []);
 
   const handleChange = (
@@ -77,17 +70,18 @@ const Setting = () => {
 
     try {
       const token = localStorage.getItem("authToken");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (value) formData.append(key, value as any);
       });
 
-      await Api.put("/api/v1/users/profile", formData, {
+      await Api.put(`/api/v1/users/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Update localStorage after successful save
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      // update localStorage
       user.profile = { ...user.profile, ...profile, dateOfBirth: profile.dob };
       localStorage.setItem("user", JSON.stringify(user));
 
