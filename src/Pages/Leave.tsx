@@ -37,7 +37,7 @@ const AdminLeavePage: React.FC = () => {
   // ✅ Approve leave
   const handleApprove = async (id: string) => {
     try {
-      await Api.post(`/api/v1/leaves/${id}/approve`);
+      await Api.post(`/api/v1/leave/approve/${id}`);
       setLeaves((prev) =>
         prev.map((leave) =>
           leave._id === id ? { ...leave, status: "approved" } : leave
@@ -47,11 +47,10 @@ const AdminLeavePage: React.FC = () => {
       console.error("Approve error:", err);
     }
   };
-
   // ✅ Reject leave
   const handleReject = async (id: string) => {
     try {
-      await Api.post(`/api/v1/leaves/${id}/reject`);
+      await Api.post(`/api/v1/leave/reject/${id}`);
       setLeaves((prev) =>
         prev.map((leave) =>
           leave._id === id ? { ...leave, status: "rejected" } : leave
@@ -114,13 +113,13 @@ const AdminLeavePage: React.FC = () => {
                     {leave.status === "pending" && (
                       <>
                         <button
-                          className="bg-green-500 hover:bg-green-600"
+                          className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-2xl"
                           onClick={() => handleApprove(leave._id)}
                         >
                           Approve
                         </button>
                         <button
-                          className="bg-red-500 hover:bg-red-600"
+                          className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-2xl"
                           onClick={() => handleReject(leave._id)}
                         >
                           Reject
