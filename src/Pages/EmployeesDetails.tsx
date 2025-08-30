@@ -2,16 +2,22 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiSearch, FiMail, FiPhone, FiMoreHorizontal } from "react-icons/fi";
 import ClipLoader from "react-spinners/ClipLoader";
+import Api from "../Components/Reuseable/Api";
 
 interface Employee {
   _id: string;
-  username: string;
-  bio?: string;
-  address?: string;
-  age?: number;
+  firstName: string;
+  lastName: string;
   email: string;
+  role: string;
   status: "online" | "offline";
-  avatar?: string;
+  profile: {
+    avatarUrl?: string;
+    address?: string;
+    phone?: string;
+    emergencyContact?: string;
+    dateOfBirth?: string;
+  };
 }
 
 const EmployeesDetails = () => {
@@ -24,12 +30,9 @@ const EmployeesDetails = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        "https://user-data-ci61.onrender.com/user/viewallUser"
-      );
-      const data = await res.json();
-      setEmployees(data.data || []);
-    } catch (err) {
+      const res = await Api.get("/api/v1/users/all");
+      setEmployees(res.data.data || []);
+    } catch (err: any) {
       console.error("Error fetching employees:", err);
       setError("Failed to fetch employees.");
     } finally {
@@ -42,22 +45,27 @@ const EmployeesDetails = () => {
   }, []);
 
   const filteredEmployees = employees.filter((emp) =>
-    emp.username?.toLowerCase().includes(search.toLowerCase())
+    `${emp.firstName} ${emp.lastName}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
+
+  const calculateAge = (dob?: string) => {
+    if (!dob) return "N/A";
+    const birthDate = new Date(dob);
+    const diff = new Date().getTime() - birthDate.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+  };
 
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div className=" flex justify-between">
-          <h2 className="text-2xl font-semibold">
-            <span className="text-indigo-900">{employees.length}</span> Employee
-          </h2>
-          <div className="flex items-center gap-3"></div>
-        </div>
-
+        <h2 className="text-2xl font-semibold">
+          <span className="text-indigo-900">{employees.length}</span> Employees
+        </h2>
         {/* Search */}
-        <div className="relative w-full max-w-md mb-8">
+        <div className="relative w-full max-w-md">
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
@@ -100,8 +108,11 @@ const EmployeesDetails = () => {
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <img
-                      src={emp.avatar || "https://via.placeholder.com/150"}
-                      alt={emp.username}
+                      src={
+                        emp.profile.avatarUrl ||
+                        "https://via.placeholder.com/150"
+                      }
+                      alt={`${emp.firstName} ${emp.lastName}`}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <span
@@ -111,10 +122,8 @@ const EmployeesDetails = () => {
                     ></span>
                   </div>
                   <div>
-                    <h3 className="font-semibold">{emp.username}</h3>
-                    <p className="text-sm text-gray-500">
-                      {emp.bio || "No role"}
-                    </p>
+                    <h3 className="font-semibold">{`${emp.firstName} ${emp.lastName}`}</h3>
+                    <p className="text-sm text-gray-500">{emp.role}</p>
                   </div>
                 </div>
                 <Link to={`/SingleEmployeedetails/${emp._id}`}>
@@ -125,10 +134,11 @@ const EmployeesDetails = () => {
               <div className="mt-4 space-y-2 text-sm text-gray-600">
                 <p>
                   <span className="font-medium">Address:</span>{" "}
-                  {emp.address || "N/A"}
+                  {emp.profile.address || "N/A"}
                 </p>
                 <p>
-                  <span className="font-medium">Age:</span> {emp.age || "N/A"}
+                  <span className="font-medium">Age:</span>{" "}
+                  {calculateAge(emp.profile.dateOfBirth)}
                 </p>
               </div>
 
@@ -137,7 +147,8 @@ const EmployeesDetails = () => {
                   <FiMail className="text-indigo-900" /> {emp.email || "N/A"}
                 </div>
                 <div className="flex items-center gap-2">
-                  <FiPhone className="text-indigo-900" /> N/A
+                  <FiPhone className="text-indigo-900" />{" "}
+                  {emp.profile.phone || "N/A"}
                 </div>
               </div>
             </div>
