@@ -3,6 +3,7 @@ import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import { Link } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
+import dash from "../assets/dashboard.png";
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -130,7 +131,7 @@ const ForgotPasswordPage: React.FC = () => {
           </p>
           <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-lg">
             <img
-              src="src/assets/dashboard.png"
+              src={dash}
               alt="Password Reset Illustration"
               className="w-full h-auto rounded-lg shadow-2xl"
             />

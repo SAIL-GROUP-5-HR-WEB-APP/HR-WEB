@@ -19,11 +19,12 @@ import withReactContent from "sweetalert2-react-content";
 const MySwal = withReactContent(Swal);
 
 interface LeaveRequest {
-  id: number;
+  id: string;
   type: string;
   reason: string;
   startDate: string;
   endDate: string;
+  status: "pending" | "approved" | "rejected";
 }
 
 const EmployeeDashboard = () => {
@@ -41,29 +42,49 @@ const EmployeeDashboard = () => {
     email: string;
     role?: string;
   } | null>(null);
+
   const navigate = useNavigate();
 
+  // Load user & fetch leave requests
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
-
     if (!token || !storedUser) {
       navigate("/login", { replace: true });
       return;
     }
-
     setUser(JSON.parse(storedUser));
+
+    // Fetch user's leave requests
+    const fetchLeaveRequests = async () => {
+      try {
+        const res = await Api.get("/api/v1/leave/my-requests", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        // Map backend _id to id
+        const formatted: LeaveRequest[] = res.data.map((r: any) => ({
+          id: r._id,
+          type: r.type,
+          reason: r.reason,
+          startDate: new Date(r.startDate).toISOString().split("T")[0],
+          endDate: new Date(r.endDate).toISOString().split("T")[0],
+          status: r.status,
+        }));
+        setLeaveRequests(formatted);
+      } catch (err) {
+        console.error("Failed to fetch leave requests", err);
+      }
+    };
+    fetchLeaveRequests();
   }, [navigate]);
 
-  // ✅ Submit Leave Request
+  // Submit leave request
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
-
     if (!leaveReason || !startDate || !endDate) {
       MySwal.fire("Missing fields", "Please fill all fields.", "warning");
       return;
     }
-
     if (new Date(endDate) < new Date(startDate)) {
       MySwal.fire(
         "Invalid dates",
@@ -72,7 +93,6 @@ const EmployeeDashboard = () => {
       );
       return;
     }
-
     try {
       const token = localStorage.getItem("authToken");
       if (!token) throw new Error("Authentication token missing");
@@ -85,45 +105,42 @@ const EmployeeDashboard = () => {
           startDate: new Date(startDate),
           endDate: new Date(endDate),
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       MySwal.fire(
         "Success",
-        res.data?.message || "Leave request submitted",
+        res.data.message || "Leave request submitted",
         "success"
       );
 
-      // update local state
-      const newRequest: LeaveRequest = {
-        id: Date.now(),
-        type: leaveType,
-        reason: leaveReason,
-        startDate,
-        endDate,
-      };
-
-      setLeaveRequests((prev) => [...prev, newRequest]);
+      // Add new request to local state
+      setLeaveRequests((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: leaveType,
+          reason: leaveReason,
+          startDate,
+          endDate,
+          status: "pending",
+        },
+      ]);
       setLeaveType("sick");
       setLeaveReason("");
       setStartDate("");
       setEndDate("");
-    } catch (error: any) {
+    } catch (err: any) {
       Swal.fire({
         title: "Error",
         text:
-          error.response?.data?.message ||
-          error.message ||
-          "Leave request failed",
+          err.response?.data?.message || err.message || "Leave request failed",
         icon: "error",
       });
     }
   };
 
+  // Logout
   const handleLogout = async () => {
     const result = await MySwal.fire({
       title: "Are you sure?",
@@ -134,32 +151,31 @@ const EmployeeDashboard = () => {
       cancelButtonText: "Cancel",
       reverseButtons: true,
     });
+    if (!result.isConfirmed) return;
 
-    if (result.isConfirmed) {
-      MySwal.fire({
-        title: "Logging out...",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
+    MySwal.fire({
+      title: "Logging out...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+    try {
+      const token = localStorage.getItem("authToken");
+      await Api.post(
+        "/api/v1/auth/logout",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      Swal.close();
+      MySwal.fire("Logged out!", "You have been logged out.", "success");
+      navigate("/login", { replace: true });
+    } catch (err: any) {
+      Swal.fire({
+        title: "Error",
+        text: err.response?.data?.message || "Logout failed",
+        icon: "error",
       });
-      try {
-        const token = localStorage.getItem("authToken");
-        await Api.post(
-          "/api/v1/auth/logout",
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("user");
-        Swal.close();
-        MySwal.fire("Logged out!", "You have been logged out.", "success");
-        navigate("/login", { replace: true });
-      } catch (error: any) {
-        Swal.fire({
-          title: "Error",
-          text: error.response?.data?.message || "Logout failed",
-          icon: "error",
-        });
-      }
     }
   };
 
@@ -257,7 +273,6 @@ const EmployeeDashboard = () => {
                   ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
                   : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:scale-105"
               }`}
-              aria-label="Mark as Present"
             >
               <LuUserCheck size={36} className="mb-2" /> Present
             </button>
@@ -268,12 +283,10 @@ const EmployeeDashboard = () => {
                   ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
                   : "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:scale-105"
               }`}
-              aria-label="Mark as Absent"
             >
               <LuUserX size={36} className="mb-2" /> Absent
             </button>
           </div>
-
           {attendance && (
             <div
               className={`mt-6 text-center p-5 rounded-xl text-white animate-slide-up ${
@@ -287,7 +300,7 @@ const EmployeeDashboard = () => {
                   <LuThumbsUp size={36} className="mb-2" />
                 ) : (
                   <LuThumbsDown size={36} className="mb-2" />
-                )}{" "}
+                )}
                 You have been marked {attendance} for today
               </p>
             </div>
@@ -296,6 +309,7 @@ const EmployeeDashboard = () => {
 
         {/* Leave Form & History */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          {/* Leave Form */}
           <section className="backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
             <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6">
               <LuCalendar className="text-gray-600" size={28} />{" "}
@@ -357,7 +371,6 @@ const EmployeeDashboard = () => {
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setStartDate(e.target.value)
                     }
-                    aria-required="true"
                   />
                 </div>
                 <div className="w-1/2">
@@ -375,7 +388,6 @@ const EmployeeDashboard = () => {
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setEndDate(e.target.value)
                     }
-                    aria-required="true"
                   />
                 </div>
               </div>
@@ -412,12 +424,27 @@ const EmployeeDashboard = () => {
                         <p className="text-sm text-gray-600">
                           {req.startDate} → {req.endDate}
                         </p>
+                        <p className="text-xs font-medium mt-1">
+                          Status:{" "}
+                          <span
+                            className={
+                              req.status === "pending"
+                                ? "text-yellow-400"
+                                : req.status === "approved"
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }
+                          >
+                            {req.status.toUpperCase()}
+                          </span>
+                        </p>
                       </div>
-                      <LuCheck
-                        className="text-green-400 animate-check"
-                        size={24}
-                        aria-label="Approved"
-                      />
+                      {req.status === "approved" && (
+                        <LuCheck
+                          className="text-green-400 animate-check"
+                          size={24}
+                        />
+                      )}
                     </div>
                   </li>
                 ))}
