@@ -33,7 +33,7 @@ const Setting = () => {
     }
 
     const token = localStorage.getItem("authToken");
-    Api.get(`/api/v1/users/${user._id}`, {
+    Api.get(`/api/v1/users/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
