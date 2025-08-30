@@ -401,7 +401,7 @@ const EmployeeDashboard = () => {
           </section>
 
           {/* Leave History */}
-          <section className="p-6 rounded-2xl border border-indigo-800">
+          <section className="p-6 rounded-2xl border border-indigo-800 overflow-y-scroll">
             <h2 className="font-extrabold text-xl md:text-2xl text-gray-600 mb-6">
               Pending Leave Requests
             </h2>
