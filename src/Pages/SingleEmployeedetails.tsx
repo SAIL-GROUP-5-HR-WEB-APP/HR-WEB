@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
-import Api from "../Components/Reuseable/Api";
 
 interface Employee {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
-  role: "admin" | "hr" | "employee";
-  verified: boolean;
+  role: string;
   profile?: {
     phone?: string;
     address?: string;
@@ -32,8 +31,13 @@ const SingleEmployeedetails = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await Api.get(`/api/v1/users/${id}`);
-      setGetSingleUser(res.data); // assuming your backend returns the user directly
+      const res = await axios.get<Employee>(
+        `https://user-data-ci61.onrender.com/api/v1/users/${id}`
+      );
+
+      console.log("API response:", res.data);
+
+      setGetSingleUser(res.data); // ✅ backend returns user directly
     } catch (err) {
       console.error("Error fetching user:", err);
       setGetSingleUser(null);
@@ -78,9 +82,9 @@ const SingleEmployeedetails = () => {
   }
 
   return (
-    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col">
+    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col justify-center items-centers">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
-        Employee Profile
+        User Detail
       </h1>
 
       <section className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center text-center">
@@ -88,8 +92,8 @@ const SingleEmployeedetails = () => {
         {getSingleUser.profile?.avatarUrl ? (
           <img
             src={getSingleUser.profile.avatarUrl}
-            alt="Profile"
-            className="h-24 w-24 rounded-full object-cover mb-4 border-4 border-indigo-500 shadow-md"
+            alt="User Avatar"
+            className="h-24 w-24 rounded-full object-cover mb-4"
           />
         ) : (
           <div className="h-24 w-24 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex justify-center items-center text-white text-4xl font-bold mb-4">
@@ -101,13 +105,10 @@ const SingleEmployeedetails = () => {
         <h2 className="text-2xl font-semibold text-gray-800 mb-1">
           {getSingleUser.firstName} {getSingleUser.lastName}
         </h2>
-        <p className="text-gray-500 mb-2">{getSingleUser.email}</p>
-        <span className="px-3 py-1 text-sm rounded-full bg-indigo-100 text-indigo-700 font-medium">
-          {getSingleUser.role}
-        </span>
+        <p className="text-gray-500 mb-6">{getSingleUser.email}</p>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full max-w-2xl mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full max-w-md">
           <div>
             <p className="text-sm text-gray-500">Phone</p>
             <p className="font-medium text-gray-800">
@@ -149,28 +150,6 @@ const SingleEmployeedetails = () => {
             </p>
           </div>
         </div>
-
-        {/* Documents */}
-        {getSingleUser.profile?.documents &&
-          getSingleUser.profile.documents.length > 0 && (
-            <div className="mt-8 w-full max-w-2xl text-left">
-              <p className="text-sm text-gray-500 mb-2">Documents</p>
-              <ul className="list-disc pl-5 space-y-1">
-                {getSingleUser.profile.documents.map((doc, i) => (
-                  <li key={i}>
-                    <a
-                      href={doc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 hover:underline"
-                    >
-                      Document {i + 1}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
       </section>
     </div>
   );
