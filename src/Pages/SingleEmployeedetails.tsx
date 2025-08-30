@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
-import ClipLoader from "react-spinners/ClipLoader";
+import { ClipLoader } from "react-spinners";
 import Api from "../Components/Reuseable/Api";
 
 interface Employee {
@@ -22,9 +22,9 @@ interface Employee {
   };
 }
 
-const SingleEmployeedetails = () => {
+const SingleEmployeeDetails = () => {
   const { id } = useParams();
-
+  const navigate = useNavigate();
   const [user, setUser] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,19 +57,21 @@ const SingleEmployeedetails = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <ClipLoader color="#5B5CE6" size={50} />
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+        <ClipLoader color="#6366f1" size={60} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen gap-4">
-        <p className="text-red-500 font-semibold">{error}</p>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 gap-6">
+        <p className="text-red-600 font-medium text-lg animate-pulse">
+          {error}
+        </p>
         <button
           onClick={fetchUser}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-300"
         >
           Retry
         </button>
@@ -79,116 +81,120 @@ const SingleEmployeedetails = () => {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-red-500 font-semibold">User not found.</p>
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+        <p className="text-red-600 font-medium text-lg">User not found.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col justify-center items-center">
-      {/* Back arrow */}
-      <div className="w-full mb-6 flex items-center">
-        <Link to={"/employees"}>
-          {" "}
-          <button className="flex items-center gap-2 text-indigo-700 hover:text-indigo-900">
-            <FiArrowLeft size={20} /> Back
-          </button>
-        </Link>
-      </div>
-
-      <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
-        Employee Details
-      </h1>
-
-      <section className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center text-center">
-        {/* Avatar */}
-        {user.profile?.avatarUrl ? (
-          <img
-            src={user.profile.avatarUrl}
-            alt="User Avatar"
-            className="h-24 w-24 rounded-full object-cover mb-4"
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="group flex items-center gap-2 text-indigo-600 hover:text-indigo-800 mb-8 transition-all duration-300"
+        >
+          <FiArrowLeft
+            className="group-hover:-translate-x-1 transition-transform"
+            size={24}
           />
-        ) : (
-          <div className="h-24 w-24 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex justify-center items-center text-white text-4xl font-bold mb-4">
-            {user.firstName?.charAt(0).toUpperCase()}
-          </div>
-        )}
+          <span className="font-medium">Back to List</span>
+        </button>
 
-        {/* Name & Email */}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-1">
-          {user.firstName} {user.lastName}
-        </h2>
-        <p className="text-gray-500 mb-6">{user.email}</p>
+        {/* Header */}
+        <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-10 bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+          Employee Profile
+        </h1>
 
-        {/* Role */}
-        <p className="text-sm text-gray-600 mb-4">
-          Role: <span className="font-medium">{user.role}</span>
-        </p>
+        {/* Employee Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="flex flex-col items-center">
+            {/* Avatar */}
+            {user.profile?.avatarUrl ? (
+              <img
+                src={user.profile.avatarUrl}
+                alt="User Avatar"
+                className="h-32 w-32 rounded-full object-cover border-4 border-indigo-100 shadow-md mb-6"
+              />
+            ) : (
+              <div className="h-32 w-32 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-5xl font-bold mb-6 shadow-md">
+                {user.firstName?.charAt(0).toUpperCase()}
+              </div>
+            )}
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left w-full max-w-md">
-          <div>
-            <p className="text-sm text-gray-500">Phone</p>
-            <p className="font-medium text-gray-800">
-              {user.profile?.phone || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Address</p>
-            <p className="font-medium text-gray-800">
-              {user.profile?.address || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Department</p>
-            <p className="font-medium text-gray-800">
-              {user.profile?.department || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Position</p>
-            <p className="font-medium text-gray-800">
-              {user.profile?.position || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Emergency Contact</p>
-            <p className="font-medium text-gray-800">
-              {user.profile?.emergencyContact || "N/A"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Date of Birth</p>
-            <p className="font-medium text-gray-800">
-              {user.profile?.dateOfBirth
-                ? new Date(user.profile.dateOfBirth).toLocaleDateString()
-                : "N/A"}
-            </p>
-          </div>
-          <div className="sm:col-span-2">
-            <p className="text-sm text-gray-500">Documents</p>
-            <ul className="list-disc list-inside text-gray-800">
-              {user.profile?.documents?.length
-                ? user.profile.documents.map((doc, idx) => (
-                    <li key={idx}>
-                      <a
-                        href={doc}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-600 hover:underline"
-                      >
-                        Document {idx + 1}
-                      </a>
-                    </li>
-                  ))
-                : "No documents uploaded"}
-            </ul>
+            {/* Name & Email */}
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              {user.firstName} {user.lastName}
+            </h2>
+            <p className="text-gray-600 mb-4 text-lg">{user.email}</p>
+
+            {/* Role */}
+            <span className="inline-block px-4 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-6">
+              {user.role}
+            </span>
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+              {[
+                { label: "Phone", value: user.profile?.phone || "N/A" },
+                { label: "Address", value: user.profile?.address || "N/A" },
+                {
+                  label: "Department",
+                  value: user.profile?.department || "N/A",
+                },
+                { label: "Position", value: user.profile?.position || "N/A" },
+                {
+                  label: "Emergency Contact",
+                  value: user.profile?.emergencyContact || "N/A",
+                },
+                {
+                  label: "Date of Birth",
+                  value: user.profile?.dateOfBirth
+                    ? new Date(user.profile.dateOfBirth).toLocaleDateString()
+                    : "N/A",
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col">
+                  <span className="text-sm text-gray-500 font-medium">
+                    {item.label}
+                  </span>
+                  <span className="text-gray-900 font-semibold">
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+
+              {/* Documents */}
+              <div className="sm:col-span-2">
+                <span className="text-sm text-gray-500 font-medium">
+                  Documents
+                </span>
+                <ul className="mt-2 space-y-2">
+                  {user.profile?.documents?.length ? (
+                    user.profile.documents.map((doc, idx) => (
+                      <li key={idx}>
+                        <a
+                          href={doc}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:text-indigo-800 font-medium hover:underline transition-colors"
+                        >
+                          Document {idx + 1}
+                        </a>
+                      </li>
+                    ))
+                  ) : (
+                    <span className="text-gray-600">No documents uploaded</span>
+                  )}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
 
-export default SingleEmployeedetails;
+export default SingleEmployeeDetails;
