@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ChangeEvent } from "react";
+import { useEffect, useState, type FormEvent, type ChangeEvent } from "react";
 import {
   LuUsers,
   LuBuilding2,
@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import DateTime from "../Components/Reuseable/DateTime";
+import Api from "../Components/Reuseable/Api";
 
 interface Task {
   id: number;
@@ -32,25 +33,32 @@ interface Task {
 const HrDashboard = () => {
   const [todo, setTodo] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [totalEmployees, setTotalEmployees] = useState<number>(0);
+
+  // Fetch total employees
+  const fetchTotalEmployees = async () => {
+    try {
+      const res = await Api.get("/api/v1/users/all");
+      setTotalEmployees(res.data.length || 0); // Assuming backend returns an array of employees
+    } catch (err) {
+      console.error("Failed to fetch total employees:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalEmployees();
+  }, []);
 
   const addTask = () => {
     if (todo.trim() === "") return;
-
-    const newTask: Task = {
-      id: Date.now(),
-      text: todo,
-      completed: false,
-    };
-
+    const newTask: Task = { id: Date.now(), text: todo, completed: false };
     setTasks([...tasks, newTask]);
     setTodo("");
   };
-
   const saveData = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     addTask();
   };
-
   const toggleComplete = (id: number) => {
     setTasks(
       tasks.map((task) =>
@@ -58,10 +66,10 @@ const HrDashboard = () => {
       )
     );
   };
-
   const deleteTask = (id: number) => {
     setTasks(tasks.filter((task) => task.id !== id));
   };
+
   const leaveCards = [
     { title: "Employees on Leave", total: "5", icon: <LuPlane size={30} /> },
     {
@@ -69,13 +77,15 @@ const HrDashboard = () => {
       total: "2",
       icon: <LuCalendarCheck size={30} />,
     },
-    {
-      title: <DateTime />,
-      icon: <LuClock size={30} />,
-    },
+    { title: <DateTime />, icon: <LuClock size={30} /> },
   ];
+
   const statCard = [
-    { title: "Total employees", total: "100", icon: <LuUsers size={30} /> },
+    {
+      title: "Total employees",
+      total: totalEmployees,
+      icon: <LuUsers size={30} />,
+    }, // DYNAMIC
     { title: "Departments", total: "7", icon: <LuBuilding2 size={30} /> },
     { title: "Present", total: "55", icon: <LuUserCheck size={30} /> },
     { title: "Absent", total: "35", icon: <LuUserX size={30} /> },
