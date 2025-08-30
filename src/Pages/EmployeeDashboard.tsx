@@ -45,9 +45,13 @@ const EmployeeDashboard = () => {
     role?: string;
   } | null>(null);
 
+  // KPI states
+  const [daysPresent, setDaysPresent] = useState<number>(0);
+  const [daysAbsent, setDaysAbsent] = useState<number>(0);
+
   const navigate = useNavigate();
 
-  // Load user & fetch leave requests
+  // Load user & fetch leave requests + attendance summary
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
@@ -55,15 +59,15 @@ const EmployeeDashboard = () => {
       navigate("/login", { replace: true });
       return;
     }
-    setUser(JSON.parse(storedUser));
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
 
-    // Fetch user's leave requests
+    // Fetch leave requests
     const fetchLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // Map backend _id to id
         const formatted: LeaveRequest[] = res.data.map((r: any) => ({
           id: r._id,
           type: r.type,
@@ -77,70 +81,29 @@ const EmployeeDashboard = () => {
         console.error("Failed to fetch leave requests", err);
       }
     };
+
+    // Fetch attendance KPI
+    const fetchAttendanceSummary = async () => {
+      try {
+        const res = await Api.get(`/api/v1/attendance/logs/${userData._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const logs = res.data;
+        setDaysPresent(logs.filter((l: any) => l.status === "present").length);
+        setDaysAbsent(logs.filter((l: any) => l.status === "absent").length);
+      } catch (err) {
+        console.error("Failed to fetch attendance summary", err);
+      }
+    };
+
     fetchLeaveRequests();
+    fetchAttendanceSummary();
   }, [navigate]);
 
-  //handle clock out
-  const handleClockOut = async () => {
-    if (!navigator.geolocation) {
-      return MySwal.fire(
-        "Error",
-        "Geolocation is not supported by your browser",
-        "error"
-      );
-    }
-
-    MySwal.fire({
-      title: "Clocking out...",
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-    });
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const token = localStorage.getItem("authToken");
-          const res = await Api.post(
-            "/api/v1/attendance/clock-out",
-            { lat: latitude, long: longitude },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          Swal.close();
-          MySwal.fire(
-            "Success",
-            res.data.isWithinGeofence
-              ? "Clock-Out successful within office area!"
-              : "Clock-Out recorded but outside geofence",
-            "success"
-          );
-          setAttendance("ClockOut");
-        } catch (err: any) {
-          Swal.close();
-          MySwal.fire(
-            "Error",
-            err.response?.data?.message || "Clock-Out failed",
-            "error"
-          );
-        }
-      },
-      (error) => {
-        Swal.close();
-        MySwal.fire("Error", "Unable to get your location", "error");
-        console.error("Geolocation error:", error);
-      }
-    );
-  };
-
-  //handle clockin
+  // Clock-in
   const handleClockIn = async () => {
-    if (!navigator.geolocation) {
-      return MySwal.fire(
-        "Error",
-        "Geolocation is not supported by your browser",
-        "error"
-      );
-    }
+    if (!navigator.geolocation)
+      return MySwal.fire("Error", "Geolocation is not supported", "error");
 
     MySwal.fire({
       title: "Clocking in...",
@@ -163,10 +126,10 @@ const EmployeeDashboard = () => {
             "Success",
             res.data.isWithinGeofence
               ? "Clock-In successful within office area!"
-              : "Clock-In recorded but outside geofence",
+              : "Clock-In recorded outside geofence",
             "success"
           );
-          setAttendance(res.data.isWithinGeofence ? "ClockIn" : "ClockOut"); // Optional fallback
+          setAttendance("ClockIn");
         } catch (err: any) {
           Swal.close();
           MySwal.fire(
@@ -179,29 +142,77 @@ const EmployeeDashboard = () => {
       (error) => {
         Swal.close();
         MySwal.fire("Error", "Unable to get your location", "error");
-        console.error("Geolocation error:", error);
+        console.error(error);
       }
     );
   };
 
-  // Submit leave request
+  // Clock-out
+  const handleClockOut = async () => {
+    if (!navigator.geolocation)
+      return MySwal.fire("Error", "Geolocation is not supported", "error");
+
+    MySwal.fire({
+      title: "Clocking out...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await Api.post(
+            "/api/v1/attendance/clock-out",
+            { lat: latitude, long: longitude },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          Swal.close();
+          MySwal.fire(
+            "Success",
+            res.data.isWithinGeofence
+              ? "Clock-Out successful within office area!"
+              : "Clock-Out recorded outside geofence",
+            "success"
+          );
+          setAttendance("ClockOut");
+        } catch (err: any) {
+          Swal.close();
+          MySwal.fire(
+            "Error",
+            err.response?.data?.message || "Clock-Out failed",
+            "error"
+          );
+        }
+      },
+      (error) => {
+        Swal.close();
+        MySwal.fire("Error", "Unable to get your location", "error");
+        console.error(error);
+      }
+    );
+  };
+
+  // Leave request submission
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
-    if (!leaveReason || !startDate || !endDate) {
-      MySwal.fire("Missing fields", "Please fill all fields.", "warning");
-      return;
-    }
-    if (new Date(endDate) < new Date(startDate)) {
-      MySwal.fire(
+    if (!leaveReason || !startDate || !endDate)
+      return MySwal.fire(
+        "Missing fields",
+        "Please fill all fields.",
+        "warning"
+      );
+    if (new Date(endDate) < new Date(startDate))
+      return MySwal.fire(
         "Invalid dates",
         "End date cannot be before start date.",
         "warning"
       );
-      return;
-    }
+
     try {
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Authentication token missing");
+      if (!token) throw new Error("Auth token missing");
 
       const res = await Api.post(
         "/api/v1/leave/request",
@@ -220,7 +231,6 @@ const EmployeeDashboard = () => {
         "success"
       );
 
-      // Add new request to local state
       setLeaveRequests((prev) => [
         ...prev,
         {
@@ -336,29 +346,26 @@ const EmployeeDashboard = () => {
             {
               icon: <LuUserCheck size={30} />,
               label: "Days Present",
-              value: 0,
-              color: "text-white",
+              value: daysPresent,
             },
             {
               icon: <LuUserX size={30} />,
               label: "Days Absent",
-              value: 0,
-              color: "text-white",
+              value: daysAbsent,
             },
             {
               icon: <LuBaggageClaim size={30} />,
               label: "Leave Requests",
               value: leaveRequests.length,
-              color: "text-white",
             },
           ].map((stat, index) => (
             <div
               key={index}
-              className={`backdrop-blur-md p-6 rounded-2xl border border-white/20 animate-pulse-once bg-gradient-to-r from-indigo-700 to-indigo-400 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] transition-all duration-300`}
+              className="backdrop-blur-md p-6 rounded-2xl border border-white/20 bg-gradient-to-r from-indigo-700 to-indigo-400 transition-all"
             >
               <div className="text-white">{stat.icon}</div>
               <p className="text-sm font-medium text-white/80">{stat.label}</p>
-              <h2 className={`text-3xl font-extrabold ${stat.color}`}>
+              <h2 className="text-3xl font-extrabold text-white">
                 {stat.value}
               </h2>
             </div>
@@ -373,7 +380,7 @@ const EmployeeDashboard = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             <button
-              onClick={handleClockIn} // call the API and verify geolocation
+              onClick={handleClockIn}
               className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
                 attendance === "ClockIn"
                   ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
@@ -383,7 +390,7 @@ const EmployeeDashboard = () => {
               <LuClock10 size={36} className="mb-2" /> Clock-In
             </button>
             <button
-              onClick={handleClockOut} // call API with geolocation
+              onClick={handleClockOut}
               className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
                 attendance === "ClockOut"
                   ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
