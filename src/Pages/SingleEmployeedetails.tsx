@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import ClipLoader from "react-spinners/ClipLoader";
+import Api from "../Components/Reuseable/Api";
 
 interface Employee {
   _id: string;
@@ -31,13 +31,9 @@ const SingleEmployeedetails = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get<Employee>(
-        `https://user-data-ci61.onrender.com/api/v1/users/${id}`
-      );
-
+      const res = await Api.get<Employee>(`/api/v1/users/${id}`);
       console.log("API response:", res.data);
-
-      setGetSingleUser(res.data); // ✅ backend returns user directly
+      setGetSingleUser(res.data);
     } catch (err) {
       console.error("Error fetching user:", err);
       setGetSingleUser(null);
@@ -82,12 +78,12 @@ const SingleEmployeedetails = () => {
   }
 
   return (
-    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col justify-center items-centers">
+    <div className="max-w-[900px] mx-auto px-6 py-10 flex flex-col justify-center items-center">
       <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
         User Detail
       </h1>
 
-      <section className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center text-center">
+      <section className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center text-center w-full">
         {/* Avatar */}
         {getSingleUser.profile?.avatarUrl ? (
           <img
@@ -148,6 +144,10 @@ const SingleEmployeedetails = () => {
                   ).toLocaleDateString()
                 : "N/A"}
             </p>
+          </div>
+          <div className="sm:col-span-2">
+            <p className="text-sm text-gray-500">Role</p>
+            <p className="font-medium text-gray-800">{getSingleUser.role}</p>
           </div>
         </div>
       </section>
