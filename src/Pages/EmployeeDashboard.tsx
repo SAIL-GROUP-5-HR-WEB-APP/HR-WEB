@@ -1,8 +1,8 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import {
   LuClipboardList,
-  LuUserX,
-  LuUserCheck,
+  LuClock10,
+  LuClock6,
   LuThumbsUp,
   LuThumbsDown,
   LuCalendar,
@@ -10,6 +10,8 @@ import {
   LuBaggageClaim,
   LuLogOut,
   LuPen,
+  LuUserX,
+  LuUserCheck,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate, Link } from "react-router-dom";
@@ -33,7 +35,7 @@ const EmployeeDashboard = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [attendance, setAttendance] = useState<"Present" | "Absent" | null>(
+  const [attendance, setAttendance] = useState<"ClockIn" | "ClockOut" | null>(
     null
   );
 
@@ -262,46 +264,47 @@ const EmployeeDashboard = () => {
         {/* Attendance Section */}
         <section className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
           <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6 justify-center">
-            <LuClipboardList className="text-gray-600" size={28} />{" "}
+            <LuClipboardList className="text-gray-600" size={28} />
             <span>Attendance</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             <button
-              onClick={() => setAttendance("Present")}
+              onClick={() => setAttendance("ClockIn")}
               className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
-                attendance === "Present"
+                attendance === "ClockIn"
                   ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
                   : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:scale-105"
               }`}
             >
-              <LuUserCheck size={36} className="mb-2" /> Present
+              <LuClock10 size={36} className="mb-2" /> Clock-In
             </button>
             <button
-              onClick={() => setAttendance("Absent")}
+              onClick={() => setAttendance("ClockOut")}
               className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
-                attendance === "Absent"
+                attendance === "ClockOut"
                   ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
                   : "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:scale-105"
               }`}
             >
-              <LuUserX size={36} className="mb-2" /> Absent
+              <LuClock6 size={36} className="mb-2" /> Clock-Out
             </button>
           </div>
           {attendance && (
             <div
               className={`mt-6 text-center p-5 rounded-xl text-white animate-slide-up ${
-                attendance === "Present"
+                attendance === "ClockIn"
                   ? "bg-gradient-to-r from-green-500 to-green-700"
                   : "bg-gradient-to-r from-red-500 to-red-700"
               }`}
             >
               <p className="text-lg font-semibold flex flex-col items-center">
-                {attendance === "Present" ? (
+                {attendance === "ClockIn" ? (
                   <LuThumbsUp size={36} className="mb-2" />
                 ) : (
                   <LuThumbsDown size={36} className="mb-2" />
                 )}
-                You have been marked {attendance} for today
+                You have successfully{" "}
+                {attendance === "ClockIn" ? "clocked in" : "clocked out"} today
               </p>
             </div>
           )}
