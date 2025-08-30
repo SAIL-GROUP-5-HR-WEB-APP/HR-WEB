@@ -89,12 +89,12 @@ const LoginPage: React.FC = () => {
       console.log("✅ Login success:", data);
 
       // ✅ Navigate based on role
+      // Navigate based on role
       if (data.user.role === "hr") {
         navigate("/dashboard", { replace: true });
       } else if (data.user.role === "admin") {
         navigate("/admin", { replace: true });
-      } else data.user.role === "employee";
-      {
+      } else if (data.user.role === "employee") {
         navigate("/EmployeeDashboard", { replace: true });
       }
     } catch (error) {
