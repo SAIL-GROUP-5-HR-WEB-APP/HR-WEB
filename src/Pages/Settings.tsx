@@ -25,21 +25,40 @@ const Setting = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // 🔹 Fetch user profile from backend when page loads
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    if (!user?.profile) return;
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await Api.get("/api/v1/users/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-    setProfile({
-      phone: user.profile.phone || "",
-      address: user.profile.address || "",
-      department: user.profile.department || "",
-      position: user.profile.position || "",
-      emergencyContact: user.profile.emergencyContact || "",
-      dob: user.profile.dateOfBirth
-        ? user.profile.dateOfBirth.split("T")[0]
-        : "",
-      image: null,
-    });
+        const profileData = res.data.profile || {};
+
+        setProfile({
+          phone: profileData.phone || "",
+          address: profileData.address || "",
+          department: profileData.department || "",
+          position: profileData.position || "",
+          emergencyContact: profileData.emergencyContact || "",
+          dob: profileData.dateOfBirth
+            ? profileData.dateOfBirth.split("T")[0]
+            : "",
+          image: null,
+        });
+
+        // update localStorage
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        user.profile = profileData;
+        localStorage.setItem("user", JSON.stringify(user));
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+        alert("Failed to load profile data");
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const handleChange = (
@@ -66,7 +85,7 @@ const Setting = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Update localStorage
+      // Update localStorage after successful save
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       user.profile = { ...user.profile, ...profile, dateOfBirth: profile.dob };
       localStorage.setItem("user", JSON.stringify(user));
