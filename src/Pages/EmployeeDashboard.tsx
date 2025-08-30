@@ -88,11 +88,19 @@ const EmployeeDashboard = () => {
         const res = await Api.get(`/api/v1/attendance/logs/${userData._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const logs = res.data;
-        setDaysPresent(logs.filter((l: any) => l.status === "present").length);
-        setDaysAbsent(logs.filter((l: any) => l.status === "absent").length);
+        const logs = res.data || []; // Ensure logs is an array
+        const presentCount = logs.filter(
+          (log: any) => log.status?.toLowerCase() === "present"
+        ).length;
+        const absentCount = logs.filter(
+          (log: any) => log.status?.toLowerCase() === "absent"
+        ).length;
+        setDaysPresent(presentCount);
+        setDaysAbsent(absentCount);
       } catch (err) {
         console.error("Failed to fetch attendance summary", err);
+        setDaysPresent(0);
+        setDaysAbsent(0);
       }
     };
 
