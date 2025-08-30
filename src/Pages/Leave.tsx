@@ -37,7 +37,7 @@ const AdminLeavePage: React.FC = () => {
   // ✅ Approve leave
   const handleApprove = async (id: string) => {
     try {
-      await Api.post(`/api/v1/leave/approve/${id}`);
+      await Api.patch(`/api/v1/leave/approve/${id}`);
       setLeaves((prev) =>
         prev.map((leave) =>
           leave._id === id ? { ...leave, status: "approved" } : leave
@@ -50,7 +50,7 @@ const AdminLeavePage: React.FC = () => {
   // ✅ Reject leave
   const handleReject = async (id: string) => {
     try {
-      await Api.post(`/api/v1/leave/reject/${id}`);
+      await Api.patch(`/api/v1/leave/reject/${id}`);
       setLeaves((prev) =>
         prev.map((leave) =>
           leave._id === id ? { ...leave, status: "rejected" } : leave
