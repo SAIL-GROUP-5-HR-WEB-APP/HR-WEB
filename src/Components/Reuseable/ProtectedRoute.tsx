@@ -1,5 +1,5 @@
 // src/components/ProtectedRoute.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 interface Props {
@@ -8,15 +8,29 @@ interface Props {
 }
 
 const ProtectedRoute: React.FC<Props> = ({ children, allowedRoles }) => {
-  const token = localStorage.getItem("authToken");
-  const role = localStorage.getItem("role");
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
-  // 🔒 Check if logged in
+  useEffect(() => {
+    // ✅ Rehydrate auth state from localStorage on mount
+    const storedToken = localStorage.getItem("authToken");
+    const storedRole = localStorage.getItem("role");
+    setToken(storedToken);
+    setRole(storedRole);
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>; // ⏳ prevent redirect flicker
+  }
+
+  // 🔒 Not logged in → go to login
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // 🔑 Check if user has permission
+  // 🔑 Logged in but no access → go to home
   if (allowedRoles && !allowedRoles.includes(role || "")) {
     return <Navigate to="/" replace />;
   }
