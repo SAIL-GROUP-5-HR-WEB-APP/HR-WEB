@@ -85,12 +85,12 @@ const EmployeeDashboard = () => {
     // Fetch attendance KPI
     const fetchAttendanceSummary = async () => {
       try {
-        if (!userData?._id) {
+        if (!userData?.id) {
           console.error(" User ID missing, cannot fetch logs");
           return;
         }
 
-        const res = await Api.get(`/api/v1/attendance/logs/${userData._id}`, {
+        const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
