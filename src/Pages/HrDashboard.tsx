@@ -8,7 +8,6 @@ import {
   LuClipboard,
   LuCheck,
   LuTrash,
-  LuPlane,
   LuCalendarCheck,
   LuClock,
 } from "react-icons/lu";
@@ -34,7 +33,11 @@ const HrDashboard = () => {
   const [todo, setTodo] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
-  const [totalLeaves, setTotalLeaves] = useState<number>(0);
+  const [leaveStats, setLeaveStats] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+  });
 
   // Fetch total employees
   const fetchTotalEmployees = async () => {
@@ -45,11 +48,19 @@ const HrDashboard = () => {
       console.error("Failed to fetch total employees:", err);
     }
   };
-  //fetch total leaves
   const fetchTotalLeaves = async () => {
     try {
       const res = await Api.get("/api/v1/leave/all");
-      setTotalLeaves(res.data.length || 0);
+      const leaves = res.data || [];
+
+      // count statuses
+      const stats = {
+        pending: leaves.filter((l: any) => l.status === "pending").length,
+        approved: leaves.filter((l: any) => l.status === "approved").length,
+        rejected: leaves.filter((l: any) => l.status === "rejected").length,
+      };
+
+      setLeaveStats(stats);
     } catch (err) {
       console.error("Failed to fetch total leaves:", err);
     }
@@ -81,11 +92,20 @@ const HrDashboard = () => {
   };
 
   const leaveCards = [
-    { title: "Employees on Leave", total: "5", icon: <LuPlane size={30} /> },
     {
-      title: "Leave Requests",
-      total: totalLeaves,
+      title: "Pending Requests",
+      total: leaveStats.pending,
+      icon: <LuClock size={30} />,
+    },
+    {
+      title: "Approved Leaves",
+      total: leaveStats.approved,
       icon: <LuCalendarCheck size={30} />,
+    },
+    {
+      title: "Rejected Leaves",
+      total: leaveStats.rejected,
+      icon: <LuUserX size={30} />,
     },
     { title: <DateTime />, icon: <LuClock size={30} /> },
   ];
@@ -239,7 +259,7 @@ const HrDashboard = () => {
         </div>
       </div>
       <div>
-        <div className="grid grid-cols-3  gap-4 mt-6  max-[550px]:grid-cols-1 ">
+        <div className="grid grid-cols-4  gap-4 mt-6  max-[550px]:grid-cols-1 ">
           {leaveCards.map((data, i) => (
             <div
               key={i}
