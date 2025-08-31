@@ -14,7 +14,7 @@ import {
   LuUserCheck,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 
@@ -29,28 +29,7 @@ interface LeaveRequest {
   status: "pending" | "approved" | "rejected";
 }
 
-interface User {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: "admin" | "hr" | "employee";
-  verified: boolean;
-  profile?: {
-    phone?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    department?: string;
-    position?: string;
-    dateOfBirth?: string;
-    avatarUrl?: string;
-  };
-}
-
 const EmployeeDashboard = () => {
-  const { id } = useParams(); // Get user ID from URL (e.g., /dashboard/:id)
   const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
@@ -59,42 +38,49 @@ const EmployeeDashboard = () => {
   const [attendance, setAttendance] = useState<"ClockIn" | "ClockOut" | null>(
     null
   );
-  const [user, setUser] = useState<User | null>(null);
+
+  const [user, setUser] = useState<{
+    firstName: string;
+    lastName?: string;
+    email: string;
+    role?: string;
+    profile?: {
+      department?: string;
+      position?: string;
+      phone?: string;
+      address?: string;
+    };
+  } | null>(null);
+
+  // KPI states
   const [daysPresent, setDaysPresent] = useState<number>(0);
   const [daysAbsent, setDaysAbsent] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  // Fetch user data, leave requests, and attendance summary
+  // Load user & fetch leave requests + attendance summary
   useEffect(() => {
     const token = localStorage.getItem("authToken");
-    if (!token || !id) {
+    const storedUser = localStorage.getItem("user");
+    if (!token || !storedUser) {
       navigate("/login", { replace: true });
       return;
     }
+    const userData = JSON.parse(storedUser);
+    setUser(userData);
 
-    // Fetch user data
-    const fetchUser = async () => {
+    //fetch user data
+    const fetchUserProfile = async () => {
       try {
-        const res = await Api.get(`/api/v1/users/${id}`, {
+        const res = await Api.get(`/api/v1/users/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(res.data);
-        localStorage.setItem("user", JSON.stringify(res.data)); // Update localStorage
-        setLoading(false);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load user data");
-        setLoading(false);
-        if (err.response?.status === 401) {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("user");
-          navigate("/login", { replace: true });
-        }
+        setUser(res.data); // <-- now we have full profile info
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+        setUser(userData); // fallback to stored
       }
     };
-
     // Fetch leave requests
     const fetchLeaveRequests = async () => {
       try {
@@ -118,36 +104,39 @@ const EmployeeDashboard = () => {
     // Fetch attendance KPI
     const fetchAttendanceSummary = async () => {
       try {
-        if (!id) {
-          console.error("User ID missing, cannot fetch logs");
+        if (!userData?.id) {
+          console.error(" User ID missing, cannot fetch logs");
           return;
         }
-        const res = await Api.get(
-          `/api/v1/attendance/logs(protocol://localhost:3000logs/${id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+
+        const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Backend returns an array of attendance logs
         const logs = Array.isArray(res.data) ? res.data : [];
+
         const presentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "present"
         ).length;
+
         const absentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "absent"
         ).length;
+
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
       } catch (err) {
-        console.error("Failed to fetch attendance summary:", err);
+        console.error(" Failed to fetch attendance summary:", err);
         setDaysPresent(0);
         setDaysAbsent(0);
       }
     };
 
-    fetchUser();
     fetchLeaveRequests();
     fetchAttendanceSummary();
-  }, [id, navigate]);
+    fetchUserProfile();
+  }, [navigate]);
 
   // Clock-in
   const handleClockIn = async () => {
@@ -262,6 +251,7 @@ const EmployeeDashboard = () => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) throw new Error("Auth token missing");
+
       const res = await Api.post(
         "/api/v1/leave/request",
         {
@@ -272,15 +262,17 @@ const EmployeeDashboard = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       MySwal.fire(
         "Success",
         res.data.message || "Leave request submitted",
         "success"
       );
+
       setLeaveRequests((prev) => [
         ...prev,
         {
-          id: res.data._id || Date.now().toString(),
+          id: Date.now().toString(),
           type: leaveType,
           reason: leaveReason,
           startDate,
@@ -293,11 +285,12 @@ const EmployeeDashboard = () => {
       setStartDate("");
       setEndDate("");
     } catch (err: any) {
-      MySwal.fire(
-        "Error",
-        err.response?.data?.message || err.message || "Leave request failed",
-        "error"
-      );
+      Swal.fire({
+        title: "Error",
+        text:
+          err.response?.data?.message || err.message || "Leave request failed",
+        icon: "error",
+      });
     }
   };
 
@@ -332,39 +325,27 @@ const EmployeeDashboard = () => {
       MySwal.fire("Logged out!", "You have been logged out.", "success");
       navigate("/login", { replace: true });
     } catch (err: any) {
-      Swal.close();
-      MySwal.fire(
-        "Error",
-        err.response?.data?.message || "Logout failed",
-        "error"
-      );
+      Swal.fire({
+        title: "Error",
+        text: err.response?.data?.message || "Logout failed",
+        icon: "error",
+      });
     }
   };
-
-  if (loading)
-    return <div className="text-center text-gray-500">Loading...</div>;
-  if (error)
-    return <div className="text-center text-red-500">Error: {error}</div>;
 
   return (
     <div className="min-h-screen w-full flex flex-col">
       {/* Profile Section */}
       <header className="p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="relative bg-white/10 backdrop-blur-md p-6 rounded-lg shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all duration-300 transform hover:scale-105 max-w-lg mx-auto">
+          <div className="relative bg-white/10 backdrop-blur-md p-6 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all duration-300 transform hover:scale-105 max-w-sm mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {user?.profile?.avatarUrl ? (
-                  <img
-                    src={user.profile.avatarUrl}
-                    alt="Profile"
-                    className="h-16 w-16 rounded-full shadow"
-                  />
-                ) : (
-                  <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
-                    {user?.firstName?.charAt(0).toUpperCase() || "?"}
-                  </div>
-                )}
+                <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
+                  {user?.firstName
+                    ? user.firstName.charAt(0).toUpperCase()
+                    : "?"}
+                </div>
                 <div className="text-gray-700">
                   <h1 className="text-2xl font-extrabold text-shadow">
                     {user?.firstName} {user?.lastName}
@@ -372,22 +353,41 @@ const EmployeeDashboard = () => {
                   <p className="text-sm font-medium capitalize">
                     {user?.role || "Employee"}
                   </p>
-                  <p className="text-xs opacity-80">
-                    {user?.email || "No email found"}
-                  </p>
+                  <p className="text-xs opacity-80">{user?.email}</p>
+
+                  {/* Profile details from API */}
                   {user?.profile && (
-                    <div className="text-xs opacity-80 mt-1">
-                      <p>
-                        Department: {user.profile.department || "Not provided"}
-                      </p>
-                      <p>Position: {user.profile.position || "Not provided"}</p>
-                      <p>Phone: {user.profile.phone || "Not provided"}</p>
+                    <div className="mt-2 text-xs text-gray-600 space-y-1">
+                      {user.profile.department && (
+                        <p>
+                          <span className="font-semibold">Department:</span>{" "}
+                          {user.profile.department}
+                        </p>
+                      )}
+                      {user.profile.position && (
+                        <p>
+                          <span className="font-semibold">Position:</span>{" "}
+                          {user.profile.position}
+                        </p>
+                      )}
+                      {user.profile.phone && (
+                        <p>
+                          <span className="font-semibold">Phone:</span>{" "}
+                          {user.profile.phone}
+                        </p>
+                      )}
+                      {user.profile.address && (
+                        <p>
+                          <span className="font-semibold">Address:</span>{" "}
+                          {user.profile.address}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex flex-col items-center gap-3">
-                <Link to="/settings">
+              <div className="flex flex-col items center gap-3">
+                <Link to={"/setting"}>
                   <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl">
                     <LuPen size={15} />
                   </button>
@@ -492,7 +492,7 @@ const EmployeeDashboard = () => {
           {/* Leave Form */}
           <section className="backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
             <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6">
-              <LuCalendar className="text-gray-600" size={28} />
+              <LuCalendar className="text-gray-600" size={28} />{" "}
               <span>Request Leave</span>
             </h2>
             <form onSubmit={submitLeaveRequest} className="space-y-4">
