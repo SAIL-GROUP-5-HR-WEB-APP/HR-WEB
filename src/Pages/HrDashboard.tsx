@@ -34,19 +34,29 @@ const HrDashboard = () => {
   const [todo, setTodo] = useState<string>("");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
+  const [totalLeaves, setTotalLeaves] = useState<number>(0);
 
   // Fetch total employees
   const fetchTotalEmployees = async () => {
     try {
       const res = await Api.get("/api/v1/users/all");
-      setTotalEmployees(res.data.length || 0); // Assuming backend returns an array of employees
+      setTotalEmployees(res.data.length || 0);
     } catch (err) {
       console.error("Failed to fetch total employees:", err);
     }
   };
+  //fetch total leaves
+  const fetchTotalLeaves = async () => {
+    try {
+      const res = await Api.get("/api/v1/leave/all");
+      setTotalLeaves(res.data.length || 0);
+    } catch (err) {
+      console.error("Failed to fetch total leaves:", err);
+    }
+  };
 
   useEffect(() => {
-    fetchTotalEmployees();
+    fetchTotalEmployees(), fetchTotalLeaves();
   }, []);
 
   const addTask = () => {
@@ -74,7 +84,7 @@ const HrDashboard = () => {
     { title: "Employees on Leave", total: "5", icon: <LuPlane size={30} /> },
     {
       title: "Leave Requests",
-      total: "2",
+      total: totalLeaves,
       icon: <LuCalendarCheck size={30} />,
     },
     { title: <DateTime />, icon: <LuClock size={30} /> },
