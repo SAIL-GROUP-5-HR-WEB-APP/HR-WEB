@@ -88,13 +88,19 @@ const EmployeeDashboard = () => {
         const res = await Api.get(`/api/v1/attendance/logs/${userData._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const logs = res.data || []; // Ensure logs is an array
+
+        // Make sure we always have an array
+        const logs: any[] = Array.isArray(res.data) ? res.data : [];
+
+        // Count present / absent
         const presentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "present"
+          (log) => String(log.status).toLowerCase() === "present"
         ).length;
+
         const absentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "absent"
+          (log) => String(log.status).toLowerCase() === "absent"
         ).length;
+
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
       } catch (err) {
