@@ -8,7 +8,6 @@ import {
   LuClipboard,
   LuCheck,
   LuTrash,
-  LuPlane,
   LuCalendarCheck,
   LuClock,
 } from "react-icons/lu";
