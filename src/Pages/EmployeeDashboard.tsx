@@ -335,22 +335,22 @@ const EmployeeDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
       {/* Profile Section */}
       <header className="p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="relative bg-white/10 backdrop-blur-md p-6 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all duration-300 transform hover:scale-105 max-w-sm mx-auto">
+          <div className="relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 max-w-lg mx-auto border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 {user?.profile?.avatarUrl ? (
                   <img
                     src={user.profile.avatarUrl}
                     alt={`${user.firstName} ${user.lastName || ""}`}
-                    className="h-16 w-16 rounded-full object-cover border-2 border-purple-400 shadow-lg"
+                    className="h-16 w-16 rounded-full object-cover border-2 border-purple-400 dark:border-purple-600 shadow-md hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-full shadow bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-2xl font-extrabold text-white tracking-wide relative overflow-hidden">
-                    <span className="animate-pulse-once drop-shadow-md">
+                  <div className="h-16 w-16 rounded-full shadow-lg bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white">
+                    <span className="animate-pulse">
                       {user?.firstName
                         ? `${user.firstName.charAt(0)}${
                             user.lastName ? user.lastName.charAt(0) : ""
@@ -359,34 +359,55 @@ const EmployeeDashboard = () => {
                     </span>
                   </div>
                 )}
-
-                <div className="text-gray-700">
-                  <h1 className="text-2xl font-extrabold text-shadow">
-                    {user?.firstName} {user?.lastName}
+                <div className="text-gray-900 dark:text-gray-100">
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    {user?.firstName} {user?.lastName || ""}
                   </h1>
-                  <p className="text-sm opacity-80">{user?.email}</p>
-
-                  {/* Profile details from API */}
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {user?.email || "No email provided"}
+                  </p>
                   {user?.profile && (
-                    <div className="mt-2 text-sm text-gray-600 space-y-1">
+                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {user.profile.department && (
-                        <p>{user.profile.department}</p>
+                        <p className="flex items-center">
+                          <span className="mr-1">🏢</span>{" "}
+                          {user.profile.department}
+                        </p>
+                      )}
+                      {user.profile.position && (
+                        <p className="flex items-center">
+                          <span className="mr-1">💼</span>{" "}
+                          {user.profile.position}
+                        </p>
+                      )}
+                      {user.profile.phone && (
+                        <p className="flex items-center">
+                          <span className="mr-1">📞</span> {user.profile.phone}
+                        </p>
+                      )}
+                      {user.profile.address && (
+                        <p className="flex items-center">
+                          <span className="mr-1">📍</span>{" "}
+                          {user.profile.address}
+                        </p>
                       )}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex flex-col items center gap-3">
-                <Link to={"/setting"}>
-                  <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl">
-                    <LuPen size={15} />
+              <div className="flex flex-col gap-3">
+                <Link to="/setting">
+                  <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg">
+                    <LuPen size={16} />
+                    <span className="text-sm font-medium">Edit</span>
                   </button>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-2 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-xl"
+                  className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
-                  <LuLogOut size={15} />
+                  <LuLogOut size={16} />
+                  <span className="text-sm font-medium">Logout</span>
                 </button>
               </div>
             </div>
@@ -395,80 +416,88 @@ const EmployeeDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
+      <main className="flex-1 p-4 md:p-8 max-w-6xl mx-auto w-full">
         {/* KPI Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {[
             {
-              icon: <LuUserCheck size={30} />,
+              icon: <LuUserCheck size={32} className="text-green-400" />,
               label: "Days Present",
               value: daysPresent,
             },
             {
-              icon: <LuUserX size={30} />,
+              icon: <LuUserX size={32} className="text-red-400" />,
               label: "Days Absent",
               value: daysAbsent,
             },
             {
-              icon: <LuBaggageClaim size={30} />,
+              icon: <LuBaggageClaim size={32} className="text-purple-400" />,
               label: "Leave Requests",
               value: leaveRequests.length,
             },
           ].map((stat, index) => (
             <div
               key={index}
-              className="backdrop-blur-md p-6 rounded-2xl border border-white/20 bg-gradient-to-r from-indigo-700 to-indigo-400 transition-all"
+              className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-gray-200 dark:border-gray-700"
             >
-              <div className="text-white">{stat.icon}</div>
-              <p className="text-sm font-medium text-white/80">{stat.label}</p>
-              <h2 className="text-3xl font-extrabold text-white">
-                {stat.value}
-              </h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                    {stat.label}
+                  </p>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+                    {stat.value}
+                  </h2>
+                </div>
+                <div>{stat.icon}</div>
+              </div>
             </div>
           ))}
         </div>
 
         {/* Attendance Section */}
-        <section className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
-          <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6 justify-center">
-            <LuClipboardList className="text-gray-600" size={28} />
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
+          <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 justify-center">
+            <LuClipboardList size={28} className="text-purple-500" />
             <span>Attendance</span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <button
               onClick={handleClockIn}
-              className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
+              className={`flex flex-col items-center justify-center p-8 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
                 attendance === "ClockIn"
-                  ? "bg-gradient-to-r from-green-500 to-green-700 text-white scale-105 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-                  : "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:scale-105"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105"
+                  : "bg-gray-100 dark:bg-gray-700 text-green-500 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105"
               }`}
             >
-              <LuClock10 size={36} className="mb-2" /> Clock-In
+              <LuClock10 size={40} className="mb-2" />
+              <span className="text-lg font-semibold">Clock-In</span>
             </button>
             <button
               onClick={handleClockOut}
-              className={`px-6 py-8 text-lg font-semibold flex flex-col items-center justify-center rounded-xl border border-white/20 transition-all duration-300 ${
+              className={`flex flex-col items-center justify-center p-8 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
                 attendance === "ClockOut"
-                  ? "bg-gradient-to-r from-red-500 to-red-700 text-white scale-105 shadow-[0_0_15px_rgba(239,68,68,0.5)]"
-                  : "bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:scale-105"
+                  ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg scale-105"
+                  : "bg-gray-100 dark:bg-gray-700 text-red-500 hover:bg-gray-200 dark:hover:bg-gray-600 hover:scale-105"
               }`}
             >
-              <LuClock6 size={36} className="mb-2" /> Clock-Out
+              <LuClock6 size={40} className="mb-2" />
+              <span className="text-lg font-semibold">Clock-Out</span>
             </button>
           </div>
           {attendance && (
             <div
-              className={`mt-6 text-center p-5 rounded-xl text-white animate-slide-up ${
+              className={`mt-6 text-center p-6 rounded-xl text-white animate-fade-in ${
                 attendance === "ClockIn"
-                  ? "bg-gradient-to-r from-green-500 to-green-700"
-                  : "bg-gradient-to-r from-red-500 to-red-700"
+                  ? "bg-gradient-to-r from-green-500 to-green-600"
+                  : "bg-gradient-to-r from-red-500 to-red-600"
               }`}
             >
               <p className="text-lg font-semibold flex flex-col items-center">
                 {attendance === "ClockIn" ? (
-                  <LuThumbsUp size={36} className="mb-2" />
+                  <LuThumbsUp size={36} className="mb-2 animate-pulse" />
                 ) : (
-                  <LuThumbsDown size={36} className="mb-2" />
+                  <LuThumbsDown size={36} className="mb-2 animate-pulse" />
                 )}
                 You have successfully{" "}
                 {attendance === "ClockIn" ? "clocked in" : "clocked out"} today
@@ -478,24 +507,24 @@ const EmployeeDashboard = () => {
         </section>
 
         {/* Leave Form & History */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Leave Form */}
-          <section className="backdrop-blur-md p-6 rounded-2xl border border-indigo-800">
-            <h2 className="font-extrabold text-xl md:text-2xl flex items-center space-x-2 text-gray-600 mb-6">
-              <LuCalendar className="text-gray-600" size={28} />{" "}
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700">
+            <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
+              <LuCalendar size={28} className="text-purple-500" />
               <span>Request Leave</span>
             </h2>
             <form onSubmit={submitLeaveRequest} className="space-y-4">
               <div>
                 <label
                   htmlFor="leaveType"
-                  className="text-sm font-medium text-white/80"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Leave Type
                 </label>
                 <select
                   id="leaveType"
-                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
                   value={leaveType}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                     setLeaveType(e.target.value)
@@ -509,7 +538,7 @@ const EmployeeDashboard = () => {
               <div>
                 <label
                   htmlFor="leaveReason"
-                  className="text-sm font-medium text-white/80"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Reason for Leave
                 </label>
@@ -517,7 +546,7 @@ const EmployeeDashboard = () => {
                   id="leaveReason"
                   type="text"
                   placeholder="Enter reason for leave"
-                  className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
                   value={leaveReason}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     setLeaveReason(e.target.value)
@@ -525,35 +554,35 @@ const EmployeeDashboard = () => {
                   aria-required="true"
                 />
               </div>
-              <div className="flex space-x-4">
-                <div className="w-1/2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                   <label
                     htmlFor="startDate"
-                    className="text-sm font-medium text-white/80"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     Start Date
                   </label>
                   <input
                     id="startDate"
                     type="date"
-                    className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
                     value={startDate}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setStartDate(e.target.value)
                     }
                   />
                 </div>
-                <div className="w-1/2">
+                <div>
                   <label
                     htmlFor="endDate"
-                    className="text-sm font-medium text-white/80"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     End Date
                   </label>
                   <input
                     id="endDate"
                     type="date"
-                    className="w-full bg-transparent border border-indigo-300 px-4 py-3 rounded-md text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
                     value={endDate}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setEndDate(e.target.value)
@@ -563,7 +592,7 @@ const EmployeeDashboard = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-md hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:rounded-2xl"
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 Submit Leave Request
               </button>
@@ -571,12 +600,12 @@ const EmployeeDashboard = () => {
           </section>
 
           {/* Leave History */}
-          <section className="p-6 rounded-2xl border border-indigo-800 overflow-y-scroll">
-            <h2 className="font-extrabold text-xl md:text-2xl text-gray-600 mb-6">
-              Pending Leave Requests
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[400px] overflow-y-auto">
+            <h2 className="font-bold text-xl md:text-2xl text-gray-900 dark:text-white mb-6">
+              Leave Requests
             </h2>
             {leaveRequests.length === 0 ? (
-              <p className="text-gray-500 text-center text-sm">
+              <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
                 No leave requests submitted.
               </p>
             ) : (
@@ -584,26 +613,26 @@ const EmployeeDashboard = () => {
                 {leaveRequests.map((req) => (
                   <li
                     key={req.id}
-                    className="p-4 border border-white/20 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 transition-all duration-200 animate-slide-up"
+                    className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 animate-fade-in"
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-semibold text-gray-500">
+                        <p className="font-semibold text-gray-900 dark:text-white capitalize">
                           {req.type} - {req.reason}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           {req.startDate} → {req.endDate}
                         </p>
                         <p className="text-xs font-medium mt-1">
                           Status:{" "}
                           <span
-                            className={
+                            className={`px-2 py-1 rounded-full text-xs ${
                               req.status === "pending"
-                                ? "text-yellow-400"
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200"
                                 : req.status === "approved"
-                                ? "text-green-400"
-                                : "text-red-400"
-                            }
+                                ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200"
+                                : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200"
+                            }`}
                           >
                             {req.status.toUpperCase()}
                           </span>
@@ -611,7 +640,7 @@ const EmployeeDashboard = () => {
                       </div>
                       {req.status === "approved" && (
                         <LuCheck
-                          className="text-green-400 animate-check"
+                          className="text-green-500 dark:text-green-400 animate-check"
                           size={24}
                         />
                       )}
@@ -625,13 +654,23 @@ const EmployeeDashboard = () => {
       </main>
 
       <style>{`
-        @keyframes pulse-once {0% { opacity: 0.8; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); }}
-        @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes check { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        .animate-pulse-once { animation: pulse-once 0.5s ease-in-out; }
-        .animate-slide-up { animation: slide-up 0.3s ease-in-out; }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+        @keyframes check {
+          0% { transform: scale(0); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        .animate-fade-in { animation: fade-in 0.3s ease-out; }
+        .animate-pulse { animation: pulse 0.5s ease-in-out; }
         .animate-check { animation: check 0.3s ease-in-out; }
-        .text-shadow { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
       `}</style>
     </div>
   );
