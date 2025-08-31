@@ -49,6 +49,7 @@ const EmployeeDashboard = () => {
       position?: string;
       phone?: string;
       address?: string;
+      avatarUrl: string;
     };
   } | null>(null);
 
@@ -341,46 +342,35 @@ const EmployeeDashboard = () => {
           <div className="relative bg-white/10 backdrop-blur-md p-6 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all duration-300 transform hover:scale-105 max-w-sm mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 rounded-full shadow bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl font-extrabold text-white">
-                  {user?.firstName
-                    ? user.firstName.charAt(0).toUpperCase()
-                    : "?"}
-                </div>
+                {user?.profile?.avatarUrl ? (
+                  <img
+                    src={user.profile.avatarUrl}
+                    alt={`${user.firstName} ${user.lastName || ""}`}
+                    className="h-16 w-16 rounded-full object-cover border-2 border-purple-400 shadow-lg"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full shadow bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-2xl font-extrabold text-white tracking-wide relative overflow-hidden">
+                    <span className="animate-pulse-once drop-shadow-md">
+                      {user?.firstName
+                        ? `${user.firstName.charAt(0)}${
+                            user.lastName ? user.lastName.charAt(0) : ""
+                          }`.toUpperCase()
+                        : "?"}
+                    </span>
+                  </div>
+                )}
+
                 <div className="text-gray-700">
                   <h1 className="text-2xl font-extrabold text-shadow">
                     {user?.firstName} {user?.lastName}
                   </h1>
-                  <p className="text-sm font-medium capitalize">
-                    {user?.role || "Employee"}
-                  </p>
-                  <p className="text-xs opacity-80">{user?.email}</p>
+                  <p className="text-sm opacity-80">{user?.email}</p>
 
                   {/* Profile details from API */}
                   {user?.profile && (
-                    <div className="mt-2 text-xs text-gray-600 space-y-1">
+                    <div className="mt-2 text-sm text-gray-600 space-y-1">
                       {user.profile.department && (
-                        <p>
-                          <span className="font-semibold">Department:</span>{" "}
-                          {user.profile.department}
-                        </p>
-                      )}
-                      {user.profile.position && (
-                        <p>
-                          <span className="font-semibold">Position:</span>{" "}
-                          {user.profile.position}
-                        </p>
-                      )}
-                      {user.profile.phone && (
-                        <p>
-                          <span className="font-semibold">Phone:</span>{" "}
-                          {user.profile.phone}
-                        </p>
-                      )}
-                      {user.profile.address && (
-                        <p>
-                          <span className="font-semibold">Address:</span>{" "}
-                          {user.profile.address}
-                        </p>
+                        <p>{user.profile.department}</p>
                       )}
                     </div>
                   )}
