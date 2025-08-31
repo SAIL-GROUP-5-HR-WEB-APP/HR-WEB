@@ -38,6 +38,27 @@ const HrDashboard = () => {
     approved: 0,
     rejected: 0,
   });
+  const [attendanceStats, setAttendanceStats] = useState({
+    present: 0,
+    absent: 0,
+  });
+
+  // fetch present and absent attendance
+  const fetchAttendanceStats = async () => {
+    try {
+      const res = await Api.get("/api/v1/attendance/all");
+      const attendance = res.data || [];
+
+      const stats = {
+        present: attendance.filter((a: any) => a.status === "present").length,
+        absent: attendance.filter((a: any) => a.status === "absent").length,
+      };
+
+      setAttendanceStats(stats);
+    } catch (err) {
+      console.error("Failed to fetch attendance:", err);
+    }
+  };
 
   // Fetch total employees
   const fetchTotalEmployees = async () => {
@@ -67,7 +88,7 @@ const HrDashboard = () => {
   };
 
   useEffect(() => {
-    fetchTotalEmployees(), fetchTotalLeaves();
+    fetchTotalEmployees(), fetchTotalLeaves(), fetchAttendanceStats();
   }, []);
 
   const addTask = () => {
@@ -117,8 +138,16 @@ const HrDashboard = () => {
       icon: <LuUsers size={30} />,
     }, // DYNAMIC
     { title: "Departments", total: "7", icon: <LuBuilding2 size={30} /> },
-    { title: "Present", total: "55", icon: <LuUserCheck size={30} /> },
-    { title: "Absent", total: "35", icon: <LuUserX size={30} /> },
+    {
+      title: "Present",
+      total: attendanceStats.present,
+      icon: <LuUserCheck size={30} />,
+    },
+    {
+      title: "Absent",
+      total: attendanceStats.absent,
+      icon: <LuUserX size={30} />,
+    },
   ];
   const barData = [
     { name: "Jan", employees: 30 },
@@ -168,13 +197,13 @@ const HrDashboard = () => {
             <h1>
               <LuClipboard />
             </h1>
-            <h1 className="text-center font-bold ml-2">TODO</h1>
+            <h1 className="text-center font-bold ml-2">ANNOUNCEMENT</h1>
           </div>
 
           <form onSubmit={saveData} className="relative">
             <input
               type="text"
-              placeholder="Add a task..."
+              placeholder="Add an announcement..."
               className="relative w-full pl-10 pr-10 py-2 border bg-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 border-indigo-200"
               value={todo}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
