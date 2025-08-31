@@ -43,7 +43,7 @@ const Attendance: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-700 text-xl">
+      <div className="flex justify-center items-center h-screen text-gray-700 text-xl animate-pulse">
         Loading attendance...
       </div>
     );
@@ -93,8 +93,8 @@ const Attendance: React.FC = () => {
               <span
                 className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
                   log.location?.isWithinGeofence
-                    ? "bg-green-900 text-white"
-                    : "bg-red-950 text-white"
+                    ? "bg-green-800 text-white"
+                    : "bg-red-800 text-white"
                 }`}
               >
                 <MapPin size={14} />
@@ -106,8 +106,8 @@ const Attendance: React.FC = () => {
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   log.status === "present"
-                    ? "bg-green-900 text-white"
-                    : "bg-red-950 text-white"
+                    ? "bg-green-800 text-white"
+                    : "bg-red-800 text-white"
                 }`}
               >
                 {log.status}
