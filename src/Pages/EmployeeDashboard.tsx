@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import {
   LuClipboardList,
   LuClock10,
