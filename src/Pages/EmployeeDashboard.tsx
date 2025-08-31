@@ -85,26 +85,30 @@ const EmployeeDashboard = () => {
     // Fetch attendance KPI
     const fetchAttendanceSummary = async () => {
       try {
+        if (!userData?._id) {
+          console.error(" User ID missing, cannot fetch logs");
+          return;
+        }
+
         const res = await Api.get(`/api/v1/attendance/logs/${userData._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Make sure we always have an array
-        const logs: any[] = Array.isArray(res.data) ? res.data : [];
+        // Backend returns an array of attendance logs
+        const logs = Array.isArray(res.data) ? res.data : [];
 
-        // Count present / absent
         const presentCount = logs.filter(
-          (log) => String(log.status).toLowerCase() === "present"
+          (log: any) => log.status?.toLowerCase() === "present"
         ).length;
 
         const absentCount = logs.filter(
-          (log) => String(log.status).toLowerCase() === "absent"
+          (log: any) => log.status?.toLowerCase() === "absent"
         ).length;
 
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
       } catch (err) {
-        console.error("Failed to fetch attendance summary", err);
+        console.error(" Failed to fetch attendance summary:", err);
         setDaysPresent(0);
         setDaysAbsent(0);
       }
