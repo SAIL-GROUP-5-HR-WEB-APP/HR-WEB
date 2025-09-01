@@ -188,7 +188,7 @@ const EmployeeDashboard = () => {
           const token = localStorage.getItem("authToken");
           const res = await Api.post(
             "/api/v1/attendance/clock-in",
-            { lat: latitude, long: longitude },
+            { latitude, longitude, consent: true }, // send correct keys
             { headers: { Authorization: `Bearer ${token}` } }
           );
           Swal.close();
@@ -217,7 +217,6 @@ const EmployeeDashboard = () => {
     );
   };
 
-  // Clock-out
   const handleClockOut = async () => {
     if (!navigator.geolocation)
       return MySwal.fire("Error", "Geolocation is not supported", "error");
@@ -235,7 +234,7 @@ const EmployeeDashboard = () => {
           const token = localStorage.getItem("authToken");
           const res = await Api.post(
             "/api/v1/attendance/clock-out",
-            { lat: latitude, long: longitude },
+            { latitude, longitude, consent: true }, // send correct keys
             { headers: { Authorization: `Bearer ${token}` } }
           );
           Swal.close();
