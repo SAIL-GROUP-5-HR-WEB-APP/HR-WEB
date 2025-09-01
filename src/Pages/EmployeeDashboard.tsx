@@ -171,6 +171,7 @@ const EmployeeDashboard = () => {
   }, [navigate]);
 
   // Clock-in
+
   const handleClockIn = async () => {
     if (!navigator.geolocation)
       return MySwal.fire("Error", "Geolocation is not supported", "error");
@@ -186,11 +187,14 @@ const EmployeeDashboard = () => {
         const { latitude, longitude } = position.coords;
         try {
           const token = localStorage.getItem("authToken");
+          if (!token) throw new Error("Auth token missing");
+
           const res = await Api.post(
             "/api/v1/attendance/clock-in",
-            { latitude, longitude, consent: true }, // send correct keys
+            { latitude, longitude, consent: true },
             { headers: { Authorization: `Bearer ${token}` } }
           );
+
           Swal.close();
           MySwal.fire(
             "Success",
@@ -199,14 +203,24 @@ const EmployeeDashboard = () => {
               : "Clock-In recorded outside geofence",
             "success"
           );
+
           setAttendance("ClockIn");
         } catch (err: any) {
           Swal.close();
-          MySwal.fire(
-            "Error",
-            err.response?.data?.message || "Clock-In failed",
-            "error"
-          );
+
+          if (err.response?.status === 403) {
+            MySwal.fire(
+              "Forbidden",
+              "You are not authorized to clock in. Please login again.",
+              "error"
+            );
+          } else {
+            MySwal.fire(
+              "Error",
+              err.response?.data?.message || "Clock-In failed",
+              "error"
+            );
+          }
         }
       },
       (error) => {
@@ -217,6 +231,7 @@ const EmployeeDashboard = () => {
     );
   };
 
+  // Clock-out
   const handleClockOut = async () => {
     if (!navigator.geolocation)
       return MySwal.fire("Error", "Geolocation is not supported", "error");
@@ -232,11 +247,14 @@ const EmployeeDashboard = () => {
         const { latitude, longitude } = position.coords;
         try {
           const token = localStorage.getItem("authToken");
+          if (!token) throw new Error("Auth token missing");
+
           const res = await Api.post(
             "/api/v1/attendance/clock-out",
-            { latitude, longitude, consent: true }, // send correct keys
+            { latitude, longitude, consent: true },
             { headers: { Authorization: `Bearer ${token}` } }
           );
+
           Swal.close();
           MySwal.fire(
             "Success",
@@ -245,14 +263,24 @@ const EmployeeDashboard = () => {
               : "Clock-Out recorded outside geofence",
             "success"
           );
+
           setAttendance("ClockOut");
         } catch (err: any) {
           Swal.close();
-          MySwal.fire(
-            "Error",
-            err.response?.data?.message || "Clock-Out failed",
-            "error"
-          );
+
+          if (err.response?.status === 403) {
+            MySwal.fire(
+              "Forbidden",
+              "You are not authorized to clock out. Please login again.",
+              "error"
+            );
+          } else {
+            MySwal.fire(
+              "Error",
+              err.response?.data?.message || "Clock-Out failed",
+              "error"
+            );
+          }
         }
       },
       (error) => {
