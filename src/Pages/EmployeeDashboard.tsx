@@ -173,8 +173,13 @@ const EmployeeDashboard = () => {
   // Clock-in
 
   const handleClockIn = async () => {
-    if (!navigator.geolocation)
-      return MySwal.fire("Error", "Geolocation is not supported", "error");
+    if (!navigator.geolocation) {
+      return MySwal.fire(
+        "Error",
+        "Geolocation is not supported by your browser",
+        "error"
+      );
+    }
 
     MySwal.fire({
       title: "Clocking in...",
@@ -184,17 +189,29 @@ const EmployeeDashboard = () => {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+
+        // Validate geolocation accuracy (e.g., accuracy > 100 meters might be unreliable)
+        if (accuracy > 100) {
+          Swal.close();
+          return MySwal.fire(
+            "Error",
+            "Geolocation accuracy too low. Please try again.",
+            "error"
+          );
+        }
 
         try {
           const token = localStorage.getItem("authToken");
-          if (!token) throw new Error("Auth token missing");
+          if (!token) {
+            throw new Error("Authentication token missing. Please log in.");
+          }
 
           const res = await Api.post(
             "/api/v1/attendance/clock-in",
             {
-              latitude: Number(latitude), // send as number
-              longitude: Number(longitude), // send as number
+              latitude: Number(latitude),
+              longitude: Number(longitude),
               consent: true,
             },
             { headers: { Authorization: `Bearer ${token}` } }
@@ -212,25 +229,43 @@ const EmployeeDashboard = () => {
           setAttendance("ClockIn");
         } catch (err: any) {
           Swal.close();
-          MySwal.fire(
-            "Error",
-            err.response?.data?.message || "Clock-In failed",
-            "error"
-          );
+          const errorMessage =
+            err.response?.data?.message ||
+            err.message ||
+            "Clock-In failed. Please try again.";
+          MySwal.fire("Error", errorMessage, "error");
         }
       },
       (error) => {
         Swal.close();
-        MySwal.fire("Error", "Unable to get your location", "error");
-        console.error(error);
-      }
+        let errorMessage = "Unable to get your location";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage =
+              "Location access denied. Please enable location services.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+        MySwal.fire("Error", errorMessage, "error");
+        console.error("Geolocation error:", error);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Geolocation options
     );
   };
 
-  // Clock-out
   const handleClockOut = async () => {
-    if (!navigator.geolocation)
-      return MySwal.fire("Error", "Geolocation is not supported", "error");
+    if (!navigator.geolocation) {
+      return MySwal.fire(
+        "Error",
+        "Geolocation is not supported by your browser",
+        "error"
+      );
+    }
 
     MySwal.fire({
       title: "Clocking out...",
@@ -240,11 +275,23 @@ const EmployeeDashboard = () => {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+
+        // Validate geolocation accuracy
+        if (accuracy > 100) {
+          Swal.close();
+          return MySwal.fire(
+            "Error",
+            "Geolocation accuracy too low. Please try again.",
+            "error"
+          );
+        }
 
         try {
           const token = localStorage.getItem("authToken");
-          if (!token) throw new Error("Auth token missing");
+          if (!token) {
+            throw new Error("Authentication token missing. Please log in.");
+          }
 
           const res = await Api.post(
             "/api/v1/attendance/clock-out",
@@ -268,18 +315,32 @@ const EmployeeDashboard = () => {
           setAttendance("ClockOut");
         } catch (err: any) {
           Swal.close();
-          MySwal.fire(
-            "Error",
-            err.response?.data?.message || "Clock-Out failed",
-            "error"
-          );
+          const errorMessage =
+            err.response?.data?.message ||
+            err.message ||
+            "Clock-Out failed. Please try again.";
+          MySwal.fire("Error", errorMessage, "error");
         }
       },
       (error) => {
         Swal.close();
-        MySwal.fire("Error", "Unable to get your location", "error");
-        console.error(error);
-      }
+        let errorMessage = "Unable to get your location";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage =
+              "Location access denied. Please enable location services.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Location request timed out.";
+            break;
+        }
+        MySwal.fire("Error", errorMessage, "error");
+        console.error("Geolocation error:", error);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Geolocation options
     );
   };
 
