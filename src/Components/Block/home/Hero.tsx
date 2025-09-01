@@ -90,16 +90,6 @@ const Hero = () => {
               </button>
             </Link>
           </div>
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            className="flex flex-col items-center mt-6 gap-2"
-          >
-            <p className="text-indigo-400 text-xs">
-              Try Now – 14 Days Free Trial
-            </p>
-          </motion.div>
         </div>
       </div>
 

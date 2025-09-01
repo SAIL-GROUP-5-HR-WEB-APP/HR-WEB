@@ -23,14 +23,15 @@ const Footer = () => {
           <Link to="/">
             <nav className="hover:text-gray-900 ">Home</nav>
           </Link>
-          <Link to="/pricing">
-            <nav className="hover:text-gray-900">Pricing</nav>
-          </Link>
+
           <Link to="/about">
             <nav className="hover:text-gray-900">About</nav>
           </Link>
           <Link to="/faqs">
             <nav className="hover:text-gray-900">FAQs</nav>
+          </Link>
+          <Link to="/contact">
+            <nav className="hover:text-gray-900">Contact</nav>
           </Link>
         </nav>
         <div className="flex space-x-4 justify-center md:justify-end">
@@ -51,7 +52,7 @@ const Footer = () => {
       <div className="border-t border-gray-200  place-items-center mt-9">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-center md:justify-between items-center text-xs text-gray-500 gap-2 ">
           <div className="flex gap-4  ">
-            <p>&copy; 2024 ZYRAHR. All rights reserved.</p>
+            <p>&copy; 2025 ZYRAHR. All rights reserved.</p>
             <a href="#" className="hover:text-blue-700">
               Privacy Policy
             </a>
