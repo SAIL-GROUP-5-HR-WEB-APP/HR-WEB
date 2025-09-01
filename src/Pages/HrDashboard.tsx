@@ -6,7 +6,6 @@ import {
   LuUserX,
   LuPlus,
   LuClipboard,
-  LuCheck,
   LuTrash,
   LuCalendarCheck,
   LuClock,
@@ -25,15 +24,18 @@ import DateTime from "../Components/Reuseable/DateTime";
 import Api from "../Components/Reuseable/Api";
 
 interface Announcement {
-  id: number;
-  text: string;
-  published: boolean;
+  _id: string;
+  title: string;
+  content: string;
+  publishAt?: string;
+  expiresAt?: string;
+  createdAt: string;
 }
 
 const HrDashboard = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [announcement, setAnnouncement] = useState<string>("");
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
   const [leaveStats, setLeaveStats] = useState({
@@ -89,6 +91,14 @@ const HrDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    fetchTotalEmployees();
+    fetchTotalLeaves();
+    fetchAttendanceStats();
+    fetchAnnouncements();
+  }, []);
+
+  // Fetch announcements
   const fetchAnnouncements = async () => {
     try {
       const res = await Api.get("/api/v1/announcements");
@@ -98,20 +108,14 @@ const HrDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTotalEmployees();
-    fetchTotalLeaves();
-    fetchAttendanceStats();
-    fetchAnnouncements();
-  }, []);
-
-  //  ANNOUNCEMENT CRUD
+  // Add new announcement
   const addAnnouncement = async () => {
     if (announcement.trim() === "") return;
     try {
       const res = await Api.post("/api/v1/announcements", {
-        text: announcement,
-        published: false,
+        title: "General Update",
+        content: announcement,
+        publishAt: new Date(),
       });
       setAnnouncements([...announcements, res.data]);
       setAnnouncement("");
@@ -120,6 +124,29 @@ const HrDashboard = () => {
     }
   };
 
+  // Update announcement
+  const updateAnnouncement = async (id: string, content: string) => {
+    try {
+      const res = await Api.patch(`/api/v1/announcements/${id}`, { content });
+      setAnnouncements(announcements.map((a) => (a._id === id ? res.data : a)));
+      setEditingId(null);
+      setAnnouncement("");
+    } catch (err) {
+      console.error("Failed to update announcement:", err);
+    }
+  };
+
+  // Delete announcement
+  const deleteAnnouncement = async (id: string) => {
+    try {
+      await Api.delete(`/api/v1/announcements/${id}`);
+      setAnnouncements(announcements.filter((a) => a._id !== id));
+    } catch (err) {
+      console.error("Failed to delete announcement:", err);
+    }
+  };
+
+  // Handle form submit
   const saveAnnouncement = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editingId) {
@@ -129,38 +156,6 @@ const HrDashboard = () => {
     }
   };
 
-  const updateAnnouncement = async (id: number, text: string) => {
-    try {
-      const res = await Api.patch(`/api/v1/announcements/${id}`, { text });
-      setAnnouncements(announcements.map((a) => (a.id === id ? res.data : a)));
-      setEditingId(null);
-      setAnnouncement("");
-    } catch (err) {
-      console.error("Failed to update announcement:", err);
-    }
-  };
-
-  const togglePublished = async (id: number, published: boolean) => {
-    try {
-      const res = await Api.patch(`/api/v1/announcements/${id}`, {
-        published: !published,
-      });
-      setAnnouncements(announcements.map((a) => (a.id === id ? res.data : a)));
-    } catch (err) {
-      console.error("Failed to toggle publish:", err);
-    }
-  };
-
-  const deleteAnnouncement = async (id: number) => {
-    try {
-      await Api.delete(`/api/v1/announcements/${id}`);
-      setAnnouncements(announcements.filter((a) => a.id !== id));
-    } catch (err) {
-      console.error("Failed to delete announcement:", err);
-    }
-  };
-
-  // ====================== UI DATA ======================
   const leaveCards = [
     {
       title: "Pending Requests",
@@ -177,7 +172,7 @@ const HrDashboard = () => {
       total: leaveStats.rejected,
       icon: <LuUserX size={30} />,
     },
-    { title: <DateTime />, icon: <LuClock size={30} /> },
+    { title: <DateTime />, total: "", icon: <LuClock size={30} /> },
   ];
 
   const statCard = [
@@ -208,7 +203,6 @@ const HrDashboard = () => {
     { name: "Jun", employees: 55 },
   ];
 
-  // ====================== RENDER ======================
   return (
     <div className="px-10">
       {/* dashboard header */}
@@ -259,11 +253,12 @@ const HrDashboard = () => {
                 setAnnouncement(e.target.value)
               }
             />
-            <LuPlus
-              onClick={addAnnouncement}
+            <button
+              type="submit"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-800 cursor-pointer"
-              size={20}
-            />
+            >
+              <LuPlus size={20} />
+            </button>
           </form>
 
           <div className="flex-1 overflow-y-auto mt-3 px-2">
@@ -274,29 +269,16 @@ const HrDashboard = () => {
             ) : (
               announcements.map((a) => (
                 <div
-                  key={a.id}
+                  key={a._id}
                   className="flex justify-between items-center py-2 px-3 rounded-lg shadow-sm mb-2 bg-indigo-50"
                 >
-                  <span
-                    className={`${
-                      a.published ? "line-through text-red-500" : ""
-                    }`}
-                  >
-                    {a.text}
-                  </span>
+                  <span>{a.content}</span>
                   <div className="flex space-x-2">
                     <button
                       type="button"
-                      onClick={() => togglePublished(a.id, a.published)}
-                      className="text-green-600 hover:text-green-800"
-                    >
-                      <LuCheck size={18} />
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
-                        setEditingId(a.id);
-                        setAnnouncement(a.text);
+                        setEditingId(a._id);
+                        setAnnouncement(a.content);
                       }}
                       className="text-blue-600 hover:text-blue-800"
                     >
@@ -304,7 +286,7 @@ const HrDashboard = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteAnnouncement(a.id)}
+                      onClick={() => deleteAnnouncement(a._id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <LuTrash size={18} />
