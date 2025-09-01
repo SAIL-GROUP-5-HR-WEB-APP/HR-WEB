@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Home from "./Pages/Home";
 import About from "./Pages/About";
-import Pricing from "./Pages/Pricing";
 import Faqs from "./Pages/Faqs";
 import Header from "./Static/Header";
 import Footer from "./Static/Footer";
@@ -61,7 +60,6 @@ const AppContent = () => {
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/pricing" element={<Pricing />} />
         <Route path="/faqs" element={<Faqs />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
