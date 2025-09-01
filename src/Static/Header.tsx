@@ -21,7 +21,7 @@ const Header: React.FC = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-[90px] bg-transparent backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all duration-500">
+    <header className="fixed top-0 left-0 right-0 z-50 h-[90px] bg-transparent backdrop-blur-sm shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all duration-500">
       <div className="max-w-[1440px] mx-auto px-20 sm:px-8 flex items-center justify-between h-full">
         {/* Logo Section */}
         <Link to="/" className="flex items-center space-x-2 group">
