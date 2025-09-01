@@ -38,8 +38,8 @@ const Header: React.FC = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`relative text-lg font-semibold text-white/90 hover:text-white transition-colors duration-300 ${
-                location.pathname === item.path ? "text-white" : ""
+              className={`relative text-lg font-semibold text-gray-800 hover:text-black transition-colors duration-300 ${
+                location.pathname === item.path ? "text-black" : ""
               }`}
             >
               {item.name}
