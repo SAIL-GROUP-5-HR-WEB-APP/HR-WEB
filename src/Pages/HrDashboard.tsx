@@ -4,7 +4,6 @@ import {
   LuBuilding2,
   LuUserCheck,
   LuUserX,
-  LuPlus,
   LuClipboard,
   LuTrash,
   LuCalendarCheck,
