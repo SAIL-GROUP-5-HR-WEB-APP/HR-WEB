@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
+import { ArrowLeftCircle } from "lucide-react";
 
 interface ProfileData {
   phone: string;
@@ -100,7 +101,20 @@ const Setting = () => {
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg space-y-6"
       >
-        <h2 className="text-2xl font-bold text-center">Edit Profile</h2>
+        <div className="flex items-center justify-between px-4 py-2">
+          <span
+            onClick={() => navigate(-1)}
+            className="cursor-pointer text-gray-700 hover:text-black"
+          >
+            <ArrowLeftCircle size={28} />
+          </span>
+
+          <h2 className="flex-1 text-2xl font-bold text-center">
+            Edit Profile
+          </h2>
+
+          <span className="w-7" />
+        </div>
 
         {[
           "department",
