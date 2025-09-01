@@ -12,9 +12,7 @@ const Sidebar: React.FC<SidebarProps> = ({ handleToggle }) => {
         <li onClick={handleToggle}>
           <Link to="/">Home</Link>
         </li>
-        {/* <li onClick={handleToggle}>
-          <Link to="/pricing">Price</Link>
-        </li> */}
+
         <li onClick={handleToggle}>
           <Link to="/faqs">Faqs</Link>
         </li>
