@@ -684,7 +684,7 @@ const EmployeeDashboard = () => {
         </div>
       </main>
       <section className="w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
-        <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
+        <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 text-center">
           <LuClipboardList size={28} className="text-purple-500" />
           <span>Announcements</span>
         </h2>
