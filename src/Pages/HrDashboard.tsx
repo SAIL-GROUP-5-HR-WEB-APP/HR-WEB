@@ -10,6 +10,7 @@ import {
   LuTrash,
   LuCalendarCheck,
   LuClock,
+  LuPencil,
 } from "react-icons/lu";
 import {
   BarChart,
@@ -23,15 +24,17 @@ import {
 import DateTime from "../Components/Reuseable/DateTime";
 import Api from "../Components/Reuseable/Api";
 
-interface Task {
+interface Announcement {
   id: number;
   text: string;
-  completed: boolean;
+  published: boolean;
 }
 
 const HrDashboard = () => {
-  const [todo, setTodo] = useState<string>("");
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcement, setAnnouncement] = useState<string>("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
   const [leaveStats, setLeaveStats] = useState({
     pending: 0,
@@ -43,7 +46,7 @@ const HrDashboard = () => {
     absent: 0,
   });
 
-  // fetch present and absent attendance
+  //FETCH DATA
   const fetchAttendanceStats = async () => {
     try {
       const res = await Api.get("/api/v1/attendance/all");
@@ -60,7 +63,6 @@ const HrDashboard = () => {
     }
   };
 
-  // Fetch total employees
   const fetchTotalEmployees = async () => {
     try {
       const res = await Api.get("/api/v1/users/all");
@@ -69,12 +71,12 @@ const HrDashboard = () => {
       console.error("Failed to fetch total employees:", err);
     }
   };
+
   const fetchTotalLeaves = async () => {
     try {
       const res = await Api.get("/api/v1/leave/all");
       const leaves = res.data || [];
 
-      // count statuses
       const stats = {
         pending: leaves.filter((l: any) => l.status === "pending").length,
         approved: leaves.filter((l: any) => l.status === "approved").length,
@@ -87,31 +89,78 @@ const HrDashboard = () => {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await Api.get("/api/v1/announcements");
+      setAnnouncements(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch announcements:", err);
+    }
+  };
+
   useEffect(() => {
-    fetchTotalEmployees(), fetchTotalLeaves(), fetchAttendanceStats();
+    fetchTotalEmployees();
+    fetchTotalLeaves();
+    fetchAttendanceStats();
+    fetchAnnouncements();
   }, []);
 
-  const addTask = () => {
-    if (todo.trim() === "") return;
-    const newTask: Task = { id: Date.now(), text: todo, completed: false };
-    setTasks([...tasks, newTask]);
-    setTodo("");
-  };
-  const saveData = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    addTask();
-  };
-  const toggleComplete = (id: number) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-  const deleteTask = (id: number) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+  //  ANNOUNCEMENT CRUD
+  const addAnnouncement = async () => {
+    if (announcement.trim() === "") return;
+    try {
+      const res = await Api.post("/api/v1/announcements", {
+        text: announcement,
+        published: false,
+      });
+      setAnnouncements([...announcements, res.data]);
+      setAnnouncement("");
+    } catch (err) {
+      console.error("Failed to post announcement:", err);
+    }
   };
 
+  const saveAnnouncement = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (editingId) {
+      updateAnnouncement(editingId, announcement);
+    } else {
+      addAnnouncement();
+    }
+  };
+
+  const updateAnnouncement = async (id: number, text: string) => {
+    try {
+      const res = await Api.patch(`/api/v1/announcements/${id}`, { text });
+      setAnnouncements(announcements.map((a) => (a.id === id ? res.data : a)));
+      setEditingId(null);
+      setAnnouncement("");
+    } catch (err) {
+      console.error("Failed to update announcement:", err);
+    }
+  };
+
+  const togglePublished = async (id: number, published: boolean) => {
+    try {
+      const res = await Api.patch(`/api/v1/announcements/${id}`, {
+        published: !published,
+      });
+      setAnnouncements(announcements.map((a) => (a.id === id ? res.data : a)));
+    } catch (err) {
+      console.error("Failed to toggle publish:", err);
+    }
+  };
+
+  const deleteAnnouncement = async (id: number) => {
+    try {
+      await Api.delete(`/api/v1/announcements/${id}`);
+      setAnnouncements(announcements.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete announcement:", err);
+    }
+  };
+
+  // ====================== UI DATA ======================
   const leaveCards = [
     {
       title: "Pending Requests",
@@ -136,7 +185,7 @@ const HrDashboard = () => {
       title: "Total employees",
       total: totalEmployees,
       icon: <LuUsers size={30} />,
-    }, // DYNAMIC
+    },
     { title: "Departments", total: "7", icon: <LuBuilding2 size={30} /> },
     {
       title: "Present",
@@ -149,6 +198,7 @@ const HrDashboard = () => {
       icon: <LuUserX size={30} />,
     },
   ];
+
   const barData = [
     { name: "Jan", employees: 30 },
     { name: "Feb", employees: 45 },
@@ -158,6 +208,7 @@ const HrDashboard = () => {
     { name: "Jun", employees: 55 },
   ];
 
+  // ====================== RENDER ======================
   return (
     <div className="px-10">
       {/* dashboard header */}
@@ -189,61 +240,71 @@ const HrDashboard = () => {
         ))}
       </div>
 
-      {/* task + chart section */}
+      {/* announcement + chart section */}
       <div className="grid grid-cols-2 gap-4 mt-5 max-[900px]:grid-cols-1">
-        {/* Todo Section */}
+        {/* Announcement Section */}
         <div className="relative border-2 p-2 border-indigo-800 rounded-lg flex flex-col h-[350px]">
           <div className="flex items-center justify-center">
-            <h1>
-              <LuClipboard />
-            </h1>
-            <h1 className="text-center font-bold ml-2">ANNOUNCEMENT</h1>
+            <LuClipboard />
+            <h1 className="text-center font-bold ml-2">ANNOUNCEMENTS</h1>
           </div>
 
-          <form onSubmit={saveData} className="relative">
+          <form onSubmit={saveAnnouncement} className="relative">
             <input
               type="text"
-              placeholder="Add an announcement..."
+              placeholder="Write an announcement..."
               className="relative w-full pl-10 pr-10 py-2 border bg-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 border-indigo-200"
-              value={todo}
+              value={announcement}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setTodo(e.target.value)
+                setAnnouncement(e.target.value)
               }
             />
-            {/* Plus icon inside input */}
             <LuPlus
-              onClick={addTask}
+              onClick={addAnnouncement}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-800 cursor-pointer"
               size={20}
             />
           </form>
 
-          {/* Todo List */}
           <div className="flex-1 overflow-y-auto mt-3 px-2">
-            {tasks.length === 0 ? (
-              <p className="text-gray-400 text-center mt-10">No tasks yet</p>
+            {announcements.length === 0 ? (
+              <p className="text-gray-400 text-center mt-10">
+                No announcements yet
+              </p>
             ) : (
-              tasks.map((task) => (
+              announcements.map((a) => (
                 <div
-                  key={task.id}
+                  key={a.id}
                   className="flex justify-between items-center py-2 px-3 rounded-lg shadow-sm mb-2 bg-indigo-50"
                 >
                   <span
                     className={`${
-                      task.completed ? "line-through text-red-500" : ""
+                      a.published ? "line-through text-red-500" : ""
                     }`}
                   >
-                    {task.text}
+                    {a.text}
                   </span>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => toggleComplete(task.id)}
+                      type="button"
+                      onClick={() => togglePublished(a.id, a.published)}
                       className="text-green-600 hover:text-green-800"
                     >
                       <LuCheck size={18} />
                     </button>
                     <button
-                      onClick={() => deleteTask(task.id)}
+                      type="button"
+                      onClick={() => {
+                        setEditingId(a.id);
+                        setAnnouncement(a.text);
+                      }}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <LuPencil size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteAnnouncement(a.id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <LuTrash size={18} />
@@ -287,12 +348,14 @@ const HrDashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* leave stats */}
       <div>
-        <div className="grid grid-cols-4  gap-4 mt-6  max-[550px]:grid-cols-1 ">
+        <div className="grid grid-cols-4 gap-4 mt-6 max-[550px]:grid-cols-1 ">
           {leaveCards.map((data, i) => (
             <div
               key={i}
-              className="hover:shadow-2xs shadow-2xl rounded-lg p-5  bg-gradient-to-r from-indigo-300 to-indigo-200  text-black text-center "
+              className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-300 to-indigo-200 text-black text-center "
             >
               <div className="place-items-center">{data.icon}</div>
               <h1 className="text-xl mt-2">{data.title}</h1>
