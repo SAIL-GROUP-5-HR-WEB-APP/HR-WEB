@@ -34,7 +34,8 @@ interface Announcement {
 
 const HrDashboard = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [announcement, setAnnouncement] = useState<string>("");
+  const [announcementTitle, setAnnouncementTitle] = useState<string>("");
+  const [announcementContent, setAnnouncementContent] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
@@ -48,18 +49,14 @@ const HrDashboard = () => {
     absent: 0,
   });
 
-  //FETCH DATA
   const fetchAttendanceStats = async () => {
     try {
       const res = await Api.get("/api/v1/attendance/all");
       const attendance = res.data || [];
-
-      const stats = {
+      setAttendanceStats({
         present: attendance.filter((a: any) => a.status === "present").length,
         absent: attendance.filter((a: any) => a.status === "absent").length,
-      };
-
-      setAttendanceStats(stats);
+      });
     } catch (err) {
       console.error("Failed to fetch attendance:", err);
     }
@@ -78,16 +75,22 @@ const HrDashboard = () => {
     try {
       const res = await Api.get("/api/v1/leave/all");
       const leaves = res.data || [];
-
-      const stats = {
+      setLeaveStats({
         pending: leaves.filter((l: any) => l.status === "pending").length,
         approved: leaves.filter((l: any) => l.status === "approved").length,
         rejected: leaves.filter((l: any) => l.status === "rejected").length,
-      };
-
-      setLeaveStats(stats);
+      });
     } catch (err) {
       console.error("Failed to fetch total leaves:", err);
+    }
+  };
+
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await Api.get("/api/v1/announcements");
+      setAnnouncements(res.data || []);
+    } catch (err) {
+      console.error("Failed to fetch announcements:", err);
     }
   };
 
@@ -98,45 +101,40 @@ const HrDashboard = () => {
     fetchAnnouncements();
   }, []);
 
-  // Fetch announcements
-  const fetchAnnouncements = async () => {
-    try {
-      const res = await Api.get("/api/v1/announcements");
-      setAnnouncements(res.data || []);
-    } catch (err) {
-      console.error("Failed to fetch announcements:", err);
-    }
-  };
-
-  // Add new announcement
   const addAnnouncement = async () => {
-    if (announcement.trim() === "") return;
+    if (announcementTitle.trim() === "" || announcementContent.trim() === "")
+      return;
     try {
       const res = await Api.post("/api/v1/announcements", {
-        title: "General Update",
-        content: announcement,
+        title: announcementTitle,
+        content: announcementContent,
         publishAt: new Date(),
       });
       setAnnouncements([...announcements, res.data]);
-      setAnnouncement("");
+      setAnnouncementTitle("");
+      setAnnouncementContent("");
     } catch (err) {
       console.error("Failed to post announcement:", err);
     }
   };
 
-  // Update announcement
-  const updateAnnouncement = async (id: string, content: string) => {
+  const updateAnnouncement = async (id: string) => {
+    if (announcementTitle.trim() === "" || announcementContent.trim() === "")
+      return;
     try {
-      const res = await Api.patch(`/api/v1/announcements/${id}`, { content });
+      const res = await Api.patch(`/api/v1/announcements/${id}`, {
+        title: announcementTitle,
+        content: announcementContent,
+      });
       setAnnouncements(announcements.map((a) => (a._id === id ? res.data : a)));
       setEditingId(null);
-      setAnnouncement("");
+      setAnnouncementTitle("");
+      setAnnouncementContent("");
     } catch (err) {
       console.error("Failed to update announcement:", err);
     }
   };
 
-  // Delete announcement
   const deleteAnnouncement = async (id: string) => {
     try {
       await Api.delete(`/api/v1/announcements/${id}`);
@@ -146,11 +144,10 @@ const HrDashboard = () => {
     }
   };
 
-  // Handle form submit
   const saveAnnouncement = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editingId) {
-      updateAnnouncement(editingId, announcement);
+      updateAnnouncement(editingId);
     } else {
       addAnnouncement();
     }
@@ -216,7 +213,7 @@ const HrDashboard = () => {
           placeholder="search anything"
         />
         <h1 className="text-lg font-semibold  max-[890px]:hidden">
-          Welcome back HR{" "}
+          Welcome back HR
         </h1>
       </div>
 
@@ -225,10 +222,10 @@ const HrDashboard = () => {
         {statCard.map((data, i) => (
           <div
             key={i}
-            className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-900 to-indigo-600  text-white hover:bg-indigo-950  flex flex-col  max-[550px]:items-center"
+            className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white hover:bg-indigo-950 flex flex-col max-[550px]:items-center"
           >
             <div>{data.icon}</div>
-            <h1 className="text-xl mt-2 ">{data.title}</h1>
+            <h1 className="text-xl mt-2">{data.title}</h1>
             <p className="text-2xl font-bold">{data.total}</p>
           </div>
         ))}
@@ -243,21 +240,30 @@ const HrDashboard = () => {
             <h1 className="text-center font-bold ml-2">ANNOUNCEMENTS</h1>
           </div>
 
-          <form onSubmit={saveAnnouncement} className="relative">
+          <form onSubmit={saveAnnouncement} className="space-y-2 mt-2">
             <input
               type="text"
-              placeholder="Write an announcement..."
-              className="relative w-full pl-10 pr-10 py-2 border bg-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 border-indigo-200"
-              value={announcement}
+              placeholder="Title"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-indigo-500"
+              value={announcementTitle}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setAnnouncement(e.target.value)
+                setAnnouncementTitle(e.target.value)
+              }
+            />
+            <input
+              type="text"
+              placeholder="Content"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-indigo-500"
+              value={announcementContent}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setAnnouncementContent(e.target.value)
               }
             />
             <button
               type="submit"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-800 cursor-pointer"
+              className="bg-indigo-700 text-white px-4 py-2 rounded-lg hover:bg-indigo-800"
             >
-              <LuPlus size={20} />
+              {editingId ? "Update" : "Add"} Announcement
             </button>
           </form>
 
@@ -272,13 +278,17 @@ const HrDashboard = () => {
                   key={a._id}
                   className="flex justify-between items-center py-2 px-3 rounded-lg shadow-sm mb-2 bg-indigo-50"
                 >
-                  <span>{a.content}</span>
+                  <div>
+                    <p className="font-semibold">{a.title}</p>
+                    <p>{a.content}</p>
+                  </div>
                   <div className="flex space-x-2">
                     <button
                       type="button"
                       onClick={() => {
                         setEditingId(a._id);
-                        setAnnouncement(a.content);
+                        setAnnouncementTitle(a.title);
+                        setAnnouncementContent(a.content);
                       }}
                       className="text-blue-600 hover:text-blue-800"
                     >
@@ -337,7 +347,7 @@ const HrDashboard = () => {
           {leaveCards.map((data, i) => (
             <div
               key={i}
-              className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-300 to-indigo-200 text-black text-center "
+              className="hover:shadow-2xs shadow-2xl rounded-lg p-5 bg-gradient-to-r from-indigo-300 to-indigo-200 text-black text-center"
             >
               <div className="place-items-center">{data.icon}</div>
               <h1 className="text-xl mt-2">{data.title}</h1>
