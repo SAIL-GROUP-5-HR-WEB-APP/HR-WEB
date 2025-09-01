@@ -29,6 +29,12 @@ interface LeaveRequest {
   status: "pending" | "approved" | "rejected";
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  message: string;
+  createdAt: string;
+}
 const EmployeeDashboard = () => {
   const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
@@ -56,6 +62,10 @@ const EmployeeDashboard = () => {
   // KPI states
   const [daysPresent, setDaysPresent] = useState<number>(0);
   const [daysAbsent, setDaysAbsent] = useState<number>(0);
+
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] =
+    useState<boolean>(false);
 
   const navigate = useNavigate();
 
@@ -102,6 +112,26 @@ const EmployeeDashboard = () => {
       }
     };
 
+    //fetch announcement
+
+    const fetchAnnouncements = async () => {
+      setLoadingAnnouncements(true);
+      try {
+        const res = await Api.get("/api/v1/announcements"); // your public endpoint
+        const formatted: Announcement[] = res.data.map((a: any) => ({
+          id: a.id || a._id,
+          title: a.title,
+          message: a.message,
+          createdAt: a.createdAt,
+        }));
+        setAnnouncements(formatted);
+      } catch (err) {
+        console.error("Failed to fetch announcements", err);
+      } finally {
+        setLoadingAnnouncements(false);
+      }
+    };
+
     // Fetch attendance KPI
     const fetchAttendanceSummary = async () => {
       try {
@@ -137,6 +167,7 @@ const EmployeeDashboard = () => {
     fetchLeaveRequests();
     fetchAttendanceSummary();
     fetchUserProfile();
+    fetchAnnouncements();
   }, [navigate]);
 
   // Clock-in
@@ -652,6 +683,41 @@ const EmployeeDashboard = () => {
           </section>
         </div>
       </main>
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
+        <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
+          <LuClipboardList size={28} className="text-purple-500" />
+          <span>Announcements</span>
+        </h2>
+
+        {loadingAnnouncements ? (
+          <div className="flex justify-center py-8">
+            <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : announcements.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+            No announcements available.
+          </p>
+        ) : (
+          <ul className="space-y-4 max-h-[300px] overflow-y-auto">
+            {announcements.map((ann) => (
+              <li
+                key={ann.id}
+                className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+              >
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {ann.title}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {ann.message}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  {new Date(ann.createdAt).toLocaleString()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <style>{`
         @keyframes fade-in {
