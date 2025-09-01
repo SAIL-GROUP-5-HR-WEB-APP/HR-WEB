@@ -35,6 +35,7 @@ interface Announcement {
   message: string;
   createdAt: string;
 }
+
 const EmployeeDashboard = () => {
   const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
@@ -113,15 +114,14 @@ const EmployeeDashboard = () => {
     };
 
     //fetch announcement
-
     const fetchAnnouncements = async () => {
       setLoadingAnnouncements(true);
       try {
-        const res = await Api.get("/api/v1/announcements"); // your public endpoint
+        const res = await Api.get("/api/v1/announcements");
         const formatted: Announcement[] = res.data.map((a: any) => ({
           id: a.id || a._id,
           title: a.title,
-          message: a.message,
+          message: a.message || a.content,
           createdAt: a.createdAt,
         }));
         setAnnouncements(formatted);
