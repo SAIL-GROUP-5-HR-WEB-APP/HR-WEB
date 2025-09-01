@@ -185,13 +185,18 @@ const EmployeeDashboard = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+
         try {
           const token = localStorage.getItem("authToken");
           if (!token) throw new Error("Auth token missing");
 
           const res = await Api.post(
             "/api/v1/attendance/clock-in",
-            { latitude, longitude, consent: true },
+            {
+              latitude: Number(latitude), // send as number
+              longitude: Number(longitude), // send as number
+              consent: true,
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           );
 
@@ -207,20 +212,11 @@ const EmployeeDashboard = () => {
           setAttendance("ClockIn");
         } catch (err: any) {
           Swal.close();
-
-          if (err.response?.status === 403) {
-            MySwal.fire(
-              "Forbidden",
-              "You are not authorized to clock in. Please login again.",
-              "error"
-            );
-          } else {
-            MySwal.fire(
-              "Error",
-              err.response?.data?.message || "Clock-In failed",
-              "error"
-            );
-          }
+          MySwal.fire(
+            "Error",
+            err.response?.data?.message || "Clock-In failed",
+            "error"
+          );
         }
       },
       (error) => {
@@ -245,13 +241,18 @@ const EmployeeDashboard = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+
         try {
           const token = localStorage.getItem("authToken");
           if (!token) throw new Error("Auth token missing");
 
           const res = await Api.post(
             "/api/v1/attendance/clock-out",
-            { latitude, longitude, consent: true },
+            {
+              latitude: Number(latitude),
+              longitude: Number(longitude),
+              consent: true,
+            },
             { headers: { Authorization: `Bearer ${token}` } }
           );
 
@@ -267,20 +268,11 @@ const EmployeeDashboard = () => {
           setAttendance("ClockOut");
         } catch (err: any) {
           Swal.close();
-
-          if (err.response?.status === 403) {
-            MySwal.fire(
-              "Forbidden",
-              "You are not authorized to clock out. Please login again.",
-              "error"
-            );
-          } else {
-            MySwal.fire(
-              "Error",
-              err.response?.data?.message || "Clock-Out failed",
-              "error"
-            );
-          }
+          MySwal.fire(
+            "Error",
+            err.response?.data?.message || "Clock-Out failed",
+            "error"
+          );
         }
       },
       (error) => {
