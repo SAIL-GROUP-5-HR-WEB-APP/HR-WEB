@@ -29,6 +29,12 @@ interface LeaveRequest {
   status: "pending" | "approved" | "rejected";
 }
 
+interface Announcement {
+  id: string;
+  text: string;
+  published: boolean;
+}
+
 const EmployeeDashboard = () => {
   const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
@@ -38,28 +44,17 @@ const EmployeeDashboard = () => {
   const [attendance, setAttendance] = useState<"ClockIn" | "ClockOut" | null>(
     null
   );
-
-  const [user, setUser] = useState<{
-    firstName: string;
-    lastName?: string;
-    email: string;
-    role?: string;
-    profile?: {
-      department?: string;
-      position?: string;
-      phone?: string;
-      address?: string;
-      avatarUrl: string;
-    };
-  } | null>(null);
-
-  // KPI states
+  const [user, setUser] = useState<any>(null);
   const [daysPresent, setDaysPresent] = useState<number>(0);
   const [daysAbsent, setDaysAbsent] = useState<number>(0);
 
+  // Announcements state
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+
   const navigate = useNavigate();
 
-  // Load user & fetch leave requests + attendance summary
+  // Load user & fetch data
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
@@ -70,19 +65,18 @@ const EmployeeDashboard = () => {
     const userData = JSON.parse(storedUser);
     setUser(userData);
 
-    //fetch user data
     const fetchUserProfile = async () => {
       try {
         const res = await Api.get(`/api/v1/users/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(res.data); // <-- now we have full profile info
+        setUser(res.data);
       } catch (err) {
         console.error("Failed to fetch user profile:", err);
-        setUser(userData); // fallback to stored
+        setUser(userData);
       }
     };
-    // Fetch leave requests
+
     const fetchLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
@@ -102,57 +96,60 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Fetch attendance KPI
     const fetchAttendanceSummary = async () => {
       try {
-        if (!userData?.id) {
-          console.error(" User ID missing, cannot fetch logs");
-          return;
-        }
-
         const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Backend returns an array of attendance logs
         const logs = Array.isArray(res.data) ? res.data : [];
-
-        const presentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "present"
-        ).length;
-
-        const absentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "absent"
-        ).length;
-
-        setDaysPresent(presentCount);
-        setDaysAbsent(absentCount);
+        setDaysPresent(
+          logs.filter((l: any) => l.status?.toLowerCase() === "present").length
+        );
+        setDaysAbsent(
+          logs.filter((l: any) => l.status?.toLowerCase() === "absent").length
+        );
       } catch (err) {
-        console.error(" Failed to fetch attendance summary:", err);
+        console.error("Failed to fetch attendance summary:", err);
         setDaysPresent(0);
         setDaysAbsent(0);
       }
     };
 
+    const fetchAnnouncements = async () => {
+      try {
+        setLoadingAnnouncements(true);
+        const res = await Api.get("/api/v1/announcements");
+        const published = res.data.filter((a: any) => a.published);
+        setAnnouncements(published);
+      } catch (err) {
+        console.error("Failed to fetch announcements:", err);
+      } finally {
+        setLoadingAnnouncements(false);
+      }
+    };
+
+    fetchUserProfile();
     fetchLeaveRequests();
     fetchAttendanceSummary();
-    fetchUserProfile();
+    fetchAnnouncements();
+
+    // Optional: auto-refresh announcements every 30s
+    const interval = setInterval(fetchAnnouncements, 30000);
+    return () => clearInterval(interval);
   }, [navigate]);
 
   // Clock-in
   const handleClockIn = async () => {
     if (!navigator.geolocation)
       return MySwal.fire("Error", "Geolocation is not supported", "error");
-
     MySwal.fire({
       title: "Clocking in...",
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
-
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
         try {
           const token = localStorage.getItem("authToken");
           const res = await Api.post(
@@ -164,8 +161,8 @@ const EmployeeDashboard = () => {
           MySwal.fire(
             "Success",
             res.data.isWithinGeofence
-              ? "Clock-In successful within office area!"
-              : "Clock-In recorded outside geofence",
+              ? "Clock-In successful!"
+              : "Clock-In outside geofence",
             "success"
           );
           setAttendance("ClockIn");
@@ -178,10 +175,9 @@ const EmployeeDashboard = () => {
           );
         }
       },
-      (error) => {
+      (_err) => {
         Swal.close();
-        MySwal.fire("Error", "Unable to get your location", "error");
-        console.error(error);
+        MySwal.fire("Error", "Unable to get location", "error");
       }
     );
   };
@@ -190,16 +186,14 @@ const EmployeeDashboard = () => {
   const handleClockOut = async () => {
     if (!navigator.geolocation)
       return MySwal.fire("Error", "Geolocation is not supported", "error");
-
     MySwal.fire({
       title: "Clocking out...",
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
-
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
         try {
           const token = localStorage.getItem("authToken");
           const res = await Api.post(
@@ -211,8 +205,8 @@ const EmployeeDashboard = () => {
           MySwal.fire(
             "Success",
             res.data.isWithinGeofence
-              ? "Clock-Out successful within office area!"
-              : "Clock-Out recorded outside geofence",
+              ? "Clock-Out successful!"
+              : "Clock-Out outside geofence",
             "success"
           );
           setAttendance("ClockOut");
@@ -225,10 +219,9 @@ const EmployeeDashboard = () => {
           );
         }
       },
-      (error) => {
+      (_err) => {
         Swal.close();
-        MySwal.fire("Error", "Unable to get your location", "error");
-        console.error(error);
+        MySwal.fire("Error", "Unable to get location", "error");
       }
     );
   };
@@ -248,11 +241,8 @@ const EmployeeDashboard = () => {
         "End date cannot be before start date.",
         "warning"
       );
-
     try {
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Auth token missing");
-
       const res = await Api.post(
         "/api/v1/leave/request",
         {
@@ -263,13 +253,11 @@ const EmployeeDashboard = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       MySwal.fire(
         "Success",
         res.data.message || "Leave request submitted",
         "success"
       );
-
       setLeaveRequests((prev) => [
         ...prev,
         {
@@ -307,7 +295,6 @@ const EmployeeDashboard = () => {
       reverseButtons: true,
     });
     if (!result.isConfirmed) return;
-
     MySwal.fire({
       title: "Logging out...",
       allowOutsideClick: false,
@@ -366,33 +353,6 @@ const EmployeeDashboard = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {user?.email || "No email provided"}
                   </p>
-                  {user?.profile && (
-                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {user.profile.department && (
-                        <p className="flex items-center">
-                          <span className="mr-1">🏢</span>{" "}
-                          {user.profile.department}
-                        </p>
-                      )}
-                      {user.profile.position && (
-                        <p className="flex items-center">
-                          <span className="mr-1">💼</span>{" "}
-                          {user.profile.position}
-                        </p>
-                      )}
-                      {user.profile.phone && (
-                        <p className="flex items-center">
-                          <span className="mr-1">📞</span> {user.profile.phone}
-                        </p>
-                      )}
-                      {user.profile.address && (
-                        <p className="flex items-center">
-                          <span className="mr-1">📍</span>{" "}
-                          {user.profile.address}
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="flex flex-col gap-3">
@@ -449,7 +409,7 @@ const EmployeeDashboard = () => {
                     {stat.value}
                   </h2>
                 </div>
-                <div>{stat.icon}</div>
+                {stat.icon}
               </div>
             </div>
           ))}
@@ -458,7 +418,7 @@ const EmployeeDashboard = () => {
         {/* Attendance Section */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 justify-center">
-            <LuClipboardList size={28} className="text-purple-500" />
+            <LuClipboardList size={28} className="text-purple-500" />{" "}
             <span>Attendance</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -651,26 +611,43 @@ const EmployeeDashboard = () => {
             )}
           </section>
         </div>
+
+        {/* Announcements Section */}
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
+          <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-4">
+            <LuClipboardList size={28} className="text-purple-500" />
+            <span>Announcements</span>
+          </h2>
+          {loadingAnnouncements ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              Loading announcements...
+            </p>
+          ) : announcements.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              No announcements at the moment.
+            </p>
+          ) : (
+            <ul className="space-y-3 max-h-80 overflow-y-auto">
+              {announcements.map((a) => (
+                <li
+                  key={a.id}
+                  className="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-900 text-gray-900 dark:text-white border border-indigo-200 dark:border-indigo-700 shadow-sm"
+                >
+                  {a.text}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </main>
 
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-          100% { transform: scale(1); }
-        }
-        @keyframes check {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); }
-        }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
-        .animate-pulse { animation: pulse 0.5s ease-in-out; }
-        .animate-check { animation: check 0.3s ease-in-out; }
+        @keyframes fade-in { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.05);} 100%{transform:scale(1);} }
+        @keyframes check { 0%{transform:scale(0);} 50%{transform:scale(1.2);} 100%{transform:scale(1);} }
+        .animate-fade-in{animation:fade-in 0.3s ease-out;}
+        .animate-pulse{animation:pulse 0.5s ease-in-out;}
+        .animate-check{animation:check 0.3s ease-in-out;}
       `}</style>
     </div>
   );
