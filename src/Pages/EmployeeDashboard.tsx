@@ -216,10 +216,11 @@ const EmployeeDashboard = () => {
           : "Clock-In outside geofence",
         "success"
       );
-      setAttendance("ClockIn"); // ✅ safe because it's inside the component
+      setAttendance("ClockIn");
     } catch (err: any) {
       Swal.close();
       Swal.fire("Error", err.message || "Clock-In failed", "error");
+      console.log(err, err.message);
     }
   };
 
@@ -256,7 +257,7 @@ const EmployeeDashboard = () => {
           : "Clock-Out outside geofence",
         "success"
       );
-      setAttendance("ClockOut"); // ✅ safe
+      setAttendance("ClockOut");
     } catch (err: any) {
       Swal.close();
       Swal.fire("Error", err.message || "Clock-Out failed", "error");
