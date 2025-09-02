@@ -177,7 +177,7 @@ const HrDashboard = () => {
       total: totalEmployees,
       icon: <LuUsers size={30} />,
     },
-    { title: "Departments", total: "7", icon: <LuBuilding2 size={30} /> },
+    { title: "Departments", total: "2", icon: <LuBuilding2 size={30} /> },
     {
       title: "Present",
       total: attendanceStats.present,

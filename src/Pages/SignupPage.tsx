@@ -111,8 +111,8 @@ const SignupPage: React.FC = () => {
 
   // Handle Google signup
   const handleGoogleSignup = (): void => {
-    console.log("Signup with Google");
-    // TODO: Add Google OAuth integration
+    window.location.href =
+      "https://zyrahr-backend.onrender.com/api/v1/auth/google";
   };
 
   // Handle Apple signup
