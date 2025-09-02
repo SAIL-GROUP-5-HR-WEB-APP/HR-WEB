@@ -113,7 +113,6 @@ const SignupPage: React.FC = () => {
   const handleGoogleSignup = (): void => {
     window.location.href =
       "https://zyrahr-backend.onrender.com/api/v1/auth/google";
-    navigate("/EmployeeDashboard");
   };
 
   // Handle Apple signup
