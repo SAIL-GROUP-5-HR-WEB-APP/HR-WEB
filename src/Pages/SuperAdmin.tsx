@@ -65,8 +65,11 @@ const SuperAdmin = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 px-4">
+    <div className="flex justify-center items-center min-h-screen bg-gradient from-indigo-300 to-white px-4">
       <div className="w-full max-w-lg">
+        <h1 className="text-4xl text-center">
+          <span className="text-indigo-600">Zyrahr</span> admin
+        </h1>
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
             👨‍💼 Create New User
