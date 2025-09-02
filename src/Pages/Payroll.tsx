@@ -27,7 +27,7 @@ const Payroll = () => {
           </thead>
           <tbody>
             <tr className="border-b">
-              <td className="px-3 sm:px-4 py-3">Joy Yakubu</td>
+              <td className="px-3 sm:px-4 py-3">Tommy Hill</td>
               <td className="px-3 sm:px-4 py-3">Software Engineer</td>
               <td className="px-3 sm:px-4 py-3 text-right">₦1,000,000</td>
               <td className="px-3 sm:px-4 py-3 text-right text-green-600">
@@ -39,8 +39,8 @@ const Payroll = () => {
               <td className="px-3 sm:px-4 py-3 text-right">₦1,055,000</td>
             </tr>
             <tr className="border-b">
-              <td className="px-3 sm:px-4 py-3">Antonia Ijeoma</td>
-              <td className="px-3 sm:px-4 py-3">Product Manager</td>
+              <td className="px-3 sm:px-4 py-3">Opayinka Ayodeji</td>
+              <td className="px-3 sm:px-4 py-3">Accountant</td>
               <td className="px-3 sm:px-4 py-3 text-right">₦900,000</td>
               <td className="px-3 sm:px-4 py-3 text-right text-green-600">
                 + ₦70,000
@@ -49,18 +49,6 @@ const Payroll = () => {
                 - ₦35,000
               </td>
               <td className="px-3 sm:px-4 py-3 text-right">₦935,000</td>
-            </tr>
-            <tr className="border-b">
-              <td className="px-3 sm:px-4 py-3">John Wick</td>
-              <td className="px-3 sm:px-4 py-3">UI/UX Designer</td>
-              <td className="px-3 sm:px-4 py-3 text-right">₦500,000</td>
-              <td className="px-3 sm:px-4 py-3 text-right text-green-600">
-                + ₦50,000
-              </td>
-              <td className="px-3 sm:px-4 py-3 text-right text-red-600">
-                - ₦45,000
-              </td>
-              <td className="px-3 sm:px-4 py-3 text-right">₦505,000</td>
             </tr>
           </tbody>
         </table>
