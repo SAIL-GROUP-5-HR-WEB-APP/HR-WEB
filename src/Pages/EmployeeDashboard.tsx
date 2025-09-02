@@ -171,18 +171,16 @@ const EmployeeDashboard = () => {
   }, [navigate]);
 
   // Clock-in
-
   const getPosition = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation not supported by your browser"));
-      } else {
+      if (!navigator.geolocation)
+        reject(new Error("Geolocation not supported"));
+      else
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 15000,
           maximumAge: 0,
         });
-      }
     });
 
   const handleClockIn = async () => {
@@ -192,28 +190,13 @@ const EmployeeDashboard = () => {
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(),
       });
+      const pos = await getPosition();
+      const { latitude, longitude, accuracy } = pos.coords;
 
-      const position = await getPosition();
-      const { latitude, longitude, accuracy } = position.coords;
-
-      if (accuracy > 100) {
-        Swal.close();
-        return Swal.fire(
-          "Error",
-          "Geolocation accuracy too low. Please try again.",
-          "error"
-        );
-      }
+      if (accuracy > 100) throw new Error("Geolocation accuracy too low");
 
       const token = localStorage.getItem("authToken");
-      if (!token) {
-        Swal.close();
-        return Swal.fire(
-          "Error",
-          "Authentication token missing. Please log in.",
-          "error"
-        );
-      }
+      if (!token) throw new Error("Authentication token missing");
 
       const res = await Api.post(
         "/api/v1/attendance/clock-in",
@@ -229,34 +212,14 @@ const EmployeeDashboard = () => {
       Swal.fire(
         "Success",
         res.data.isWithinGeofence
-          ? "Clock-In successful within office area!"
-          : "Clock-In recorded outside geofence",
+          ? "Clock-In successful!"
+          : "Clock-In outside geofence",
         "success"
       );
+      setAttendance("ClockIn"); // ✅ safe because it's inside the component
     } catch (err: any) {
       Swal.close();
-      if (err.code) {
-        let errorMessage = "Unable to get your location";
-        switch (err.code) {
-          case err.PERMISSION_DENIED:
-            errorMessage =
-              "Location access denied. Please enable location services.";
-            break;
-          case err.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
-            break;
-          case err.TIMEOUT:
-            errorMessage = "Location request timed out.";
-            break;
-        }
-        return Swal.fire("Error", errorMessage, "error");
-      }
-
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Clock-In failed. Please try again.";
-      Swal.fire("Error", errorMessage, "error");
+      Swal.fire("Error", err.message || "Clock-In failed", "error");
     }
   };
 
@@ -267,28 +230,13 @@ const EmployeeDashboard = () => {
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(),
       });
+      const pos = await getPosition();
+      const { latitude, longitude, accuracy } = pos.coords;
 
-      const position = await getPosition();
-      const { latitude, longitude, accuracy } = position.coords;
-
-      if (accuracy > 100) {
-        Swal.close();
-        return Swal.fire(
-          "Error",
-          "Geolocation accuracy too low. Please try again.",
-          "error"
-        );
-      }
+      if (accuracy > 100) throw new Error("Geolocation accuracy too low");
 
       const token = localStorage.getItem("authToken");
-      if (!token) {
-        Swal.close();
-        return Swal.fire(
-          "Error",
-          "Authentication token missing. Please log in.",
-          "error"
-        );
-      }
+      if (!token) throw new Error("Authentication token missing");
 
       const res = await Api.post(
         "/api/v1/attendance/clock-out",
@@ -304,34 +252,14 @@ const EmployeeDashboard = () => {
       Swal.fire(
         "Success",
         res.data.isWithinGeofence
-          ? "Clock-Out successful within office area!"
-          : "Clock-Out recorded outside geofence",
+          ? "Clock-Out successful!"
+          : "Clock-Out outside geofence",
         "success"
       );
+      setAttendance("ClockOut"); // ✅ safe
     } catch (err: any) {
       Swal.close();
-      if (err.code) {
-        let errorMessage = "Unable to get your location";
-        switch (err.code) {
-          case err.PERMISSION_DENIED:
-            errorMessage =
-              "Location access denied. Please enable location services.";
-            break;
-          case err.POSITION_UNAVAILABLE:
-            errorMessage = "Location information is unavailable.";
-            break;
-          case err.TIMEOUT:
-            errorMessage = "Location request timed out.";
-            break;
-        }
-        return Swal.fire("Error", errorMessage, "error");
-      }
-
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Clock-Out failed. Please try again.";
-      Swal.fire("Error", errorMessage, "error");
+      Swal.fire("Error", err.message || "Clock-Out failed", "error");
     }
   };
 
