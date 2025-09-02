@@ -189,17 +189,9 @@ const EmployeeDashboard = () => {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
+        const { latitude, longitude } = position.coords;
 
         // Validate geolocation accuracy (e.g., accuracy > 100 meters might be unreliable)
-        if (accuracy > 100) {
-          Swal.close();
-          return MySwal.fire(
-            "Error",
-            "Geolocation accuracy too low. Please try again.",
-            "error"
-          );
-        }
 
         try {
           const token = localStorage.getItem("authToken");
@@ -275,17 +267,7 @@ const EmployeeDashboard = () => {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-
-        // Validate geolocation accuracy
-        if (accuracy > 100) {
-          Swal.close();
-          return MySwal.fire(
-            "Error",
-            "Geolocation accuracy too low. Please try again.",
-            "error"
-          );
-        }
+        const { latitude, longitude } = position.coords;
 
         try {
           const token = localStorage.getItem("authToken");
