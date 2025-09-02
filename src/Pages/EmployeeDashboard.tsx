@@ -235,7 +235,7 @@ const EmployeeDashboard = () => {
       const { latitude, longitude, accuracy } = pos.coords;
       console.log(accuracy);
 
-      if (accuracy < 100) throw new Error("Geolocation accuracy too low");
+      if (accuracy > 100) throw new Error("Geolocation accuracy too low");
 
       const token = localStorage.getItem("authToken");
       if (!token) throw new Error("Authentication token missing");
