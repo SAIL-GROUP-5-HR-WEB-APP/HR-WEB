@@ -75,17 +75,10 @@ const Hero = () => {
             Empower Your HR Operations with Seamless Efficiency and Insightful
             Analytics.
           </motion.p>
-          <div className="flex mt-7 gap-4">
+          <div className="flex mt-7 gap-4 justify-center">
             <Link to="/login">
               <button className="group inline-flex items-center gap-2 px-6 py-3 bg-indigo-700 text-white rounded-lg font-medium transition-all duration-500 hover:bg-indigo-800 overflow-hidden hover:rounded-full hover:tracking-widest ease-in-out">
                 <span>Sign In</span>
-                <FaArrowRight className="w-5 h-5 transform group-hover:translate-x-5 group-hover:opacity-0 transition-all duration-300 ease-in-out" />
-              </button>
-            </Link>
-
-            <Link to="/signup">
-              <button className="group inline-flex items-center gap-2 px-6 py-3 text-indigo-700 rounded-lg font-medium transition-all duration-300 hover:bg-zinc-50 overflow-hidden border-2 border-indigo-700 hover:rounded-full hover:tracking-widest ease-in-out">
-                <span>Get Started</span>
                 <FaArrowRight className="w-5 h-5 transform group-hover:translate-x-5 group-hover:opacity-0 transition-all duration-300 ease-in-out" />
               </button>
             </Link>

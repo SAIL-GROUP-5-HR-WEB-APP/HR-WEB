@@ -19,10 +19,10 @@ const Sidebar: React.FC<SidebarProps> = ({ handleToggle }) => {
         <li onClick={handleToggle}>
           <Link to="/about">About</Link>
         </li>
-        <Link to={"/signup"}>
+        <Link to={"/login"}>
           <li>
             <Button
-              title="Register"
+              title="login"
               bg="#4338CA"
               textColor="white"
               borderColor="white"

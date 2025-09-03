@@ -6,7 +6,6 @@ import Faqs from "./Pages/Faqs";
 import Header from "./Static/Header";
 import Footer from "./Static/Footer";
 import LoginPage from "./Pages/LoginPage";
-import SignupPage from "./Pages/SignupPage";
 import Onboarding from "./Pages/Onboarding";
 import Contact from "./Pages/Contact";
 import ScrollToTop from "./Components/ScrollToTop";
@@ -34,7 +33,6 @@ const AppContent = () => {
   // Paths where header & footer should be hidden
   const hideHeaderAndFooterPaths = [
     "/login",
-    "/signup",
     "/forgotpassword",
     "/reset-password",
     "/onboarding",
@@ -62,7 +60,7 @@ const AppContent = () => {
         <Route path="/about" element={<About />} />
         <Route path="/faqs" element={<Faqs />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+
         <Route path="/contact" element={<Contact />} />
         <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
