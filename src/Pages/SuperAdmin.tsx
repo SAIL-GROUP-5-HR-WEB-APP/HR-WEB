@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
 import Api from "../Components/Reuseable/Api";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
+import withReactContent from "sweetalert2-react-content";
+import { LuLogOut } from "react-icons/lu";
 
 // Define allowed roles
 type Role = "employee" | "hr";
@@ -61,6 +64,53 @@ const SuperAdmin = () => {
       ...prev,
       [name]: value,
     }));
+  };
+  const navigate = useNavigate();
+  const MySwal = withReactContent(Swal);
+  const handleLogout = async () => {
+    const result = await MySwal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out of your account.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, logout",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      // SweetAlert built-in loading spinner
+      MySwal.fire({
+        title: "Logging out...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      try {
+        // Call logout API (optional)
+        await Api.post("/api/v1/auth/logout");
+
+        // Clear localStorage
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("role");
+        localStorage.removeItem("user");
+
+        Swal.close();
+        navigate("/login");
+      } catch (error) {
+        console.error("Logout failed:", error);
+
+        // Clear localStorage anyway
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("role");
+        localStorage.removeItem("user");
+
+        Swal.close();
+        navigate("/login");
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -132,6 +182,13 @@ const SuperAdmin = () => {
         <p className="mt-2 text-gray-600 text-sm sm:text-base">
           Manage your team with ease
         </p>
+        <button
+          onClick={handleLogout}
+          className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+        >
+          <LuLogOut size={16} />
+          <span className="text-sm font-medium">Logout</span>
+        </button>
       </header>
 
       {/* Stats Cards */}
