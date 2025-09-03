@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
 import Api from "../Components/Reuseable/Api";
+import Swal from "sweetalert2";
 
 // Define allowed roles
 type Role = "employee" | "hr";
@@ -76,8 +77,11 @@ const SuperAdmin = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setMessage(res.data.message);
+
+      // Add new user to list
       setUsers((prev) => [...prev, res.data.user]);
+
+      // Reset form
       setForm({
         firstName: "",
         lastName: "",
@@ -85,10 +89,31 @@ const SuperAdmin = () => {
         password: "",
         role: "employee",
       });
+
+      // Close modal
       setShowForm(false);
+
+      // 🎉 Success Alert
+      Swal.fire({
+        title: "User Created!",
+        text: res.data.message,
+        icon: "success",
+        confirmButtonColor: "#4F46E5", // indigo-600
+        confirmButtonText: "Back to Dashboard",
+      }).then(() => {
+        window.location.href = "/superadmin";
+      });
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
       setMessage(err.response?.data?.message || "Error creating user");
+
+      // ❌ Error Alert
+      Swal.fire({
+        title: "Error",
+        text: err.response?.data?.message || "Error creating user",
+        icon: "error",
+        confirmButtonColor: "#DC2626", // red-600
+      });
     } finally {
       setLoading(false);
     }
