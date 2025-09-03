@@ -2,34 +2,50 @@ import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
 import { ArrowLeftCircle } from "lucide-react";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
 interface ProfileData {
   phone: string;
   address: string;
+  city: string;
+  state: string;
+  country: string;
   department: string;
   position: string;
   emergencyContact: string;
   dob: string;
-  image: File | null;
+  avatar: File | null;
 }
 
 const Setting = () => {
   const navigate = useNavigate();
+  const MySwal = withReactContent(Swal);
   const [profile, setProfile] = useState<ProfileData>({
     phone: "",
     address: "",
+    city: "",
+    state: "",
+    country: "",
     department: "",
     position: "",
     emergencyContact: "",
     dob: "",
-    image: null,
+    avatar: null,
   });
   const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!user?.id) {
       console.error("No user ID found in localStorage");
+      MySwal.fire({
+        title: "Error",
+        text: "User data not found. Please log in again.",
+        icon: "error",
+        confirmButtonColor: "#DC2626",
+      }).then(() => navigate("/login"));
       return;
     }
 
@@ -42,32 +58,61 @@ const Setting = () => {
         setProfile({
           phone: u.profile?.phone || "",
           address: u.profile?.address || "",
+          city: u.profile?.city || "",
+          state: u.profile?.state || "",
+          country: u.profile?.country || "",
           department: u.profile?.department || "",
           position: u.profile?.position || "",
           emergencyContact: u.profile?.emergencyContact || "",
           dob: u.profile?.dateOfBirth
             ? u.profile.dateOfBirth.split("T")[0]
             : "",
-          image: null,
+          avatar: null,
         });
+        // Set preview if existing avatar URL is available
+        if (u.profile?.avatarUrl) setPreview(u.profile.avatarUrl);
       })
       .catch((err) => {
         console.error("Failed to load profile", err);
+        MySwal.fire({
+          title: "Error",
+          text: "Failed to load profile data.",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
       });
-  }, []);
+  }, [navigate]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement>,
     field: keyof ProfileData
   ) => {
     const value =
-      field === "image" ? e.target.files?.[0] || null : e.target.value;
+      field === "avatar" ? e.target.files?.[0] || null : e.target.value;
     setProfile((prev) => ({ ...prev, [field]: value }));
+
+    if (field === "avatar" && value instanceof File) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result as string);
+      reader.readAsDataURL(value);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Basic validation
+    if (!profile.department || !profile.position || !profile.phone) {
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Department, Position, and Phone are required.",
+        icon: "warning",
+        confirmButtonColor: "#DC2626",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const token = localStorage.getItem("authToken");
@@ -75,21 +120,42 @@ const Setting = () => {
 
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
-        if (value) formData.append(key, value as any);
+        if (value) {
+          if (key === "dob" && value) formData.append("dateOfBirth", value);
+          else if (value instanceof File) formData.append("avatar", value);
+          else formData.append(key, value);
+        }
       });
 
       await Api.put(`/api/v1/users/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // update localStorage
-      user.profile = { ...user.profile, ...profile, dateOfBirth: profile.dob };
+      // Update localStorage
+      user.profile = {
+        ...user.profile,
+        ...profile,
+        dateOfBirth: profile.dob,
+        avatarUrl: profile.avatar
+          ? URL.createObjectURL(profile.avatar)
+          : user.profile.avatarUrl,
+      };
       localStorage.setItem("user", JSON.stringify(user));
 
-      navigate("/EmployeeDashboard");
+      MySwal.fire({
+        title: "Success",
+        text: "Profile updated successfully",
+        icon: "success",
+        confirmButtonColor: "#4F46E5",
+      }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || "Update failed");
+      MySwal.fire({
+        title: "Error",
+        text: err.response?.data?.message || "Update failed",
+        icon: "error",
+        confirmButtonColor: "#DC2626",
+      });
     } finally {
       setLoading(false);
     }
@@ -122,6 +188,9 @@ const Setting = () => {
           "phone",
           "emergencyContact",
           "address",
+          "city",
+          "state",
+          "country",
           "dob",
         ].map((field, i) => (
           <div key={i} className="flex flex-col">
@@ -133,13 +202,21 @@ const Setting = () => {
               value={profile[field as keyof ProfileData] as string}
               onChange={(e) => handleChange(e, field as keyof ProfileData)}
               className="border px-3 py-2 rounded-md"
+              required={["department", "position", "phone"].includes(field)}
             />
           </div>
         ))}
 
         <div className="flex flex-col">
-          <label className="mb-1">Profile Image</label>
-          <input type="file" onChange={(e) => handleChange(e, "image")} />
+          <label className="mb-1">Profile Avatar</label>
+          {preview && (
+            <img
+              src={preview}
+              alt="Profile Preview"
+              className="w-32 h-32 mb-2 rounded-full object-cover"
+            />
+          )}
+          <input type="file" onChange={(e) => handleChange(e, "avatar")} />
         </div>
 
         <button
