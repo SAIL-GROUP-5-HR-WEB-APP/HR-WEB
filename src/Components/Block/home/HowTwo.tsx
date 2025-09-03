@@ -17,9 +17,9 @@ const HowTwo = () => {
           anywhere{" "}
         </p>
         <div className="flex mt-7 max-[880px]:justify-center  ">
-          <Link to="/signup">
+          <Link to="/login">
             <button className="group inline-flex items-center gap-2 px-6 py-3 bg-indigo-700 text-white  font-medium transition-all duration-500 hover:bg-indigo-800 overflow-hidden rounded-full hover:tracking-widest ease-in-out">
-              <span>Get Started</span>
+              <span>login</span>
               <FaArrowRight className="w-5 h-5 transform group-hover:translate-x-5 group-hover:opacity-0 transition-all duration-300 ease-in-out" />
             </button>
           </Link>
