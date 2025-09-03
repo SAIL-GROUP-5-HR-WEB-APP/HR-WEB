@@ -101,7 +101,7 @@ const SuperAdmin = () => {
         confirmButtonColor: "#4F46E5", // indigo-600
         confirmButtonText: "Back to Dashboard",
       }).then(() => {
-        window.location.href = "/superadmin";
+        window.location.href = "/admin";
       });
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
