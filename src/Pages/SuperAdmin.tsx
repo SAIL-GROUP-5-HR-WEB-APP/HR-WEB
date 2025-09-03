@@ -168,7 +168,7 @@ const SuperAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-gray-50 to-purple-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-gray-50 to-purple-50 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <header className="mb-8 text-center">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
@@ -182,7 +182,7 @@ const SuperAdmin = () => {
         </p>
         <button
           onClick={handleLogout}
-          className="flex items-center justify-center-safe space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+          className="flex items-center place-items-center justify-center mx-auto space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
         >
           <LuLogOut size={16} />
           <span className="text-sm font-medium">Logout</span>
