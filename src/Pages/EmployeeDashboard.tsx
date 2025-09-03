@@ -56,7 +56,7 @@ const EmployeeDashboard = () => {
       position?: string;
       phone?: string;
       address?: string;
-      avatarUrl: string;
+      avatarUrl?: string;
     };
   } | null>(null);
 
@@ -79,20 +79,27 @@ const EmployeeDashboard = () => {
       return;
     }
     const userData = JSON.parse(storedUser);
-    setUser(userData);
+    setUser(userData); // Initial set from localStorage
 
-    //fetch user data
+    // Fetch user profile
     const fetchUserProfile = async () => {
       try {
         const res = await Api.get(`/api/v1/users/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(res.data); // <-- now we have full profile info
+        const updatedUser = res.data;
+        setUser(updatedUser); // Update with full profile info
+        localStorage.setItem("user", JSON.stringify(updatedUser)); // Sync localStorage
+        console.log(
+          "Fetched user profile with avatarUrl:",
+          updatedUser.profile?.avatarUrl
+        );
       } catch (err) {
         console.error("Failed to fetch user profile:", err);
-        setUser(userData); // fallback to stored
+        setUser(userData); // Fallback to stored data
       }
     };
+
     // Fetch leave requests
     const fetchLeaveRequests = async () => {
       try {
@@ -113,7 +120,7 @@ const EmployeeDashboard = () => {
       }
     };
 
-    //fetch announcement
+    // Fetch announcements
     const fetchAnnouncements = async () => {
       setLoadingAnnouncements(true);
       try {
@@ -136,7 +143,7 @@ const EmployeeDashboard = () => {
     const fetchAttendanceSummary = async () => {
       try {
         if (!userData?.id) {
-          console.error(" User ID missing, cannot fetch logs");
+          console.error("User ID missing, cannot fetch logs");
           return;
         }
 
@@ -144,13 +151,10 @@ const EmployeeDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Backend returns an array of attendance logs
         const logs = Array.isArray(res.data) ? res.data : [];
-
         const presentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "present"
         ).length;
-
         const absentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "absent"
         ).length;
@@ -158,15 +162,15 @@ const EmployeeDashboard = () => {
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
       } catch (err) {
-        console.error(" Failed to fetch attendance summary:", err);
+        console.error("Failed to fetch attendance summary:", err);
         setDaysPresent(0);
         setDaysAbsent(0);
       }
     };
 
+    fetchUserProfile();
     fetchLeaveRequests();
     fetchAttendanceSummary();
-    fetchUserProfile();
     fetchAnnouncements();
   }, [navigate]);
 
@@ -233,7 +237,6 @@ const EmployeeDashboard = () => {
       });
       const pos = await getPosition();
       const { latitude, longitude, accuracy } = pos.coords;
-      console.log(accuracy);
 
       if (accuracy > 100) throw new Error("Geolocation accuracy too low");
 
@@ -379,6 +382,14 @@ const EmployeeDashboard = () => {
                     src={user.profile.avatarUrl}
                     alt={`${user.firstName} ${user.lastName || ""}`}
                     className="h-16 w-16 rounded-full object-cover border-2 border-purple-400 dark:border-purple-600 shadow-md hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      console.error(
+                        "Image load failed:",
+                        user.profile?.avatarUrl
+                      );
+                      (e.target as HTMLImageElement).src =
+                        "/placeholder-avatar.png"; // Fallback image
+                    }}
                   />
                 ) : (
                   <div className="h-16 w-16 rounded-full shadow-lg bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white">
