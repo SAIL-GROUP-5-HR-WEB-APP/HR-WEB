@@ -1,6 +1,3 @@
-import Button from "../../Reuseable/Button";
-import { Link } from "react-router-dom";
-
 const HowItWorks = () => {
   return (
     <div className="max-w-[1280px] mx-auto mt-16">
@@ -23,9 +20,7 @@ const HowItWorks = () => {
       <div className="flex mt-16 max-[830px]:flex-col max-[830px]:gap-16">
         {/* start */}
         <div className="max-w-md mx-auto border border-gray-200 bg-white shadow-lg rounded-2xl p-6">
-          <h1 className="text-2xl font-bold text-center mb-4">
-            Start Your Free Trial
-          </h1>
+          <h1 className="text-2xl font-bold text-center mb-4">Start Now</h1>
 
           <div className="space-y-5">
             {/* Name Row */}
@@ -92,19 +87,6 @@ const HowItWorks = () => {
             <p className="text-xs text-center text-gray-500">
               Create your account within minutes.
             </p>
-            <div className="flex justify-center items-center mt-11">
-              {" "}
-              <Link to="/signup">
-                {" "}
-                <Button
-                  title="Get Started"
-                  bg="#4F46E5"
-                  textColor="white"
-                  borderColor="white"
-                  hoverr=" hover:scale-105"
-                />
-              </Link>
-            </div>
           </div>
         </div>
         {/* start */}
@@ -177,19 +159,6 @@ const HowItWorks = () => {
             <p className="text-xs text-center text-gray-500">
               Tailor the system to your unique needs
             </p>
-            <div className="flex justify-center items-center">
-              {" "}
-              <Link to="/signup">
-                {" "}
-                <Button
-                  title="Get Started"
-                  bg="#4F46E5"
-                  textColor="white"
-                  borderColor="white"
-                  hoverr=" hover:scale-105"
-                />
-              </Link>
-            </div>
           </div>
         </div>
         {/* configure */}
@@ -256,19 +225,6 @@ const HowItWorks = () => {
             <p className="text-xs text-center text-gray-500">
               Streamline operations and get insightful analytics.
             </p>
-            <div className="flex justify-center items-center mt-16">
-              {" "}
-              <Link to="/signup">
-                {" "}
-                <Button
-                  title="Get Started"
-                  bg="#4F46E5"
-                  textColor="white"
-                  borderColor="white"
-                  hoverr=" hover:scale-105"
-                />
-              </Link>
-            </div>
           </div>
         </div>
 

@@ -52,7 +52,7 @@ const Header: React.FC = () => {
 
         {/* Call to Action Button */}
         <div className="hidden lg:flex items-center">
-          <Link to="/signup">
+          <Link to="/login">
             <Button
               title="Get started"
               bg="#4338CA"
