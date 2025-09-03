@@ -13,6 +13,9 @@ interface Employee {
   profile?: {
     phone?: string;
     address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
     department?: string;
     position?: string;
     emergencyContact?: string;
@@ -57,7 +60,7 @@ const SingleEmployeeDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-gray-100">
         <ClipLoader color="#6366f1" size={60} />
       </div>
     );
@@ -65,7 +68,7 @@ const SingleEmployeeDetails = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 gap-6">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-gray-100 gap-6">
         <p className="text-red-600 font-medium text-lg animate-pulse">
           {error}
         </p>
@@ -81,7 +84,7 @@ const SingleEmployeeDetails = () => {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-indigo-50 to-gray-100">
         <p className="text-red-600 font-medium text-lg">User not found.</p>
       </div>
     );
@@ -108,37 +111,48 @@ const SingleEmployeeDetails = () => {
         </h1>
 
         {/* Employee Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 transform hover:scale-[1.01] transition-all duration-300">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 transform hover:shadow-3xl transition-all duration-300">
           <div className="flex flex-col items-center">
             {/* Avatar */}
             {user.profile?.avatarUrl ? (
               <img
                 src={user.profile.avatarUrl}
                 alt="User Avatar"
-                className="h-32 w-32 rounded-full object-cover border-4 border-indigo-100 shadow-md mb-6"
+                className="h-40 w-40 rounded-full object-cover border-4 border-indigo-100 shadow-lg mb-8 hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  console.error("Image load failed:", user.profile?.avatarUrl);
+                  (e.target as HTMLImageElement).src =
+                    "/placeholder-avatar.png"; // Fallback image
+                }}
               />
             ) : (
-              <div className="h-32 w-32 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-5xl font-bold mb-6 shadow-md">
+              <div className="h-40 w-40 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-5xl font-bold mb-8 shadow-lg hover:scale-105 transition-transform duration-300">
                 {user.firstName?.charAt(0).toUpperCase()}
+                {user.lastName?.charAt(0).toUpperCase()}
               </div>
             )}
 
             {/* Name & Email */}
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {user.firstName} {user.lastName}
-            </h2>
-            <p className="text-gray-600 mb-4 text-lg">{user.email}</p>
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold text-gray-900">
+                {user.firstName} {user.lastName}
+              </h2>
+              <p className="text-gray-600 text-lg mt-2">{user.email}</p>
+            </div>
 
-            {/* Role */}
-            <span className="inline-block px-4 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-6">
+            {/* Role Badge */}
+            <span className="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-8">
               {user.role}
             </span>
 
             {/* Info Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
               {[
                 { label: "Phone", value: user.profile?.phone || "N/A" },
                 { label: "Address", value: user.profile?.address || "N/A" },
+                { label: "City", value: user.profile?.city || "N/A" },
+                { label: "State", value: user.profile?.state || "N/A" },
+                { label: "Country", value: user.profile?.country || "N/A" },
                 {
                   label: "Department",
                   value: user.profile?.department || "N/A",
@@ -159,14 +173,14 @@ const SingleEmployeeDetails = () => {
                   <span className="text-sm text-gray-500 font-medium">
                     {item.label}
                   </span>
-                  <span className="text-gray-900 font-semibold">
+                  <span className="text-gray-900 font-semibold mt-1">
                     {item.value}
                   </span>
                 </div>
               ))}
 
               {/* Documents */}
-              <div className="sm:col-span-2">
+              <div className="md:col-span-2">
                 <span className="text-sm text-gray-500 font-medium">
                   Documents
                 </span>
