@@ -291,17 +291,6 @@ const LoginPage: React.FC = () => {
               onClick={handleAppleLogin}
             />
           </div>
-
-          {/* Sign Up Link */}
-          <div className="text-center text-sm text-gray-600">
-            Don’t have an account?{" "}
-            <a
-              href="/signup"
-              className="text-indigo-600 font-medium hover:underline"
-            >
-              Register
-            </a>
-          </div>
         </div>
       </div>
 
