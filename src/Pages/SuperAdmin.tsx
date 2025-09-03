@@ -142,7 +142,6 @@ const SuperAdmin = () => {
       // Close modal
       setShowForm(false);
 
-      // 🎉 Success Alert
       Swal.fire({
         title: "User Created!",
         text: res.data.message,
@@ -183,7 +182,7 @@ const SuperAdmin = () => {
           </p>
           <button
             onClick={handleLogout}
-            className="flex items-center place-items-center justify-center mx-auto space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+            className="flex items-center place-items-center justify-center mx-auto mt-4 space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
           >
             <LuLogOut size={16} />
             <span className="text-sm font-medium">Logout</span>
