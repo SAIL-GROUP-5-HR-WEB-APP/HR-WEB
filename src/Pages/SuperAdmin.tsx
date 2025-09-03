@@ -1,4 +1,3 @@
-// src/pages/SuperAdmin.tsx
 import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
 import Api from "../Components/Reuseable/Api";
@@ -70,7 +69,6 @@ const SuperAdmin = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-
       const res = await Api.post<{ message: string; user: User }>(
         "/api/v1/admin/create-user",
         form,
@@ -78,9 +76,8 @@ const SuperAdmin = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       setMessage(res.data.message);
-      setUsers((prev) => [...prev, res.data.user]); // add new user to list
+      setUsers((prev) => [...prev, res.data.user]);
       setForm({
         firstName: "",
         lastName: "",
@@ -88,7 +85,7 @@ const SuperAdmin = () => {
         password: "",
         role: "employee",
       });
-      setShowForm(false); // close form after success
+      setShowForm(false);
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
       setMessage(err.response?.data?.message || "Error creating user");
@@ -98,150 +95,157 @@ const SuperAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Dashboard Header */}
-      <h1 className="text-4xl font-bold mb-6 text-center">
-        <span className="text-indigo-600">Zyrahr</span> Super Admin Dashboard
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-gray-50 to-purple-50 p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            Zyrahr
+          </span>{" "}
+          Super Admin
+        </h1>
+        <p className="mt-2 text-gray-600 text-sm sm:text-base">
+          Manage your team with ease
+        </p>
+      </header>
 
-      {/* Stats Widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-          <p className="text-gray-500 text-sm">Total Users</p>
-          <h2 className="text-2xl font-bold">{users.length}</h2>
-        </div>
-        <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-          <p className="text-gray-500 text-sm">Total HR</p>
-          <h2 className="text-2xl font-bold">
-            {users.filter((u) => u.role === "hr").length}
-          </h2>
-        </div>
-        <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-          <p className="text-gray-500 text-sm">Total Employees</p>
-          <h2 className="text-2xl font-bold">
-            {users.filter((u) => u.role === "employee").length}
-          </h2>
-        </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
+        {[
+          { label: "Total Users", value: users.length },
+          {
+            label: "HR Members",
+            value: users.filter((u) => u.role === "hr").length,
+          },
+          {
+            label: "Employees",
+            value: users.filter((u) => u.role === "employee").length,
+          },
+        ].map((stat, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-2xl shadow-lg p-5 sm:p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+          >
+            <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">
+              {stat.label}
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
+              {stat.value}
+            </h2>
+          </div>
+        ))}
       </div>
 
-      {/* Actions */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">User Management</h2>
+      {/* User Management Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+          Users
+        </h2>
         <button
           onClick={() => setShowForm((prev) => !prev)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700"
+          className="mt-3 sm:mt-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
         >
-          + Add Employee
+          + Add User
         </button>
       </div>
 
-      {/* User List */}
-      <div className="bg-white rounded-2xl shadow-md overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-100 text-gray-700 text-sm">
-              <th className="py-3 px-4">Name</th>
-              <th className="py-3 px-4">Email</th>
-              <th className="py-3 px-4">Role</th>
-              <th className="py-3 px-4">Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-t">
-                <td className="py-2 px-4">
-                  {u.firstName} {u.lastName}
-                </td>
-                <td className="py-2 px-4">{u.email}</td>
-                <td className="py-2 px-4 capitalize">{u.role}</td>
-                <td className="py-2 px-4">
-                  {new Date(u.createdAt).toLocaleDateString()}
-                </td>
+      {/* User Table */}
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm sm:text-base">
+            <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 text-gray-700">
+              <tr>
+                <th className="py-3 px-4 sm:px-6 font-semibold">Name</th>
+                <th className="py-3 px-4 sm:px-6 font-semibold">Email</th>
+                <th className="py-3 px-4 sm:px-6 font-semibold">Role</th>
+                <th className="py-3 px-4 sm:px-6 font-semibold">Created</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u, index) => (
+                <tr
+                  key={u.id}
+                  className={`border-t hover:bg-indigo-50/50 transition-colors duration-200 ${
+                    index % 2 === 0 ? "bg-gray-50/50" : "bg-white"
+                  }`}
+                >
+                  <td className="py-3 px-4 sm:px-6">
+                    {u.firstName} {u.lastName}
+                  </td>
+                  <td className="py-3 px-4 sm:px-6">{u.email}</td>
+                  <td className="py-3 px-4 sm:px-6 capitalize">{u.role}</td>
+                  <td className="py-3 px-4 sm:px-6">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Create User Form (only shows when Add Employee is clicked) */}
+      {/* Create User Modal */}
       {showForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-              👨‍💼 Create New User
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg transform transition-all duration-300">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6 text-center">
+              Create New User
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <input
-                type="text"
-                name="firstName"
-                placeholder="First Name"
-                value={form.firstName}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
-                required
-              />
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Last Name"
-                value={form.lastName}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                value={form.email}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
-                required
-              />
-              <input
-                type="password"
-                name="password"
-                placeholder="Temporary Password"
-                value={form.password}
-                onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
-                required
-              />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {[
+                { name: "firstName", placeholder: "First Name", type: "text" },
+                { name: "lastName", placeholder: "Last Name", type: "text" },
+                { name: "email", placeholder: "Email", type: "email" },
+                {
+                  name: "password",
+                  placeholder: "Temporary Password",
+                  type: "password",
+                },
+              ].map((field) => (
+                <input
+                  key={field.name}
+                  type={field.type}
+                  name={field.name}
+                  placeholder={field.placeholder}
+                  value={form[field.name as keyof CreateUserForm]}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                  required
+                />
+              ))}
               <select
                 name="role"
                 value={form.role}
                 onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
+                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
               >
                 <option value="employee">Employee</option>
                 <option value="hr">HR</option>
               </select>
-
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                  className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all duration-200 text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`px-4 py-2 rounded-lg text-white ${
+                  className={`flex-1 px-4 py-2.5 rounded-lg text-white text-sm sm:text-base ${
                     loading
                       ? "bg-indigo-400 cursor-not-allowed"
-                      : "bg-indigo-600 hover:bg-indigo-700"
-                  }`}
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  } transition-all duration-200`}
                 >
                   {loading ? "Creating..." : "Create User"}
                 </button>
               </div>
             </form>
-
             {message && (
               <p
-                className={`mt-4 text-center font-medium ${
+                className={`mt-4 text-center text-sm sm:text-base font-medium ${
                   message.includes("successfully")
                     ? "text-green-600"
                     : "text-red-600"
