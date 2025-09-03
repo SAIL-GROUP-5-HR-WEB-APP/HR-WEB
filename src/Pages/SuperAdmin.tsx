@@ -89,7 +89,6 @@ const SuperAdmin = () => {
       });
 
       try {
-        // Call logout API (optional)
         await Api.post("/api/v1/auth/logout");
 
         // Clear localStorage
@@ -148,7 +147,7 @@ const SuperAdmin = () => {
         title: "User Created!",
         text: res.data.message,
         icon: "success",
-        confirmButtonColor: "#4F46E5", // indigo-600
+        confirmButtonColor: "#4F46E5",
         confirmButtonText: "Back to Dashboard",
       }).then(() => {
         window.location.href = "/admin";
@@ -157,12 +156,11 @@ const SuperAdmin = () => {
       const err = error as AxiosError<{ message: string }>;
       setMessage(err.response?.data?.message || "Error creating user");
 
-      // ❌ Error Alert
       Swal.fire({
         title: "Error",
         text: err.response?.data?.message || "Error creating user",
         icon: "error",
-        confirmButtonColor: "#DC2626", // red-600
+        confirmButtonColor: "#DC2626",
       });
     } finally {
       setLoading(false);
@@ -177,14 +175,14 @@ const SuperAdmin = () => {
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
             Zyrahr
           </span>{" "}
-          Super Admin
+          Admin
         </h1>
         <p className="mt-2 text-gray-600 text-sm sm:text-base">
           Manage your team with ease
         </p>
         <button
           onClick={handleLogout}
-          className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+          className="flex items-center justify-center-safe space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
         >
           <LuLogOut size={16} />
           <span className="text-sm font-medium">Logout</span>
