@@ -45,7 +45,7 @@ const SuperAdmin = () => {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const res = await Api.get<User[]>("/api/v1/admin/users", {
+        const res = await Api.get<User[]>("/api/v1/users/all", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(res.data);
