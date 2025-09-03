@@ -55,6 +55,7 @@ const SuperAdmin = () => {
     name: "",
   });
   const [activeTab, setActiveTab] = useState("users");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch all users and departments on mount
   useEffect(() => {
@@ -103,6 +104,22 @@ const SuperAdmin = () => {
       [name]: value,
     }));
   };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const filteredUsers = users.filter(
+    (u) =>
+      `${u.firstName} ${u.lastName}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredDepartments = departments.filter((d) =>
+    d.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const navigate = useNavigate();
   const MySwal = withReactContent(Swal);
@@ -316,12 +333,21 @@ const SuperAdmin = () => {
                   <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
                     Users
                   </h2>
-                  <button
-                    onClick={() => setShowUserForm((prev) => !prev)}
-                    className="mt-3 sm:mt-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
-                  >
-                    + Add User
-                  </button>
+                  <div className="flex flex-col sm:flex-row sm:space-x-4 mt-3 sm:mt-0">
+                    <input
+                      type="text"
+                      placeholder="Search users..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      className="w-full sm:w-64 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                    />
+                    <button
+                      onClick={() => setShowUserForm((prev) => !prev)}
+                      className="mt-3 sm:mt-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
+                    >
+                      + Add User
+                    </button>
+                  </div>
                 </div>
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
@@ -343,7 +369,7 @@ const SuperAdmin = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {users.map((u, index) => (
+                        {filteredUsers.map((u, index) => (
                           <tr
                             key={u.id}
                             className={`border-t hover:bg-indigo-50/50 transition-colors duration-200 ${
@@ -374,12 +400,21 @@ const SuperAdmin = () => {
                   <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
                     Departments
                   </h2>
-                  <button
-                    onClick={() => setShowDeptForm((prev) => !prev)}
-                    className="mt-3 sm:mt-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
-                  >
-                    + Add Department
-                  </button>
+                  <div className="flex flex-col sm:flex-row sm:space-x-4 mt-3 sm:mt-0">
+                    <input
+                      type="text"
+                      placeholder="Search departments..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      className="w-full sm:w-64 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                    />
+                    <button
+                      onClick={() => setShowDeptForm((prev) => !prev)}
+                      className="mt-3 sm:mt-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
+                    >
+                      + Add Department
+                    </button>
+                  </div>
                 </div>
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
@@ -395,7 +430,7 @@ const SuperAdmin = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {departments.map((d, index) => (
+                        {filteredDepartments.map((d, index) => (
                           <tr
                             key={d.id}
                             className={`border-t hover:bg-indigo-50/50 transition-colors duration-200 ${
