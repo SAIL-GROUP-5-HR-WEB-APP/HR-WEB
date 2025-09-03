@@ -93,7 +93,7 @@ const EmployeesDetails = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setEmployees((prev) => [...prev, res.data.user]); // update list
+      setEmployees((prev) => [...prev, res.data.user]);
       setForm({
         firstName: "",
         lastName: "",
@@ -147,7 +147,7 @@ const EmployeesDetails = () => {
         {/* 🔹 Add Employee Button */}
         <button
           onClick={() => setShowForm(true)}
-          className="mt-3 sm:mt-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
+          className="mt-3 sm:mt-0 bg-indigo-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
         >
           + Add Employees
         </button>
@@ -267,7 +267,6 @@ const EmployeesDetails = () => {
                 className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
               >
                 <option value="employee">Employee</option>
-                <option value="hr">HR</option>
               </select>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
