@@ -28,6 +28,7 @@ interface User {
 
 interface CreateDepartmentForm {
   name: string;
+  description: string;
 }
 
 interface Department {
@@ -53,6 +54,7 @@ const SuperAdmin = () => {
   const [showDeptForm, setShowDeptForm] = useState<boolean>(false);
   const [deptForm, setDeptForm] = useState<CreateDepartmentForm>({
     name: "",
+    description: "",
   });
   const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,7 +76,7 @@ const SuperAdmin = () => {
     const fetchDepartments = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const res = await Api.get<Department[]>("/api/v1/departments/all", {
+        const res = await Api.get<Department[]>("/api/v1/departments", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setDepartments(res.data);
@@ -218,7 +220,7 @@ const SuperAdmin = () => {
     try {
       const token = localStorage.getItem("authToken");
       const res = await Api.post<{ message: string; department: Department }>(
-        "/api/v1/admin/create-department",
+        "/api/v1/departments",
         deptForm,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -226,7 +228,7 @@ const SuperAdmin = () => {
       );
 
       setDepartments((prev) => [...prev, res.data.department]);
-      setDeptForm({ name: "" });
+      setDeptForm({ name: "", description: "" });
       setShowDeptForm(false);
 
       Swal.fire({
@@ -543,6 +545,15 @@ const SuperAdmin = () => {
                   name="name"
                   placeholder="Department Name"
                   value={deptForm.name}
+                  onChange={handleDeptChange}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                  required
+                />
+                <input
+                  type="text"
+                  name="description"
+                  placeholder="Department description"
+                  value={deptForm.description}
                   onChange={handleDeptChange}
                   className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                   required
