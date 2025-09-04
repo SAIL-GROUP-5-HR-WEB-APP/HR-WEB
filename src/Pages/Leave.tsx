@@ -25,6 +25,9 @@ const AdminLeavePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "approved" | "rejected"
+  >("pending");
 
   const fetchLeaves = async () => {
     setLoading(true);
@@ -47,6 +50,7 @@ const AdminLeavePage: React.FC = () => {
           leave._id === id ? { ...leave, status: "approved" } : leave
         )
       );
+      if (activeTab !== "approved") setActiveTab("approved"); // Switch to Approved tab
     } catch (err) {
       console.error("Approve error:", err);
     }
@@ -60,6 +64,7 @@ const AdminLeavePage: React.FC = () => {
           leave._id === id ? { ...leave, status: "rejected" } : leave
         )
       );
+      if (activeTab !== "rejected") setActiveTab("rejected"); // Switch to Rejected tab
     } catch (err) {
       console.error("Reject error:", err);
     }
@@ -69,14 +74,15 @@ const AdminLeavePage: React.FC = () => {
     fetchLeaves();
   }, []);
 
-  // Filter leaves based on search term
+  // Filter leaves based on search term and active tab
   const filteredLeaves = leaves.filter(
     (leave) =>
-      `${leave.userId.firstName} ${leave.userId.lastName}`
+      leave.status === activeTab &&
+      (`${leave.userId.firstName} ${leave.userId.lastName}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      leave.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      leave.reason.toLowerCase().includes(searchTerm.toLowerCase())
+        leave.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        leave.reason.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (loading)
@@ -85,26 +91,28 @@ const AdminLeavePage: React.FC = () => {
     return <p className="text-center text-red-500 font-medium">{error}</p>;
 
   const renderTable = (
-    title: string,
     status: "pending" | "approved" | "rejected",
     icon: React.ReactNode
   ) => {
-    const filtered = filteredLeaves.filter((leave) => leave.status === status);
+    const isActive = activeTab === status;
+    if (!isActive) return null;
 
     return (
       <div className="mb-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-indigo-100/50 hover:shadow-xl transition-all duration-300">
         <div className="flex items-center gap-3 mb-4">
           {icon}
-          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
+          <h3 className="text-xl font-semibold text-gray-800">
+            {status.charAt(0).toUpperCase() + status.slice(1)} Requests
+          </h3>
         </div>
-        {filtered.length === 0 ? (
+        {filteredLeaves.length === 0 ? (
           <p className="text-gray-500 text-center py-4">
             No {status} requests.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl">
+          <div className="overflow-x-auto rounded-xl max-h-96 overflow-y-auto">
             <table className="w-full border-collapse">
-              <thead className="bg-gradient-to-r from-indigo-100 to-purple-100 text-left">
+              <thead className="bg-gradient-to-r from-indigo-100 to-purple-100 text-left sticky top-0">
                 <tr>
                   <th className="p-4 font-medium text-gray-700">Employee</th>
                   <th className="p-4 font-medium text-gray-700">Type</th>
@@ -117,7 +125,7 @@ const AdminLeavePage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((leave) => (
+                {filteredLeaves.map((leave) => (
                   <tr
                     key={leave._id}
                     className="border-b hover:bg-gray-50 transition-colors"
@@ -174,13 +182,13 @@ const AdminLeavePage: React.FC = () => {
   return (
     <div className="p-6 lg:p-10 bg-gradient-to-br from-indigo-50 via-purple-50 to-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-2">
+        <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
           <FaClock className="text-indigo-600" />
           Leave Requests Management
         </h2>
 
         {/* Search Bar */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="relative">
             <input
               type="text"
@@ -193,21 +201,29 @@ const AdminLeavePage: React.FC = () => {
           </div>
         </div>
 
-        {renderTable(
-          "⏳ Pending Requests",
-          "pending",
-          <FaClock className="text-yellow-600" />
-        )}
-        {renderTable(
-          "✅ Approved Requests",
-          "approved",
-          <FaCheckCircle className="text-green-600" />
-        )}
-        {renderTable(
-          "❌ Rejected Requests",
-          "rejected",
-          <FaTimesCircle className="text-red-600" />
-        )}
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-6 border-b-2 border-indigo-100">
+          {["pending", "approved", "rejected"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() =>
+                setActiveTab(tab as "pending" | "approved" | "rejected")
+              }
+              className={`px-6 py-3 font-semibold text-lg capitalize transition-all duration-300 ${
+                activeTab === tab
+                  ? "text-indigo-700 border-b-2 border-indigo-700"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Render Active Tab Content */}
+        {renderTable("pending", <FaClock className="text-yellow-600" />)}
+        {renderTable("approved", <FaCheckCircle className="text-green-600" />)}
+        {renderTable("rejected", <FaTimesCircle className="text-red-600" />)}
       </div>
     </div>
   );
