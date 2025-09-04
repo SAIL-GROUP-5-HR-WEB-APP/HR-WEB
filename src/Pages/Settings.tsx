@@ -16,10 +16,10 @@ interface ProfileData {
   city: string;
   state: string;
   country: string;
-  department: string; // stores departmentId
+  departmentId: string; // matches backend
   position: string;
   emergencyContact: string;
-  dob: string;
+  dateOfBirth: string;
   avatar: File | null;
 }
 
@@ -33,10 +33,10 @@ const Setting = () => {
     city: "",
     state: "",
     country: "",
-    department: "",
+    departmentId: "",
     position: "",
     emergencyContact: "",
-    dob: "",
+    dateOfBirth: "",
     avatar: null,
   });
 
@@ -44,7 +44,7 @@ const Setting = () => {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // 🔹 Fetch profile and departments
+  // 🔹 Fetch profile + departments
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const token = localStorage.getItem("authToken");
@@ -52,7 +52,7 @@ const Setting = () => {
     if (!user?.id) {
       MySwal.fire({
         title: "Error",
-        text: "User data not found. Please log in again.",
+        text: "User not found. Please log in again.",
         icon: "error",
         confirmButtonColor: "#DC2626",
       }).then(() => navigate("/login"));
@@ -71,10 +71,10 @@ const Setting = () => {
           city: u.profile?.city || "",
           state: u.profile?.state || "",
           country: u.profile?.country || "",
-          department: u.profile?.department || "",
+          departmentId: u.profile?.departmentId || "",
           position: u.profile?.position || "",
           emergencyContact: u.profile?.emergencyContact || "",
-          dob: u.profile?.dateOfBirth
+          dateOfBirth: u.profile?.dateOfBirth
             ? u.profile.dateOfBirth.split("T")[0]
             : "",
           avatar: null,
@@ -98,6 +98,7 @@ const Setting = () => {
       .catch((err) => console.error("Failed to fetch departments", err));
   }, [navigate]);
 
+  // 🔹 Input change handler
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof ProfileData
@@ -116,11 +117,12 @@ const Setting = () => {
     }
   };
 
+  // 🔹 Submit handler
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!profile.department || !profile.position || !profile.phone) {
+    if (!profile.departmentId || !profile.position || !profile.phone) {
       MySwal.fire({
         title: "Validation Error",
         text: "Department, Position, and Phone are required.",
@@ -137,14 +139,7 @@ const Setting = () => {
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (!value) return;
-
-        if (key === "dob") {
-          // ✅ rename to backend field
-          formData.append("profile.dateOfBirth", value);
-        } else if (key === "department") {
-          // ✅ rename to backend field
-          formData.append("profile.departmentId", value);
-        } else if (key === "avatar" && value instanceof File) {
+        if (key === "avatar" && value instanceof File) {
           formData.append("avatar", value);
         } else {
           formData.append(`profile.${key}`, value as string);
@@ -196,8 +191,8 @@ const Setting = () => {
         <div className="flex flex-col">
           <label className="mb-1">Department</label>
           <select
-            value={profile.department}
-            onChange={(e) => handleChange(e, "department")}
+            value={profile.departmentId}
+            onChange={(e) => handleChange(e, "departmentId")}
             className="border px-3 py-2 rounded-md"
             required
           >
@@ -219,14 +214,14 @@ const Setting = () => {
           "city",
           "state",
           "country",
-          "dob",
-        ].map((field, i) => (
-          <div key={i} className="flex flex-col">
+          "dateOfBirth",
+        ].map((field) => (
+          <div key={field} className="flex flex-col">
             <label className="mb-1 capitalize">
               {field.replace(/([A-Z])/g, " $1")}
             </label>
             <input
-              type={field === "dob" ? "date" : "text"}
+              type={field === "dateOfBirth" ? "date" : "text"}
               value={profile[field as keyof ProfileData] as string}
               onChange={(e) => handleChange(e, field as keyof ProfileData)}
               className="border px-3 py-2 rounded-md"
