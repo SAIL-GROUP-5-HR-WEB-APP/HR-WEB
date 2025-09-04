@@ -75,9 +75,7 @@ const Departments = () => {
             <div className="h-16 w-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-3xl font-extrabold text-white">
               <LuBuilding2 />
             </div>
-            <h1 className="text-3xl font-extrabold text-white">
-              Department Dashboard
-            </h1>
+            <h1 className="text-3xl font-extrabold text-white">Department</h1>
           </div>
         </div>
       </header>

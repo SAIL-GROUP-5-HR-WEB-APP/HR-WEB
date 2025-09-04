@@ -133,38 +133,27 @@ const Setting = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (!value) return;
 
         if (key === "dob") {
-          formData.append("profile[dateOfBirth]", value);
+          // ✅ rename to backend field
+          formData.append("profile.dateOfBirth", value);
         } else if (key === "department") {
-          formData.append("profile[departmentId]", value); // ✅ FIXED
-        } else if (value instanceof File) {
+          // ✅ rename to backend field
+          formData.append("profile.departmentId", value);
+        } else if (key === "avatar" && value instanceof File) {
           formData.append("avatar", value);
         } else {
-          formData.append(`profile[${key}]`, value);
+          formData.append(`profile.${key}`, value as string);
         }
       });
 
       await Api.put(`/api/v1/users/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Update localStorage
-      user.profile = {
-        ...user.profile,
-        ...profile,
-        departmentId: profile.department, // ✅ Keep consistency
-        dateOfBirth: profile.dob,
-        avatarUrl: profile.avatar
-          ? URL.createObjectURL(profile.avatar)
-          : user.profile.avatarUrl,
-      };
-      localStorage.setItem("user", JSON.stringify(user));
 
       MySwal.fire({
         title: "Success",
@@ -173,7 +162,6 @@ const Setting = () => {
         confirmButtonColor: "#4F46E5",
       }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
-      console.error("Update failed:", err.response?.data || err.message);
       MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Update failed",
