@@ -39,7 +39,6 @@ const Departments = () => {
               id={dept._id}
               name={dept.name}
               employeeCount={dept.employeeCount || 0}
-              openPositions={dept.openPositions || 0}
             />
           ))}
         </div>

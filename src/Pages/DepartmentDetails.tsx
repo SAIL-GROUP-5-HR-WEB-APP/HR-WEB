@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Api from "../Components/Reuseable/Api"; // ✅ use Api wrapper
+import Api from "../Components/Reuseable/Api";
 import {
   LuBuilding2,
   LuUsers,
@@ -38,24 +38,15 @@ const DepartmentDetails = () => {
     fetchEmployees();
   }, [id]);
 
-  if (!department) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <h2 className="text-2xl font-bold">Department Not Found</h2>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen w-full flex flex-col p-4 md:p-8">
       <header className="max-w-6xl mx-auto w-full mb-8">
         <div className="flex justify-center gap-5 items-center mb-6 ">
           <Link
             to="/dashboard/department"
-            className="flex items-center space-x-2 text-black hover:text-gray-800 transition-colors duration-300"
+            className="flex items-center space-x-2 text-gray-700 hover:text-black transition-colors duration-300"
           >
             <LuArrowLeft size={20} />
-            <span className="text-lg">Back to Departments</span>
           </Link>
           <div className="p-4 rounded-full shadow-lg max-w-lg bg-gradient-to-r from-indigo-900 to-indigo-600">
             <div className="flex items-center justify-center space-x-4">
@@ -81,22 +72,18 @@ const DepartmentDetails = () => {
             </div>
             <div className="flex items-center space-x-2">
               <LuBriefcase size={24} />
-              <div>
-                <p className="text-sm font-medium">Open Roles</p>
-                <p className="text-lg font-bold">0</p>
-              </div>
             </div>
           </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full mt-8">
-        <h2 className="text-2xl font-bold text-white mb-6">Employees</h2>
+        <h2 className="text-2xl font-bold text-black mb-6">Employees</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {employees.map((employee: any) => (
             <div
               key={employee._id}
-              className="bg-indigo-800 p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
+              className="bg-indigo-700 p-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
             >
               <h3 className="text-xl font-extrabold text-white mb-2">
                 {employee.firstName} {employee.lastName}
