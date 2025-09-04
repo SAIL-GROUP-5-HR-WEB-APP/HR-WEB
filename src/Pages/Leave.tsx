@@ -86,7 +86,11 @@ const AdminLeavePage: React.FC = () => {
   );
 
   if (loading)
-    return <p className="text-center py-6 text-gray-600">Loading leaves...</p>;
+    return (
+      <p className="text-center py-6 text-gray-600 animate-pulse">
+        Loading leaves...
+      </p>
+    );
   if (error)
     return <p className="text-center text-red-500 font-medium">{error}</p>;
 
@@ -98,7 +102,7 @@ const AdminLeavePage: React.FC = () => {
     if (!isActive) return null;
 
     return (
-      <div className="mb-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-indigo-100/50 hover:shadow-xl transition-all duration-300">
+      <div className="backdrop-blur-md rounded-2xl shadow-lg p-6 border border-indigo-100/50 hover:shadow-xl transition-all duration-300">
         <div className="flex items-center gap-3 mb-4">
           {icon}
           <h3 className="text-xl font-semibold text-gray-800">
