@@ -5,13 +5,18 @@ import { ArrowLeftCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 
+interface Department {
+  _id: string;
+  name: string;
+}
+
 interface ProfileData {
   phone: string;
   address: string;
   city: string;
   state: string;
   country: string;
-  department: string;
+  department: string; // stores departmentId
   position: string;
   emergencyContact: string;
   dob: string;
@@ -21,6 +26,7 @@ interface ProfileData {
 const Setting = () => {
   const navigate = useNavigate();
   const MySwal = withReactContent(Swal);
+
   const [profile, setProfile] = useState<ProfileData>({
     phone: "",
     address: "",
@@ -33,13 +39,17 @@ const Setting = () => {
     dob: "",
     avatar: null,
   });
+
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
+  // 🔹 Fetch profile and departments
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const token = localStorage.getItem("authToken");
+
     if (!user?.id) {
-      console.error("No user ID found in localStorage");
       MySwal.fire({
         title: "Error",
         text: "User data not found. Please log in again.",
@@ -49,7 +59,7 @@ const Setting = () => {
       return;
     }
 
-    const token = localStorage.getItem("authToken");
+    // Fetch profile
     Api.get(`/api/v1/users/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -69,11 +79,9 @@ const Setting = () => {
             : "",
           avatar: null,
         });
-        // Set preview if existing avatar URL is available
         if (u.profile?.avatarUrl) setPreview(u.profile.avatarUrl);
       })
-      .catch((err) => {
-        console.error("Failed to load profile", err);
+      .catch(() => {
         MySwal.fire({
           title: "Error",
           text: "Failed to load profile data.",
@@ -81,15 +89,25 @@ const Setting = () => {
           confirmButtonColor: "#DC2626",
         });
       });
+
+    // Fetch departments
+    Api.get(`/api/v1/departments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => setDepartments(res.data))
+      .catch((err) => console.error("Failed to fetch departments", err));
   }, [navigate]);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement>,
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof ProfileData
   ) => {
     const value =
-      field === "avatar" ? e.target.files?.[0] || null : e.target.value;
-    setProfile((prev) => ({ ...prev, [field]: value }));
+      field === "avatar" && "files" in e.target
+        ? e.target.files?.[0] || null
+        : e.target.value;
+
+    setProfile((prev) => ({ ...prev, [field]: value as any }));
 
     if (field === "avatar" && value instanceof File) {
       const reader = new FileReader();
@@ -102,7 +120,6 @@ const Setting = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Basic validation
     if (!profile.department || !profile.position || !profile.phone) {
       MySwal.fire({
         title: "Validation Error",
@@ -121,7 +138,7 @@ const Setting = () => {
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (value) {
-          if (key === "dob" && value) formData.append("dateOfBirth", value);
+          if (key === "dob") formData.append("dateOfBirth", value);
           else if (value instanceof File) formData.append("avatar", value);
           else formData.append(key, value);
         }
@@ -131,7 +148,6 @@ const Setting = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Update localStorage
       user.profile = {
         ...user.profile,
         ...profile,
@@ -149,7 +165,6 @@ const Setting = () => {
         confirmButtonColor: "#4F46E5",
       }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
-      console.error(err);
       MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Update failed",
@@ -174,16 +189,32 @@ const Setting = () => {
           >
             <ArrowLeftCircle size={28} />
           </span>
-
           <h2 className="flex-1 text-2xl font-bold text-center">
             Edit Profile
           </h2>
-
           <span className="w-7" />
         </div>
 
+        {/* 🔹 Department dropdown */}
+        <div className="flex flex-col">
+          <label className="mb-1">Department</label>
+          <select
+            value={profile.department}
+            onChange={(e) => handleChange(e, "department")}
+            className="border px-3 py-2 rounded-md"
+            required
+          >
+            <option value="">Select a department</option>
+            {departments.map((dept) => (
+              <option key={dept._id} value={dept._id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 🔹 Other inputs */}
         {[
-          "department",
           "position",
           "phone",
           "emergencyContact",
@@ -202,11 +233,12 @@ const Setting = () => {
               value={profile[field as keyof ProfileData] as string}
               onChange={(e) => handleChange(e, field as keyof ProfileData)}
               className="border px-3 py-2 rounded-md"
-              required={["department", "position", "phone"].includes(field)}
+              required={["position", "phone"].includes(field)}
             />
           </div>
         ))}
 
+        {/* Avatar */}
         <div className="flex flex-col">
           <label className="mb-1">Profile Avatar</label>
           {preview && (
