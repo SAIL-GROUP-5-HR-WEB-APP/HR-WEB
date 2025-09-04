@@ -122,7 +122,7 @@ const Setting = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (!profile.departmentId || !profile.position || !profile.phone) {
+    if (!profile.department || !profile.position || !profile.phone) {
       MySwal.fire({
         title: "Validation Error",
         text: "Department, Position, and Phone are required.",
@@ -139,10 +139,15 @@ const Setting = () => {
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (!value) return;
-        if (key === "avatar" && value instanceof File) {
-          formData.append("avatar", value);
+
+        if (key === "dob") {
+          formData.append("dateOfBirth", value); // ✅ matches backend
+        } else if (key === "department") {
+          formData.append("department", value); // ✅ backend expects flat
+        } else if (key === "avatar" && value instanceof File) {
+          formData.append("avatar", value); // ✅ file upload
         } else {
-          formData.append(`profile.${key}`, value as string);
+          formData.append(key, value as string); // ✅ phone, address, etc.
         }
       });
 
