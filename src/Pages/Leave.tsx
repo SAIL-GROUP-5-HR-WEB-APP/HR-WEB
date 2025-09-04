@@ -50,7 +50,7 @@ const AdminLeavePage: React.FC = () => {
           leave._id === id ? { ...leave, status: "approved" } : leave
         )
       );
-      if (activeTab !== "approved") setActiveTab("approved"); // Switch to Approved tab
+      if (activeTab !== "approved") setActiveTab("approved");
     } catch (err) {
       console.error("Approve error:", err);
     }
@@ -64,7 +64,7 @@ const AdminLeavePage: React.FC = () => {
           leave._id === id ? { ...leave, status: "rejected" } : leave
         )
       );
-      if (activeTab !== "rejected") setActiveTab("rejected"); // Switch to Rejected tab
+      if (activeTab !== "rejected") setActiveTab("rejected");
     } catch (err) {
       console.error("Reject error:", err);
     }
@@ -86,11 +86,7 @@ const AdminLeavePage: React.FC = () => {
   );
 
   if (loading)
-    return (
-      <p className="text-center py-6 text-gray-600 animate-pulse">
-        Loading leaves...
-      </p>
-    );
+    return <p className="text-center py-6 text-gray-600">Loading leaves...</p>;
   if (error)
     return <p className="text-center text-red-500 font-medium">{error}</p>;
 
@@ -102,7 +98,7 @@ const AdminLeavePage: React.FC = () => {
     if (!isActive) return null;
 
     return (
-      <div className="backdrop-blur-md rounded-2xl shadow-lg p-6 border border-indigo-100/50 hover:shadow-xl transition-all duration-300">
+      <div className="mb-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-indigo-100/50 hover:shadow-xl transition-all duration-300">
         <div className="flex items-center gap-3 mb-4">
           {icon}
           <h3 className="text-xl font-semibold text-gray-800">
@@ -184,9 +180,9 @@ const AdminLeavePage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 lg:p-10 bg-gradient-to-br from-indigo-50 via-purple-50 to-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-gray-50 p-0">
+      <div className="max-w-7xl mx-auto p-6 lg:p-10">
+        <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-2">
           <FaClock className="text-indigo-600" />
           Leave Requests Management
         </h2>
