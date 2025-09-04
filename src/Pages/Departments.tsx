@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Api from "../Components/Reuseable/Api";
-import DepartmentCard from "../Pages/DepartmentCard";
+import DepartmentCard from "./DepartmentCard";
 
 interface Department {
   _id: string;
