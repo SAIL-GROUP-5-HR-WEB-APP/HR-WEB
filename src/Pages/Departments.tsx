@@ -1,24 +1,16 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import Api from "../Components/Reuseable/Api"; // ✅ use your Api wrapper
 import DepartmentCard from "./DepartmentCard";
 import { LuBuilding2 } from "react-icons/lu";
 
-interface Department {
-  _id: string; // ✅ MongoDB id is a string
-  name: string;
-  description?: string;
-}
-
 const Departments = () => {
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await axios.get("/api/v1/departments", {
-          withCredentials: true,
-        });
-        setDepartments(res.data);
+        const { data } = await Api.get("/api/v1/departments");
+        setDepartments(data || []);
       } catch (err) {
         console.error("Error fetching departments:", err);
       }
@@ -34,22 +26,20 @@ const Departments = () => {
             <div className="h-16 w-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-3xl font-extrabold text-white">
               <LuBuilding2 />
             </div>
-            <h1 className="text-3xl font-extrabold text-white">
-              Department Dashboard
-            </h1>
+            <h1 className="text-3xl font-extrabold text-white">Departments</h1>
           </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-6xl mx-auto w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {departments.map((dept) => (
+          {departments.map((dept: any) => (
             <DepartmentCard
               key={dept._id}
-              id={dept._id} // ✅ string, matches DepartmentCard props
+              id={dept._id}
               name={dept.name}
-              employeeCount={0} // will replace with API later
-              openPositions={0} // can also fetch from API
+              employeeCount={dept.employeeCount || 0}
+              openPositions={dept.openPositions || 0}
             />
           ))}
         </div>
