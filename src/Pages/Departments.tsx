@@ -5,7 +5,7 @@ import { LuBuilding2 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 
 interface Department {
-  _id: string;
+  id: string;
   name: string;
   description?: string;
 }
@@ -58,8 +58,8 @@ const Departments = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {departments.map((dept) => (
               <DepartmentCard
-                key={dept._id}
-                id={dept._id}
+                key={dept.id}
+                id={dept.id}
                 name={dept.name}
                 employeeCount={0} // real count will be shown in details page
                 openPositions={0} // optional, depends on your schema
