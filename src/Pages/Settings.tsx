@@ -137,10 +137,16 @@ const Setting = () => {
 
       const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
-        if (value) {
-          if (key === "dob") formData.append("dateOfBirth", value);
-          else if (value instanceof File) formData.append("avatar", value);
-          else formData.append(key, value);
+        if (!value) return;
+
+        if (key === "dob") {
+          formData.append("profile[dateOfBirth]", value);
+        } else if (key === "department") {
+          formData.append("profile[departmentId]", value); // ✅ FIXED
+        } else if (value instanceof File) {
+          formData.append("avatar", value);
+        } else {
+          formData.append(`profile[${key}]`, value);
         }
       });
 
@@ -148,9 +154,11 @@ const Setting = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Update localStorage
       user.profile = {
         ...user.profile,
         ...profile,
+        departmentId: profile.department, // ✅ Keep consistency
         dateOfBirth: profile.dob,
         avatarUrl: profile.avatar
           ? URL.createObjectURL(profile.avatar)
@@ -165,6 +173,7 @@ const Setting = () => {
         confirmButtonColor: "#4F46E5",
       }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
+      console.error("Update failed:", err.response?.data || err.message);
       MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Update failed",
