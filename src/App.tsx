@@ -33,7 +33,7 @@ const AppContent = () => {
   // Paths where header & footer should be hidden
   const hideHeaderAndFooterPaths = [
     "/login",
-    "/forgotpassword",
+    "/changepassword",
     "/reset-password",
     "/onboarding",
     "/dashboard",
@@ -62,7 +62,7 @@ const AppContent = () => {
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/contact" element={<Contact />} />
-        <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+        <Route path="/changepassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/OTP" element={<OTPmodal />} />
 
