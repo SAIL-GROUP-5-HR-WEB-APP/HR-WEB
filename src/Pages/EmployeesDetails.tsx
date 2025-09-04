@@ -104,18 +104,20 @@ const EmployeesDetails = () => {
       setShowForm(false);
 
       Swal.fire({
-        title: "User Created!",
+        title: "Employee Created!",
         text: res.data.message,
         icon: "success",
         confirmButtonColor: "#4F46E5",
+      }).then(() => {
+        window.location.href = "/dashboard/employees";
       });
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      setMessage(err.response?.data?.message || "Error creating user");
+      setMessage(err.response?.data?.message || "Error creating Employee");
 
       Swal.fire({
         title: "Error",
-        text: err.response?.data?.message || "Error creating user",
+        text: err.response?.data?.message || "Error creating Employee",
         icon: "error",
         confirmButtonColor: "#DC2626",
       });
