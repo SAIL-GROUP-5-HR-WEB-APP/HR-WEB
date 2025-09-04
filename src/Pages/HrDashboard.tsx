@@ -36,7 +36,7 @@ const HrDashboard = () => {
   const [announcementTitle, setAnnouncementTitle] = useState<string>("");
   const [announcementContent, setAnnouncementContent] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
-
+  const [departments, setDepartments] = useState([]);
   const [totalEmployees, setTotalEmployees] = useState<number>(0);
   const [leaveStats, setLeaveStats] = useState({
     pending: 0,
@@ -59,6 +59,18 @@ const HrDashboard = () => {
     } catch (err) {
       console.error("Failed to fetch attendance:", err);
     }
+  };
+  const fetchDepartments = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await Api.get("/api/v1/departments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartments(res.data);
+    } catch (error) {
+      console.error("Failed to fetch departments");
+    }
+    fetchDepartments();
   };
 
   const fetchTotalEmployees = async () => {
@@ -177,7 +189,11 @@ const HrDashboard = () => {
       total: totalEmployees,
       icon: <LuUsers size={30} />,
     },
-    { title: "Departments", total: "2", icon: <LuBuilding2 size={30} /> },
+    {
+      title: "Departments",
+      total: departments.length,
+      icon: <LuBuilding2 size={30} />,
+    },
     {
       title: "Present",
       total: attendanceStats.present,

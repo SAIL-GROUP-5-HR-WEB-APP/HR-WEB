@@ -39,7 +39,7 @@ const OtpPage: React.FC = () => {
         );
         localStorage.setItem("role", "employee"); // only employees signup
 
-        navigate("/onboarding");
+        navigate("/login");
       }
     } catch (err: any) {
       if (err.response) {
