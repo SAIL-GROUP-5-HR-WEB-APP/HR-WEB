@@ -282,8 +282,8 @@ const SuperAdmin = () => {
           {[
             { label: "Total Users", value: users.length },
             {
-              label: "HR Members",
-              value: users.filter((u) => u.role === "hr").length,
+              label: "Departments",
+              value: departments.length,
             },
             {
               label: "Employees",
