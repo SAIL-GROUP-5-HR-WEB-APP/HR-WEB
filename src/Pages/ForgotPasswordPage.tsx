@@ -5,15 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
 import dash from "../assets/dashboard.png";
 
-const navigate = useNavigate();
-
 const ForgotPasswordPage: React.FC = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -31,8 +30,13 @@ const ForgotPasswordPage: React.FC = () => {
       setLoading(true);
       const res = await Api.post("/api/v1/auth/forgot-password", { email });
 
-      if (res.status === 201 || res.status === 200) {
-        setSuccess("Reset link has been sent to your email");
+      if (res.status === 200 || res.status === 201) {
+        setSuccess("OTP has been sent to your email");
+        // Store email to localStorage for the Reset Password page
+        localStorage.setItem("resetEmail", email);
+
+        // Redirect to Reset Password page after short delay
+        setTimeout(() => navigate("/reset-password"), 1000);
       }
     } catch (err: any) {
       setError(
@@ -42,7 +46,6 @@ const ForgotPasswordPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-    navigate("/OTP");
   };
 
   return (
@@ -61,19 +64,14 @@ const ForgotPasswordPage: React.FC = () => {
               Change Password
             </h1>
             <p className="text-sm text-gray-600">
-              Enter your email to receive a password reset link.
+              Enter your email to receive a one-time password (OTP).
             </p>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-500 mb-4" role="alert">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
           {success && <p className="text-sm text-green-600 mb-4">{success}</p>}
 
           <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit}>
-            {/* Email Input */}
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="email"
@@ -105,7 +103,7 @@ const ForgotPasswordPage: React.FC = () => {
                   type="submit"
                   className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white font-medium bg-indigo-600 hover:bg-indigo-700"
                 >
-                  Send Reset Link
+                  Send OTP
                 </button>
               )}
             </div>
@@ -113,12 +111,12 @@ const ForgotPasswordPage: React.FC = () => {
 
           <div className="text-center text-sm text-gray-600">
             Remember your password?{" "}
-            <a
-              href="/login"
+            <Link
+              to="/login"
               className="text-indigo-600 font-medium hover:underline"
             >
               Login
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,69 +1,62 @@
 import { useState } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import Button from "../Components/Reuseable/Button";
 import Api from "../Components/Reuseable/Api";
-import { AxiosError } from "axios";
 import dash from "../assets/dashboard.png";
+
 interface ResetPasswordData {
-  password: string;
+  otp: string;
+  newPassword: string;
   confirmPassword: string;
 }
 
 const ResetPasswordPage: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<ResetPasswordData>({
-    password: "",
+    otp: "",
+    newPassword: "",
     confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<Partial<ResetPasswordData>>({});
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Extract token from query string
-  const queryParams = new URLSearchParams(location.search);
-  const token = queryParams.get("token");
+  const email = localStorage.getItem("resetEmail"); // Email saved from forgot password step
 
   const validateForm = (): boolean => {
     const newErrors: Partial<ResetPasswordData> = {};
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-
-    if (formData.password !== formData.confirmPassword) {
+    if (!formData.otp) newErrors.otp = "OTP is required";
+    if (!formData.newPassword) newErrors.newPassword = "Password is required";
+    else if (formData.newPassword.length < 6)
+      newErrors.newPassword = "Password must be at least 6 characters";
+    if (formData.newPassword !== formData.confirmPassword)
       newErrors.confirmPassword = "Passwords do not match";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     setSuccess(false);
 
     if (!validateForm()) return;
-    if (!token) {
-      setSubmitError("Invalid or expired reset link");
+    if (!email) {
+      setSubmitError("Email not found. Start the process again.");
       return;
     }
 
@@ -71,19 +64,19 @@ const ResetPasswordPage: React.FC = () => {
       setLoading(true);
 
       const res = await Api.post("/api/v1/auth/reset-password", {
-        token,
-        newPassword: formData.password,
+        email,
+        otp: formData.otp,
+        newPassword: formData.newPassword,
       });
 
       if (res.status === 200) {
         setSuccess(true);
-        // Redirect after 2s
+        localStorage.removeItem("resetEmail");
         setTimeout(() => navigate("/login"), 2000);
       }
-    } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
+    } catch (err: any) {
       setSubmitError(
-        error.response?.data?.message || "An error occurred. Please try again."
+        err.response?.data?.message || "Invalid OTP or expired. Try again."
       );
       console.error(err);
     } finally {
@@ -97,9 +90,7 @@ const ResetPasswordPage: React.FC = () => {
       <div className="lg:w-1/2 w-full flex flex-col justify-center p-8 lg:h-full">
         <div className="max-w-md mx-auto w-full">
           <div className="mb-10">
-            <Link to="/">
-              <Logo />
-            </Link>
+            <Logo />
           </div>
 
           <div className="mb-8 text-left">
@@ -107,7 +98,7 @@ const ResetPasswordPage: React.FC = () => {
               Reset Password
             </h1>
             <p className="text-sm text-gray-600">
-              Enter your new password below.
+              Enter the OTP sent to your email and choose a new password.
             </p>
           </div>
 
@@ -116,22 +107,34 @@ const ResetPasswordPage: React.FC = () => {
           )}
           {success && (
             <p className="text-sm text-green-600 mb-4">
-              Your password has been reset. Redirecting to{" "}
+              Password reset successful! Redirecting to{" "}
               <span className="font-medium">Login</span>...
             </p>
           )}
 
           <form className="flex flex-col gap-6 mb-8" onSubmit={handleSubmit}>
+            <div className="flex flex-col">
+              <label>OTP</label>
+              <input
+                type="text"
+                name="otp"
+                value={formData.otp}
+                onChange={handleInputChange}
+                className="border px-3 py-2 rounded-md"
+                required
+              />
+            </div>
+
             <PasswordInput
               label="New Password"
-              id="password"
-              name="password"
+              id="newPassword"
+              name="newPassword"
               placeholder="Enter new password"
-              value={formData.password}
+              value={formData.newPassword}
               onChange={handleInputChange}
               showPassword={showPassword}
               toggleShowPassword={() => setShowPassword(!showPassword)}
-              error={errors.password}
+              error={errors.newPassword}
             />
 
             <PasswordInput
@@ -150,7 +153,7 @@ const ResetPasswordPage: React.FC = () => {
 
             <div className="relative">
               {loading ? (
-                <div className="flex items-center justify-center px-4 py-3 bg-[#5B5CE6] rounded-lg">
+                <div className="flex items-center justify-center px-4 py-3 bg-indigo-600 rounded-lg">
                   <ClipLoader color="#ffffff" size={24} />
                 </div>
               ) : (
@@ -164,16 +167,6 @@ const ResetPasswordPage: React.FC = () => {
               )}
             </div>
           </form>
-
-          <div className="text-center text-sm text-gray-600">
-            Remember your password?
-            <a
-              href="/login"
-              className="text-indigo-600 font-medium hover:underline"
-            >
-              Login
-            </a>
-          </div>
         </div>
       </div>
 
