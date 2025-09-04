@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
 import dash from "../assets/dashboard.png";
+
+const navigate = useNavigate();
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -40,6 +42,7 @@ const ForgotPasswordPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+    navigate("/OTP");
   };
 
   return (
@@ -55,7 +58,7 @@ const ForgotPasswordPage: React.FC = () => {
 
           <div className="mb-8 text-left">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Forgot Password
+              Change Password
             </h1>
             <p className="text-sm text-gray-600">
               Enter your email to receive a password reset link.
@@ -127,7 +130,7 @@ const ForgotPasswordPage: React.FC = () => {
             Reset your password easily.
           </h2>
           <p className="text-base opacity-90 mb-10">
-            We’ll email you a secure link so you can create a new password.
+            We’ll email you a secure OTP so you can create a new password.
           </p>
           <div className="bg-white/10 rounded-2xl p-5 backdrop-blur-lg">
             <img
