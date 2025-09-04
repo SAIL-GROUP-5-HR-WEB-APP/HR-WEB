@@ -210,7 +210,7 @@ const LoginPage: React.FC = () => {
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember Me</span>
               </label>
-              <Link to="/forgotpassword">
+              <Link to="/changepassword">
                 <a className="text-sm text-indigo-600 font-medium hover:underline">
                   Forgot Your Password?
                 </a>
