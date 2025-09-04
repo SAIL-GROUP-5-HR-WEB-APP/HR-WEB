@@ -8,6 +8,8 @@ interface Department {
   id: string;
   name: string;
   description?: string;
+  employeeCount: number;
+  openPositions: number;
 }
 
 const Departments = () => {
@@ -59,10 +61,10 @@ const Departments = () => {
             {departments.map((dept) => (
               <DepartmentCard
                 key={dept.id}
-                id={dept.id}
+                id={dept.id} // ✅ string works fine
                 name={dept.name}
-                employeeCount={0} // real count will be shown in details page
-                openPositions={0} // optional, depends on your schema
+                employeeCount={0}
+                openPositions={0}
               />
             ))}
           </div>
