@@ -16,7 +16,7 @@ interface ProfileData {
   city: string;
   state: string;
   country: string;
-  department: string; // ✅ backend expects "department" (not departmentId)
+  departmentId: string; // matches backend
   position: string;
   emergencyContact: string;
   dob: string;
@@ -33,7 +33,7 @@ const Setting = () => {
     city: "",
     state: "",
     country: "",
-    department: "",
+    departmentId: "",
     position: "",
     emergencyContact: "",
     dob: "",
@@ -44,7 +44,7 @@ const Setting = () => {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // 🔹 Fetch profile + departments
+  // Fetch profile and departments
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const token = localStorage.getItem("authToken");
@@ -59,7 +59,7 @@ const Setting = () => {
       return;
     }
 
-    // Fetch user profile
+    // Fetch profile
     Api.get(`/api/v1/users/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -71,7 +71,7 @@ const Setting = () => {
           city: u.profile?.city || "",
           state: u.profile?.state || "",
           country: u.profile?.country || "",
-          department: u.profile?.department || "", // ✅ match backend
+          departmentId: u.profile?.departmentId || "",
           position: u.profile?.position || "",
           emergencyContact: u.profile?.emergencyContact || "",
           dob: u.profile?.dateOfBirth
@@ -98,7 +98,6 @@ const Setting = () => {
       .catch((err) => console.error("Failed to fetch departments", err));
   }, [navigate]);
 
-  // 🔹 Handle input changes
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof ProfileData
@@ -108,7 +107,7 @@ const Setting = () => {
         ? e.target.files?.[0] || null
         : e.target.value;
 
-    setProfile((prev) => ({ ...prev, [field]: value as any }));
+    setProfile((prev) => ({ ...prev, [field]: value }));
 
     if (field === "avatar" && value instanceof File) {
       const reader = new FileReader();
@@ -117,12 +116,11 @@ const Setting = () => {
     }
   };
 
-  // 🔹 Handle form submit
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    if (!profile.department || !profile.position || !profile.phone) {
+    if (!profile.departmentId || !profile.position || !profile.phone) {
       MySwal.fire({
         title: "Validation Error",
         text: "Department, Position, and Phone are required.",
@@ -135,17 +133,19 @@ const Setting = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-      const formData = new FormData();
 
+      const formData = new FormData();
       Object.entries(profile).forEach(([key, value]) => {
         if (!value) return;
 
         if (key === "dob") {
-          formData.append("dateOfBirth", value); // ✅ backend expects flat
+          formData.append("profile.dateOfBirth", value);
+        } else if (key === "departmentId") {
+          formData.append("profile.departmentId", value);
         } else if (key === "avatar" && value instanceof File) {
           formData.append("avatar", value);
         } else {
-          formData.append(key, value as string); // ✅ department, phone, etc.
+          formData.append(`profile.${key}`, value as string);
         }
       });
 
@@ -160,7 +160,6 @@ const Setting = () => {
         confirmButtonColor: "#4F46E5",
       }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
-      console.error("Update failed", err);
       MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Update failed",
@@ -191,12 +190,12 @@ const Setting = () => {
           <span className="w-7" />
         </div>
 
-        {/* 🔹 Department dropdown */}
+        {/* Department dropdown */}
         <div className="flex flex-col">
           <label className="mb-1">Department</label>
           <select
-            value={profile.department}
-            onChange={(e) => handleChange(e, "department")}
+            value={profile.departmentId}
+            onChange={(e) => handleChange(e, "departmentId")}
             className="border px-3 py-2 rounded-md"
             required
           >
@@ -209,7 +208,7 @@ const Setting = () => {
           </select>
         </div>
 
-        {/* 🔹 Other inputs */}
+        {/* Other profile fields */}
         {[
           "position",
           "phone",
