@@ -16,10 +16,10 @@ interface ProfileData {
   city: string;
   state: string;
   country: string;
-  departmentId: string; // matches backend
+  department: string; // ✅ backend expects "department" (not departmentId)
   position: string;
   emergencyContact: string;
-  dateOfBirth: string;
+  dob: string;
   avatar: File | null;
 }
 
@@ -33,10 +33,10 @@ const Setting = () => {
     city: "",
     state: "",
     country: "",
-    departmentId: "",
+    department: "",
     position: "",
     emergencyContact: "",
-    dateOfBirth: "",
+    dob: "",
     avatar: null,
   });
 
@@ -52,14 +52,14 @@ const Setting = () => {
     if (!user?.id) {
       MySwal.fire({
         title: "Error",
-        text: "User not found. Please log in again.",
+        text: "User data not found. Please log in again.",
         icon: "error",
         confirmButtonColor: "#DC2626",
       }).then(() => navigate("/login"));
       return;
     }
 
-    // Fetch profile
+    // Fetch user profile
     Api.get(`/api/v1/users/${user.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -71,10 +71,10 @@ const Setting = () => {
           city: u.profile?.city || "",
           state: u.profile?.state || "",
           country: u.profile?.country || "",
-          departmentId: u.profile?.departmentId || "",
+          department: u.profile?.department || "", // ✅ match backend
           position: u.profile?.position || "",
           emergencyContact: u.profile?.emergencyContact || "",
-          dateOfBirth: u.profile?.dateOfBirth
+          dob: u.profile?.dateOfBirth
             ? u.profile.dateOfBirth.split("T")[0]
             : "",
           avatar: null,
@@ -98,7 +98,7 @@ const Setting = () => {
       .catch((err) => console.error("Failed to fetch departments", err));
   }, [navigate]);
 
-  // 🔹 Input change handler
+  // 🔹 Handle input changes
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof ProfileData
@@ -117,7 +117,7 @@ const Setting = () => {
     }
   };
 
-  // 🔹 Submit handler
+  // 🔹 Handle form submit
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -135,19 +135,17 @@ const Setting = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-
       const formData = new FormData();
+
       Object.entries(profile).forEach(([key, value]) => {
         if (!value) return;
 
         if (key === "dob") {
-          formData.append("dateOfBirth", value); // ✅ matches backend
-        } else if (key === "department") {
-          formData.append("department", value); // ✅ backend expects flat
+          formData.append("dateOfBirth", value); // ✅ backend expects flat
         } else if (key === "avatar" && value instanceof File) {
-          formData.append("avatar", value); // ✅ file upload
+          formData.append("avatar", value);
         } else {
-          formData.append(key, value as string); // ✅ phone, address, etc.
+          formData.append(key, value as string); // ✅ department, phone, etc.
         }
       });
 
@@ -162,6 +160,7 @@ const Setting = () => {
         confirmButtonColor: "#4F46E5",
       }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
+      console.error("Update failed", err);
       MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Update failed",
@@ -196,8 +195,8 @@ const Setting = () => {
         <div className="flex flex-col">
           <label className="mb-1">Department</label>
           <select
-            value={profile.departmentId}
-            onChange={(e) => handleChange(e, "departmentId")}
+            value={profile.department}
+            onChange={(e) => handleChange(e, "department")}
             className="border px-3 py-2 rounded-md"
             required
           >
@@ -219,14 +218,14 @@ const Setting = () => {
           "city",
           "state",
           "country",
-          "dateOfBirth",
-        ].map((field) => (
-          <div key={field} className="flex flex-col">
+          "dob",
+        ].map((field, i) => (
+          <div key={i} className="flex flex-col">
             <label className="mb-1 capitalize">
               {field.replace(/([A-Z])/g, " $1")}
             </label>
             <input
-              type={field === "dateOfBirth" ? "date" : "text"}
+              type={field === "dob" ? "date" : "text"}
               value={profile[field as keyof ProfileData] as string}
               onChange={(e) => handleChange(e, field as keyof ProfileData)}
               className="border px-3 py-2 rounded-md"
