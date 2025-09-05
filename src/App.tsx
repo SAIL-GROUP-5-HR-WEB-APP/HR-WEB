@@ -26,6 +26,7 @@ import SuperAdmin from "./Pages/SuperAdmin";
 import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
 import Settings from "./Pages/Settings";
 import Attendance from "./Pages/Attendance";
+import DemoPage from "./Pages/DemoPage";
 
 const AppContent = () => {
   const location = useLocation();
@@ -41,7 +42,7 @@ const AppContent = () => {
     "/OTP",
     "/setting",
     "/admin",
-
+    "/demo",
     "/SingleEmployeedetails",
   ];
 
@@ -64,6 +65,7 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/changepassword" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/OTP" element={<OTPmodal />} />
 
         <Route
