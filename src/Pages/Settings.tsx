@@ -19,7 +19,7 @@ interface ProfileData {
   departmentId: string; // matches backend
   position: string;
   emergencyContact: string;
-  dob: string;
+  dateOfBirth: string;
   avatar: File | null;
 }
 
@@ -36,7 +36,7 @@ const Setting = () => {
     departmentId: "",
     position: "",
     emergencyContact: "",
-    dob: "",
+    dateOfBirth: "",
     avatar: null,
   });
 
@@ -74,8 +74,8 @@ const Setting = () => {
           departmentId: u.profile?.departmentId || "",
           position: u.profile?.position || "",
           emergencyContact: u.profile?.emergencyContact || "",
-          dob: u.profile?.dateOfBirth
-            ? u.profile.dateOfBirth.split("T")[0]
+          dateOfBirth: u.profile?.dateOfBirth
+            ? new Date(u.profile.dateOfBirth).toISOString().split("T")[0]
             : "",
           avatar: null,
         });
@@ -138,14 +138,12 @@ const Setting = () => {
       Object.entries(profile).forEach(([key, value]) => {
         if (!value) return;
 
-        if (key === "dob") {
-          formData.append("profile.dateOfBirth", value);
-        } else if (key === "departmentId") {
-          formData.append("profile.departmentId", value);
+        if (key === "dateOfBirth") {
+          formData.append("dateOfBirth", value);
         } else if (key === "avatar" && value instanceof File) {
           formData.append("avatar", value);
         } else {
-          formData.append(`profile.${key}`, value as string);
+          formData.append(key, value as string);
         }
       });
 
@@ -217,14 +215,14 @@ const Setting = () => {
           "city",
           "state",
           "country",
-          "dob",
+          "dateOfBirth",
         ].map((field, i) => (
           <div key={i} className="flex flex-col">
             <label className="mb-1 capitalize">
               {field.replace(/([A-Z])/g, " $1")}
             </label>
             <input
-              type={field === "dob" ? "date" : "text"}
+              type={field === "dateOfBirth" ? "date" : "text"}
               value={profile[field as keyof ProfileData] as string}
               onChange={(e) => handleChange(e, field as keyof ProfileData)}
               className="border px-3 py-2 rounded-md"
