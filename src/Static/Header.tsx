@@ -54,7 +54,7 @@ const Header: React.FC = () => {
         <div className="hidden lg:flex items-center">
           <Link to="/login">
             <Button
-              title="Get started"
+              title="Login"
               bg="#4338CA"
               textColor="white"
               borderColor="border-transparent"

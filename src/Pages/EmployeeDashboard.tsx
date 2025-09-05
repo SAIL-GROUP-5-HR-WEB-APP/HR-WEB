@@ -848,7 +848,7 @@ const EmployeeDashboard = () => {
           <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700">
             <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
               <LuHeart size={28} className="text-purple-500" />
-              <span>Send Kudo</span>
+              <span>Send Kudos</span>
             </h2>
             <form onSubmit={submitKudo} className="space-y-4">
               <div>
@@ -856,7 +856,7 @@ const EmployeeDashboard = () => {
                   htmlFor="kudoReceiver"
                   className="text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Send Kudo To
+                  Send Kudos To
                 </label>
                 <select
                   id="kudoReceiver"
@@ -885,7 +885,7 @@ const EmployeeDashboard = () => {
                 </label>
                 <textarea
                   id="kudoMessage"
-                  placeholder="Write your kudo message"
+                  placeholder="Write your kudos message"
                   className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
                   value={kudoMessage}
                   onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
@@ -899,7 +899,7 @@ const EmployeeDashboard = () => {
                 type="submit"
                 className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg"
               >
-                Send Kudo
+                Send Kudos
               </button>
             </form>
           </section>
