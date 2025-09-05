@@ -11,6 +11,7 @@ import { LuLogOut } from "react-icons/lu";
 import Api from "./Api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { MdLeaderboard } from "react-icons/md";
 
 const MySwal = withReactContent(Swal);
 
@@ -146,6 +147,19 @@ const HrDashboardSidebar = () => {
           >
             <BanknotesIcon className="h-5 w-5 mr-3" />
             Payroll
+          </NavLink>
+        </li>
+        <li>
+          <NavLink
+            to="/dashboard/leaderboard"
+            className={({ isActive }) =>
+              `flex items-center p-2 rounded-lg transition-colors duration-200 ${
+                isActive ? "bg-indigo-600 text-white" : "hover:bg-gray-700"
+              }`
+            }
+          >
+            <MdLeaderboard className="h-5 w-5 mr-3" />
+            Leaderboard
           </NavLink>
         </li>
 

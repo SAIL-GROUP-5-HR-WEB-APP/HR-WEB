@@ -27,6 +27,7 @@ import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
 import Settings from "./Pages/Settings";
 import Attendance from "./Pages/Attendance";
 import DemoPage from "./Pages/DemoPage";
+import HRVoteLeaderboard from "./Pages/HRVoteLeaderboard";
 
 const AppContent = () => {
   const location = useLocation();
@@ -133,6 +134,7 @@ const AppContent = () => {
           <Route path="payroll" element={<Payroll />} />
           <Route path="employees" element={<EmployeesDetails />} />
           <Route path="attendance" element={<Attendance />} />
+          <Route path="leaderboard" element={<HRVoteLeaderboard />} />
         </Route>
       </Routes>
 
