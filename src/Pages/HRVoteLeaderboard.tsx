@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-// import Api from "../Components/Reuseable/Api";
+import Api from "../Components/Reuseable/Api";
 import { LuTrophy, LuRefreshCw } from "react-icons/lu";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface VoteResult {
   name: string;
@@ -13,7 +13,11 @@ const HRVoteLeaderboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Current date and time for display
+  const token = localStorage.getItem("authToken");
+  const navigate = useNavigate();
+
+  // Current month and time for display
+  const currentMonth = new Date().toISOString().slice(0, 7); // e.g., "2025-09"
   const currentDateTime = new Date().toLocaleString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -25,35 +29,41 @@ const HRVoteLeaderboard: React.FC = () => {
   });
 
   useEffect(() => {
-    // Simulate dummy data
-    const dummyVotes: VoteResult[] = [
-      { name: "Aisha Johnson", count: 15 },
-      { name: "Liam Smith", count: 12 },
-      { name: "Kofi Mensah", count: 10 },
-      { name: "Priya Sharma", count: 8 },
-    ];
-    setVotes(dummyVotes);
-    setLoading(false);
-  }, []);
+    const fetchLeaderboard = async () => {
+      if (!token) {
+        setError("Please log in to view the leaderboard");
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await Api.get(`/api/v1/voting?month=${currentMonth}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setVotes(res.data.sort((a: any, b: any) => b.count - a.count));
+      } catch (err) {
+        setError("Failed to fetch leaderboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [token, currentMonth]);
 
   const refreshVotes = async () => {
     setLoading(true);
     setError(null);
-    // Simulate refresh with same dummy data
-    const dummyVotes: VoteResult[] = [
-      { name: "Aisha Johnson", count: 15 },
-      { name: "Liam Smith", count: 12 },
-      { name: "Kofi Mensah", count: 10 },
-      { name: "Priya Sharma", count: 8 },
-    ];
-    setVotes(dummyVotes);
-    setLoading(false);
+    try {
+      const res = await Api.get(`/api/v1/voting?month=${currentMonth}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setVotes(res.data.sort((a: any, b: any) => b.count - a.count));
+    } catch (err) {
+      setError("Failed to refresh leaderboard data");
+    } finally {
+      setLoading(false);
+    }
   };
-
-  if (loading)
-    return <div className="text-center py-10 text-gray-600">Loading...</div>;
-  if (error)
-    return <div className="text-center py-10 text-red-600">{error}</div>;
 
   return (
     <section className="bg-gradient-to-br from-indigo-50 via-white to-indigo-100 min-h-screen p-6">
@@ -73,7 +83,7 @@ const HRVoteLeaderboard: React.FC = () => {
             </button>
           </div>
           <p className="text-gray-600 mb-4 text-sm">
-            Last updated: {currentDateTime} WAT
+            Last updated: {currentDateTime} WAT (Month: {currentMonth})
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -85,33 +95,49 @@ const HRVoteLeaderboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {votes.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={3} className="p-4 text-center text-gray-600">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={3} className="p-4 text-center text-red-600">
+                      {error}
+                    </td>
+                  </tr>
+                ) : votes.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="p-4 text-center text-gray-500">
-                      No votes recorded yet.
+                      No votes recorded yet for {currentMonth}.
                     </td>
                   </tr>
                 ) : (
-                  votes
-                    .sort((a, b) => b.count - a.count)
-                    .map((vote, index) => (
-                      <tr
-                        key={vote.name}
-                        className="border-b border-gray-200 hover:bg-indigo-50 transition-all duration-200"
-                      >
-                        <td className="p-4 text-gray-900 font-medium">
-                          {index + 1}
-                        </td>
-                        <td className="p-4 text-gray-900">{vote.name}</td>
-                        <td className="p-4 text-gray-900 font-bold">
-                          {vote.count}
-                        </td>
-                      </tr>
-                    ))
+                  votes.map((vote, index) => (
+                    <tr
+                      key={vote.name}
+                      className="border-b border-gray-200 hover:bg-indigo-50 transition-all duration-200"
+                    >
+                      <td className="p-4 text-gray-900 font-medium">
+                        {index + 1}
+                      </td>
+                      <td className="p-4 text-gray-900">{vote.name}</td>
+                      <td className="p-4 text-gray-900 font-bold">
+                        {vote.count}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
+          <button
+            onClick={() => navigate("/EmployeeDashboard/hr")}
+            className="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-md"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
     </section>
