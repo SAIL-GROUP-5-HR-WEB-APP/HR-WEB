@@ -45,7 +45,7 @@ const DashboardLayout = () => {
         </div>
 
         {/* Routed pages */}
-        <div className="p-6">
+        <div>
           <Outlet />
         </div>
       </div>
