@@ -1,182 +1,5 @@
-// import React, { useState, useEffect } from "react";
-// import Api from "../Components/Reuseable/Api";
-// import { LuThumbsUp } from "react-icons/lu";
-// import Swal from "sweetalert2";
-// import withReactContent from "sweetalert2-react-content";
-// import { useNavigate } from "react-router-dom";
-
-// interface Employee {
-//   _id: string;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   role?: string; // Added role to determine admin status
-// }
-
-// interface VoteResult {
-//   name: string;
-//   count: number;
-// }
-
-// const MySwal = withReactContent(Swal);
-
-// const EmployeeVotingSection: React.FC = () => {
-//   const [employees, setEmployees] = useState<Employee[]>([]);
-//   const [votes, setVotes] = useState<VoteResult[]>([]);
-//   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
-//   const [error, setError] = useState<string | null>(null);
-//   const [loading, setLoading] = useState<boolean>(true);
-
-//   const token = localStorage.getItem("authToken");
-//   const user = JSON.parse(localStorage.getItem("user") || "{}");
-//   const isAdmin = user.role === "admin"; // Check if user is admin
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const fetchEmployees = async () => {
-//       try {
-//         const res = await Api.get("/api/v1/users", {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-//         setEmployees(
-//           res.data.filter((user: Employee) => user.role !== "admin")
-//         ); // Exclude admins from voting list
-//       } catch (err) {
-//         setError("Failed to fetch employees");
-//       }
-//     };
-
-//     const fetchVotes = async () => {
-//       try {
-//         const res = await Api.get("/api/v1/votes", {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-//         setVotes(res.data);
-//       } catch (err) {
-//         setError("Failed to fetch votes");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchEmployees();
-//     if (isAdmin) fetchVotes(); // Only fetch votes if admin
-//   }, [token, isAdmin]);
-
-//   const handleVote = async (nomineeId: string) => {
-//     if (!token) {
-//       setError("Please log in to vote");
-//       return;
-//     }
-//     if (selectedEmployee) {
-//       setError("You can only vote once per month");
-//       return;
-//     }
-
-//     const result = await MySwal.fire({
-//       title: "Confirm Vote",
-//       text: `Are you sure you want to vote for ${
-//         employees.find((e) => e._id === nomineeId)?.firstName
-//       } ${employees.find((e) => e._id === nomineeId)?.lastName}?`,
-//       icon: "question",
-//       showCancelButton: true,
-//       confirmButtonText: "Yes, vote!",
-//       cancelButtonText: "Cancel",
-//       reverseButtons: true,
-//     });
-
-//     if (result.isConfirmed) {
-//       try {
-//         await Api.post(
-//           "/api/v1/votes",
-//           { nomineeId },
-//           { headers: { Authorization: `Bearer ${token}` } }
-//         );
-//         setSelectedEmployee(nomineeId);
-//         if (isAdmin) {
-//           const res = await Api.get("/api/v1/votes", {
-//             headers: { Authorization: `Bearer ${token}` },
-//           });
-//           setVotes(res.data);
-//         }
-//         setError(null);
-
-//         await MySwal.fire({
-//           title: "Vote Recorded!",
-//           text: "Thank you for voting. Redirecting to dashboard...",
-//           icon: "success",
-//           timer: 2000,
-//           showConfirmButton: false,
-//         });
-//         navigate("/dashboard");
-//       } catch (err: any) {
-//         setError(err.response?.data?.message || "Voting failed");
-//         await MySwal.fire({
-//           title: "Error",
-//           text: error || "Voting failed. Please try again.",
-//           icon: "error",
-//         });
-//       }
-//     }
-//   };
-
-//   if (loading) return <div className="text-center py-4">Loading...</div>;
-//   if (error)
-//     return <div className="text-red-500 text-center py-4">{error}</div>;
-
-//   return (
-//     <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
-//       <h2 className="font-bold text-2xl text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
-//         <LuThumbsUp size={28} className="text-blue-500" />
-//         <span>Vote for Employee of the Month</span>
-//       </h2>
-//       <p className="text-gray-600 dark:text-gray-400 mb-6">
-//         Cast your vote to boost morale and recognize outstanding performance!
-//       </p>
-//       <div className="space-y-4 max-h-[400px] overflow-y-auto">
-//         {employees.map((employee) => {
-//           const isVoted = selectedEmployee === employee._id;
-//           return (
-//             <div
-//               key={employee._id}
-//               className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200"
-//             >
-//               <span className="text-gray-900 dark:text-white font-medium">
-//                 {employee.firstName} {employee.lastName} ({employee.email})
-//               </span>
-//               <div className="flex items-center gap-4">
-//                 {isAdmin && (
-//                   <span className="text-sm text-gray-600 dark:text-gray-400">
-//                     Votes:{" "}
-//                     {votes.find(
-//                       (v) =>
-//                         v.name === `${employee.firstName} ${employee.lastName}`
-//                     )?.count || 0}
-//                   </span>
-//                 )}
-//                 <button
-//                   onClick={() => handleVote(employee._id)}
-//                   disabled={isVoted}
-//                   className={`px-4 py-2 rounded-lg text-white ${
-//                     isVoted
-//                       ? "bg-gray-400 cursor-not-allowed"
-//                       : "bg-blue-500 hover:bg-blue-600"
-//                   } transition-colors duration-300`}
-//                 >
-//                   {isVoted ? "Voted" : "Vote"}
-//                 </button>
-//               </div>
-//             </div>
-//           );
-//         })}
-//       </div>
-//     </section>
-//   );
-// };
-
-// export default EmployeeVotingSection;
 import React, { useState, useEffect } from "react";
-// import Api from "../Components/Reuseable/Api";
+import Api from "../Components/Reuseable/Api";
 import { LuThumbsUp } from "react-icons/lu";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -190,23 +13,15 @@ interface Employee {
   role?: string;
 }
 
-interface VoteResult {
-  name: string;
-  count: number;
-}
-
 const MySwal = withReactContent(Swal);
 
 const EmployeeVotingSection: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [votes, setVotes] = useState<VoteResult[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const token = localStorage.getItem("authToken");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const isAdmin = user.role === "admin";
   const navigate = useNavigate();
 
   // Current date for welcome message
@@ -215,47 +30,29 @@ const EmployeeVotingSection: React.FC = () => {
     year: "numeric",
     month: "long",
     day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 
   useEffect(() => {
-    // Simulate API data with dummy values
-    const dummyEmployees: Employee[] = [
-      {
-        _id: "1",
-        firstName: "Aisha",
-        lastName: "Johnson",
-        email: "aisha@zyrahr.com",
-      },
-      {
-        _id: "2",
-        firstName: "Kofi",
-        lastName: "Mensah",
-        email: "kofi@zyrahr.com",
-      },
-      {
-        _id: "3",
-        firstName: "Priya",
-        lastName: "Sharma",
-        email: "priya@zyrahr.com",
-      },
-      {
-        _id: "4",
-        firstName: "Liam",
-        lastName: "Smith",
-        email: "liam@zyrahr.com",
-      },
-    ];
-    const dummyVotes: VoteResult[] = [
-      { name: "Aisha Johnson", count: 15 },
-      { name: "Kofi Mensah", count: 10 },
-      { name: "Priya Sharma", count: 8 },
-      { name: "Liam Smith", count: 12 },
-    ];
+    const fetchEmployees = async () => {
+      try {
+        const res = await Api.get("/api/v1/users/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setEmployees(
+          res.data.filter((user: Employee) => user.role !== "admin")
+        );
+      } catch (err) {
+        setError("Failed to fetch employees");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setEmployees(dummyEmployees);
-    if (isAdmin) setVotes(dummyVotes);
-    setLoading(false);
-  }, [isAdmin]);
+    fetchEmployees();
+  }, [token]);
 
   const handleVote = async (nomineeId: string) => {
     if (!token) {
@@ -281,19 +78,12 @@ const EmployeeVotingSection: React.FC = () => {
 
     if (result.isConfirmed) {
       try {
+        await Api.post(
+          "/api/v1/voting",
+          { nomineeId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         setSelectedEmployee(nomineeId);
-        if (isAdmin) {
-          setVotes((prevVotes) =>
-            prevVotes.map((v) =>
-              v.name ===
-              `${employees.find((e) => e._id === nomineeId)?.firstName} ${
-                employees.find((e) => e._id === nomineeId)?.lastName
-              }`
-                ? { ...v, count: v.count + 1 }
-                : v
-            )
-          );
-        }
         setError(null);
 
         await MySwal.fire({
@@ -305,7 +95,7 @@ const EmployeeVotingSection: React.FC = () => {
         });
         navigate("/EmployeeDashboard");
       } catch (err: any) {
-        setError("Voting failed");
+        setError(err.response?.data?.message || "Voting failed");
         await MySwal.fire({
           title: "Error",
           text: error || "Voting failed. Please try again.",
@@ -315,52 +105,44 @@ const EmployeeVotingSection: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="text-center py-4">Loading...</div>;
+  if (loading)
+    return <div className="text-center py-6 text-gray-600">Loading...</div>;
   if (error)
-    return <div className="text-red-500 text-center py-4">{error}</div>;
+    return <div className="text-center py-6 text-red-600">{error}</div>;
 
   return (
-    <section className="bg-gradient-to-br from-white via-gray-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 p-6 rounded-2xl shadow-lg border border-indigo-200 dark:border-indigo-900 mb-8 max-w-4xl mx-auto">
-      <h2 className="font-bold text-3xl text-gray-900 dark:text-white mb-6 flex items-center space-x-3">
-        <LuThumbsUp
-          size={32}
-          className="text-indigo-600 dark:text-indigo-400"
-        />
+    <section className="bg-gradient-to-br from-indigo-50 via-white to-indigo-100 p-6 rounded-2xl shadow-lg max-w-3xl mx-auto">
+      <h2 className="text-3xl font-bold text-gray-900 flex items-center space-x-3 mb-6">
+        <LuThumbsUp size={32} className="text-indigo-600" />
         <span>Vote for Employee of the Month</span>
       </h2>
-      <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg font-medium">
-        Welcome! Today is {currentDate}. Cast your vote to boost morale and
+      <p className="text-gray-600 text-lg mb-6">
+        Welcome! Today is {currentDate} WAT. Cast your vote to boost morale and
         recognize outstanding performance!
       </p>
-      <div className="space-y-4 max-h-[400px] overflow-y-auto">
+      <div className="space-y-4 max-h-[450px] overflow-y-auto">
         {employees.map((employee) => {
           const isVoted = selectedEmployee === employee._id;
           return (
             <div
               key={employee._id}
-              className="flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 dark:border-gray-700"
+              className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-indigo-200"
             >
-              <span className="text-xl text-gray-900 dark:text-gray-100 font-semibold">
-                {employee.firstName} {employee.lastName} ({employee.email})
-              </span>
-              <div className="flex items-center gap-6">
-                {isAdmin && (
-                  <span className="text-lg text-indigo-600 dark:text-indigo-400 font-medium">
-                    Votes:{" "}
-                    {votes.find(
-                      (v) =>
-                        v.name === `${employee.firstName} ${employee.lastName}`
-                    )?.count || 0}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xl font-semibold text-gray-900">
+                    {employee.firstName} {employee.lastName}
                   </span>
-                )}
+                  <p className="text-sm text-gray-600">{employee.email}</p>
+                </div>
                 <button
                   onClick={() => handleVote(employee._id)}
                   disabled={isVoted}
-                  className={`px-6 py-3 rounded-lg text-white font-semibold ${
+                  className={`px-6 py-3 rounded-lg text-white font-medium ${
                     isVoted
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-indigo-600 hover:bg-indigo-700"
-                  } transition-colors duration-300 shadow-md hover:shadow-lg`}
+                  } transition-colors duration-300 shadow-md`}
                 >
                   {isVoted ? "Voted" : "Vote"}
                 </button>
