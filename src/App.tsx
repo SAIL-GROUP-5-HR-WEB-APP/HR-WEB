@@ -47,6 +47,7 @@ const AppContent = () => {
     "/demo",
     "/SingleEmployeedetails",
     "/vote",
+    "/survey",
   ];
 
   const shouldHide = hideHeaderAndFooterPaths.some((path) =>

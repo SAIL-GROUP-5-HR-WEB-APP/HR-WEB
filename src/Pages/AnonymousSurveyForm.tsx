@@ -67,7 +67,7 @@ const AnonymousSurveyForm: React.FC = () => {
         ],
         comments,
       };
-      await Api.post(" /api/v1/surveys", surveyData, {
+      await Api.post("/api/v1/surveys", surveyData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await MySwal.fire({
