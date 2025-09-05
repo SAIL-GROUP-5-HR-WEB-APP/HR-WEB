@@ -16,11 +16,11 @@ interface ProfileData {
   city: string;
   state: string;
   country: string;
-  departmentId: string; // matches backend
+  departmentId: string;
   position: string;
   emergencyContact: string;
   dateOfBirth: string;
-  avatar: File | null;
+  avatar: File | null; // File input for Cloudinary upload
 }
 
 const Setting = () => {
@@ -43,6 +43,12 @@ const Setting = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // Store fetched avatarUrl
+
+  // Cloudinary configuration
+  const CLOUDINARY_UPLOAD_PRESET = "zyrahrrr"; // Replace with your Cloudinary upload preset
+  const CLOUDINARY_UPLOAD_URL =
+    "https://api.cloudinary.com/v1_1/zyrahrrr/image/upload";
 
   // Fetch profile and departments
   useEffect(() => {
@@ -79,9 +85,14 @@ const Setting = () => {
             : "",
           avatar: null,
         });
-        if (u.profile?.avatarUrl) setPreview(u.profile.avatarUrl);
+        setAvatarUrl(u.profile?.avatarUrl || null);
+        setPreview(u.profile?.avatarUrl || null);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Failed to load profile data:", {
+          message: err.message,
+          response: err.response?.data,
+        });
         MySwal.fire({
           title: "Error",
           text: "Failed to load profile data.",
@@ -95,7 +106,7 @@ const Setting = () => {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => setDepartments(res.data))
-      .catch((err) => console.error("Failed to fetch departments", err));
+      .catch((err) => console.error("Failed to fetch departments:", err));
   }, [navigate]);
 
   const handleChange = (
@@ -116,6 +127,33 @@ const Setting = () => {
     }
   };
 
+  // Upload avatar to Cloudinary
+  const handleAvatarUpload = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+      const cloudRes = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!cloudRes.ok) {
+        throw new Error(`Cloudinary upload failed: ${cloudRes.statusText}`);
+      }
+
+      const cloudData = await cloudRes.json();
+      return cloudData.secure_url;
+    } catch (err: any) {
+      console.error("Avatar upload failed:", {
+        message: err.message,
+        response: err.response?.data,
+      });
+      throw new Error("Failed to upload avatar to Cloudinary");
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -133,22 +171,33 @@ const Setting = () => {
 
     try {
       const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("Authentication token missing");
 
-      const formData = new FormData();
-      Object.entries(profile).forEach(([key, value]) => {
-        if (!value) return;
+      let newAvatarUrl = avatarUrl;
+      if (profile.avatar) {
+        // Upload avatar to Cloudinary
+        newAvatarUrl = await handleAvatarUpload(profile.avatar);
+      }
 
-        if (key === "dateOfBirth") {
-          formData.append("dateOfBirth", value);
-        } else if (key === "avatar" && value instanceof File) {
-          formData.append("avatar", value);
-        } else {
-          formData.append(key, value as string);
-        }
-      });
+      // Prepare profile data
+      const profileData = {
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        country: profile.country,
+        departmentId: profile.departmentId,
+        position: profile.position,
+        emergencyContact: profile.emergencyContact,
+        dateOfBirth: profile.dateOfBirth,
+        avatarUrl: newAvatarUrl || undefined, // Send undefined if no new URL
+      };
 
-      await Api.put(`/api/v1/users/profile`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
+      await Api.put(`/api/v1/users/profile`, profileData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       MySwal.fire({
@@ -158,9 +207,17 @@ const Setting = () => {
         confirmButtonColor: "#4F46E5",
       }).then(() => navigate("/EmployeeDashboard"));
     } catch (err: any) {
+      console.error("Profile update error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       MySwal.fire({
         title: "Error",
-        text: err.response?.data?.message || "Update failed",
+        text:
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to update profile",
         icon: "error",
         confirmButtonColor: "#DC2626",
       });
@@ -239,15 +296,20 @@ const Setting = () => {
               src={preview}
               alt="Profile Preview"
               className="w-32 h-32 mb-2 rounded-full object-cover"
+              onError={() => setPreview(null)} // Hide preview if URL is invalid
             />
           )}
-          <input type="file" onChange={(e) => handleChange(e, "avatar")} />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleChange(e, "avatar")}
+          />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-700 text-white py-2 rounded-md hover:bg-indigo-800"
+          className="w-full bg-indigo-700 text-white py-2 rounded-md hover:bg-indigo-800 disabled:bg-indigo-400"
         >
           {loading ? "Updating..." : "Update Profile"}
         </button>
