@@ -180,7 +180,7 @@ const AdminLeavePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen  p-0">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-gray-50 p-0">
       <div className="max-w-7xl mx-auto p-6 lg:p-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-2">
           <FaClock className="text-indigo-600" />

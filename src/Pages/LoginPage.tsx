@@ -109,8 +109,7 @@ const LoginPage: React.FC = () => {
 
   // Handle Google login
   const handleGoogleLogin = (): void => {
-    console.log("Login with Google");
-    // TODO: Add Google OAuth integration
+    window.location.href = "https://zyrahr.netlify.app/api/auth/google";
   };
 
   // Handle Apple login

@@ -3,13 +3,6 @@ import React, { useState, useEffect } from "react";
 import { LuTrophy, LuRefreshCw } from "react-icons/lu";
 // import { useNavigate } from "react-router-dom";
 
-// interface Employee {
-//   _id: string;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-// }
-
 interface VoteResult {
   name: string;
   count: number;
@@ -19,9 +12,6 @@ const HRVoteLeaderboard: React.FC = () => {
   const [votes, setVotes] = useState<VoteResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  //   const token = localStorage.getItem("authToken");
-  //   const navigate = useNavigate();
 
   // Current date and time for display
   const currentDateTime = new Date().toLocaleString("en-US", {
@@ -66,12 +56,12 @@ const HRVoteLeaderboard: React.FC = () => {
     return <div className="text-center py-10 text-red-600">{error}</div>;
 
   return (
-    <section className="bg-gradient-to-br from-gray-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 min-h-screen p-6">
+    <section className="bg-gradient-to-br from-indigo-50 via-white to-indigo-100 min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-indigo-200 dark:border-indigo-900">
+        <div className="bg-white p-6 rounded-2xl shadow-lg border border-indigo-200">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-3">
-              <LuTrophy size={32} className="text-yellow-500" />
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
+              <LuTrophy size={32} className="text-indigo-600" />
               <span>Employee of the Month Leaderboard</span>
             </h1>
             <button
@@ -82,12 +72,12 @@ const HRVoteLeaderboard: React.FC = () => {
               <span>Refresh</span>
             </button>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+          <p className="text-gray-600 mb-4 text-sm">
             Last updated: {currentDateTime} WAT
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-indigo-100 dark:bg-indigo-900 text-gray-700 dark:text-gray-300">
+              <thead className="bg-indigo-50 text-gray-700">
                 <tr>
                   <th className="p-4 font-semibold">Rank</th>
                   <th className="p-4 font-semibold">Employee</th>
@@ -97,10 +87,7 @@ const HRVoteLeaderboard: React.FC = () => {
               <tbody>
                 {votes.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={3}
-                      className="p-4 text-center text-gray-500 dark:text-gray-400"
-                    >
+                    <td colSpan={3} className="p-4 text-center text-gray-500">
                       No votes recorded yet.
                     </td>
                   </tr>
@@ -110,15 +97,13 @@ const HRVoteLeaderboard: React.FC = () => {
                     .map((vote, index) => (
                       <tr
                         key={vote.name}
-                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+                        className="border-b border-gray-200 hover:bg-indigo-50 transition-all duration-200"
                       >
-                        <td className="p-4 text-gray-900 dark:text-gray-100 font-medium">
+                        <td className="p-4 text-gray-900 font-medium">
                           {index + 1}
                         </td>
-                        <td className="p-4 text-gray-900 dark:text-gray-100">
-                          {vote.name}
-                        </td>
-                        <td className="p-4 text-gray-900 dark:text-gray-100 font-bold">
+                        <td className="p-4 text-gray-900">{vote.name}</td>
+                        <td className="p-4 text-gray-900 font-bold">
                           {vote.count}
                         </td>
                       </tr>
