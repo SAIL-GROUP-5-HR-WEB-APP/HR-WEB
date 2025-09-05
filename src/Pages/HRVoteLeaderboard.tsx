@@ -14,7 +14,6 @@ const HRVoteLeaderboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const token = localStorage.getItem("authToken");
-  const navigate = useNavigate();
 
   // Current month and time for display
   const currentMonth = new Date().toISOString().slice(0, 7); // e.g., "2025-09"
