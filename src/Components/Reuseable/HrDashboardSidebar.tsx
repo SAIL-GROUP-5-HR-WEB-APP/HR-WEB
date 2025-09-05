@@ -7,7 +7,7 @@ import {
   BanknotesIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
-import { LuLogOut } from "react-icons/lu";
+import { LuLogOut, LuMessageSquare } from "react-icons/lu";
 import Api from "./Api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -160,6 +160,19 @@ const HrDashboardSidebar = () => {
           >
             <MdLeaderboard className="h-5 w-5 mr-3" />
             Leaderboard
+          </NavLink>
+        </li>
+        <li>
+          <NavLink
+            to="/dashboard/feedback"
+            className={({ isActive }) =>
+              `flex items-center p-2 rounded-lg transition-colors duration-200 ${
+                isActive ? "bg-indigo-600 text-white" : "hover:bg-gray-700"
+              }`
+            }
+          >
+            <LuMessageSquare className="h-5 w-5 mr-3" />
+            Feedback
           </NavLink>
         </li>
 

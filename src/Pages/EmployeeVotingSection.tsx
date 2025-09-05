@@ -112,7 +112,7 @@ const EmployeeVotingSection: React.FC = () => {
     return <div className="text-center py-6 text-red-600">{error}</div>;
 
   return (
-    <section className="bg-gradient-to-br from-indigo-50 via-white to-indigo-100 p-6 flex justify-center rounded-2xl shadow-lg max-w-3xl mx-auto">
+    <section className="bg-gradient-to-br from-indigo-50 via-white to-indigo-100 p-6  rounded-2xl shadow-lg max-w-3xl mx-auto my-auto">
       <h2 className="text-3xl font-bold text-gray-900 flex items-center space-x-3 mb-6">
         <LuThumbsUp size={32} className="text-indigo-600" />
         <span>Vote for Employee of the Month</span>
