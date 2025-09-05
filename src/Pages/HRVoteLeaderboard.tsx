@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Api from "../Components/Reuseable/Api";
 import { LuTrophy, LuRefreshCw } from "react-icons/lu";
-import { useNavigate } from "react-router-dom";
 
 interface VoteResult {
   name: string;
