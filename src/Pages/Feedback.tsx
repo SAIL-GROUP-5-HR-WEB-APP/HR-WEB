@@ -44,9 +44,6 @@ const Feedback: React.FC = () => {
         <div className="bg-white p-8 rounded-3xl shadow-2xl border border-indigo-100 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-4xl font-bold text-gray-900 flex items-center space-x-4">
-              <span role="img" aria-label="survey">
-                📊
-              </span>
               <span>Mental Health Survey Overview</span>
             </h2>
             <p className="text-sm text-gray-500">
@@ -112,12 +109,6 @@ const Feedback: React.FC = () => {
               ))
             )}
           </div>
-          <button
-            onClick={() => navigate("/hr")}
-            className="mt-6 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            Back to HR Dashboard
-          </button>
         </div>
       </div>
     </section>
