@@ -28,6 +28,7 @@ import Settings from "./Pages/Settings";
 import Attendance from "./Pages/Attendance";
 import DemoPage from "./Pages/DemoPage";
 import HRVoteLeaderboard from "./Pages/HRVoteLeaderboard";
+import AnonymousSurveyForm from "./Pages/AnonymousSurveyForm";
 
 const AppContent = () => {
   const location = useLocation();
@@ -98,6 +99,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={["employee"]}>
               <EmployeeVotingSection />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/survey"
+          element={
+            <ProtectedRoute allowedRoles={["employee"]}>
+              <AnonymousSurveyForm />
             </ProtectedRoute>
           }
         />
