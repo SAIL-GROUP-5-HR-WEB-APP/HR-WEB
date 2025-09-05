@@ -12,7 +12,7 @@ import {
   LuPen,
   LuUserX,
   LuUserCheck,
-  LuHeart, // Added for Kudos icon
+  LuHeart,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate, Link } from "react-router-dom";
@@ -62,7 +62,7 @@ const EmployeeDashboard = () => {
   );
 
   const [user, setUser] = useState<{
-    id?: string; // Added id for self-kudo check
+    id?: string;
     firstName: string;
     lastName?: string;
     email: string;
@@ -133,7 +133,7 @@ const EmployeeDashboard = () => {
         }));
         setLeaveRequests(formatted);
       } catch (err) {
-        console.error("Failed to fetch leave requests", err);
+        console.error("Failed to fetch leave requests:", err);
       }
     };
 
@@ -150,7 +150,7 @@ const EmployeeDashboard = () => {
         }));
         setAnnouncements(formatted);
       } catch (err) {
-        console.error("Failed to fetch announcements", err);
+        console.error("Failed to fetch announcements:", err);
       } finally {
         setLoadingAnnouncements(false);
       }
@@ -203,8 +203,12 @@ const EmployeeDashboard = () => {
           createdAt: k.createdAt,
         }));
         setKudos(formatted);
-      } catch (err) {
-        console.error("Failed to fetch kudos:", err);
+      } catch (err: any) {
+        console.error("Failed to fetch kudos:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
       } finally {
         setLoadingKudos(false);
       }
@@ -217,8 +221,12 @@ const EmployeeDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(res.data);
-      } catch (err) {
-        console.error("Failed to fetch users:", err);
+      } catch (err: any) {
+        console.error("Failed to fetch users:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
       }
     };
 
@@ -404,7 +412,7 @@ const EmployeeDashboard = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Auth token missing");
+      if (!token) throw new Error("Authentication token missing");
 
       await Api.post(
         "/api/v1/kudos",
@@ -418,7 +426,7 @@ const EmployeeDashboard = () => {
       MySwal.fire("Success", "Kudo sent successfully!", "success");
 
       // Refetch kudos to update the list
-      const res = await Api.get("/api/kudos", {
+      const res = await Api.get("/api/v1/kudos", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const formatted: Kudo[] = res.data.map((k: any) => ({
@@ -439,10 +447,19 @@ const EmployeeDashboard = () => {
       setKudoReceiverId("");
       setKudoMessage("");
     } catch (err: any) {
+      console.error("Failed to send kudo:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      const errorMessage =
+        err.response?.data?.errors?.map((e: any) => e.msg).join(", ") ||
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to send kudo";
       Swal.fire({
         title: "Error",
-        text:
-          err.response?.data?.message || err.message || "Failed to send kudo",
+        text: errorMessage,
         icon: "error",
       });
     }
