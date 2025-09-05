@@ -22,7 +22,7 @@ import EmployeeDashboard from "./Pages/EmployeeDashboard";
 import OTPmodal from "./Pages/OTPmodal";
 import ProtectedRoute from "./Components/Reuseable/ProtectedRoute";
 import SuperAdmin from "./Pages/SuperAdmin";
-
+import EmployeeVotingSection from "./Pages/EmployeeVotingSection";
 import SingleEmployeedetails from "./Pages/SingleEmployeedetails";
 import Settings from "./Pages/Settings";
 import Attendance from "./Pages/Attendance";
@@ -89,6 +89,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute allowedRoles={["employee"]}>
               <EmployeeDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vote"
+          element={
+            <ProtectedRoute allowedRoles={["employee"]}>
+              <EmployeeVotingSection />
             </ProtectedRoute>
           }
         />

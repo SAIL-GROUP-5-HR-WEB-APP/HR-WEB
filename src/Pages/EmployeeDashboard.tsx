@@ -487,6 +487,16 @@ const EmployeeDashboard = () => {
           ))}
         </div>
 
+        {/* Vote Button */}
+        <div className="mb-8 text-center">
+          <button
+            onClick={() => navigate("/vote")}
+            className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            Vote for Employee of the Month
+          </button>
+        </div>
+
         {/* Attendance Section */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 justify-center">
