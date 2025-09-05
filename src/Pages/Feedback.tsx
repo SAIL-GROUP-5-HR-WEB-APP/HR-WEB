@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Api from "../Components/Reuseable/Api";
-import { useNavigate } from "react-router-dom";
 
 interface Survey {
   _id: string;
@@ -14,7 +13,6 @@ const Feedback: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const token = localStorage.getItem("authToken");
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSurveys = async () => {
