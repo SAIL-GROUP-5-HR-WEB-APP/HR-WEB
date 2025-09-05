@@ -89,6 +89,16 @@ const Hrmside: React.FC<Side> = ({ handleToggle }) => {
             Leaderboard
           </NavLink>
         </li>
+        <li onClick={handleToggle}>
+          <NavLink
+            to="/dashboard/feedback"
+            className={({ isActive }) =>
+              isActive ? "text-blue-600 font-bold" : "text-gray-800"
+            }
+          >
+            Feedback
+          </NavLink>
+        </li>
       </ul>
     </motion.div>
   );

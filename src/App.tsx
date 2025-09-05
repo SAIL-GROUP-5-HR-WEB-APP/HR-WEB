@@ -29,6 +29,7 @@ import Attendance from "./Pages/Attendance";
 import DemoPage from "./Pages/DemoPage";
 import HRVoteLeaderboard from "./Pages/HRVoteLeaderboard";
 import AnonymousSurveyForm from "./Pages/AnonymousSurveyForm";
+import Feedback from "./Pages/Feedback";
 
 const AppContent = () => {
   const location = useLocation();
@@ -145,6 +146,7 @@ const AppContent = () => {
           <Route path="employees" element={<EmployeesDetails />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="leaderboard" element={<HRVoteLeaderboard />} />
+          <Route path="feedback" element={<Feedback />} />
         </Route>
       </Routes>
 
