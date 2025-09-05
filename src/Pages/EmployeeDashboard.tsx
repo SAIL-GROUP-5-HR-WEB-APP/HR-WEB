@@ -1,5 +1,4 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
-import { io, Socket } from "socket.io-client";
 import {
   LuClipboardList,
   LuClock10,
