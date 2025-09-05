@@ -303,7 +303,7 @@ const EmployeeVotingSection: React.FC = () => {
           timer: 2000,
           showConfirmButton: false,
         });
-        navigate("/dashboard");
+        navigate("/EmployeeDashboard");
       } catch (err: any) {
         setError("Voting failed");
         await MySwal.fire({
