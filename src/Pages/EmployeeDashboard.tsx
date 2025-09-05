@@ -12,6 +12,7 @@ import {
   LuPen,
   LuUserX,
   LuUserCheck,
+  LuHeart, // Added for Kudos icon
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate, Link } from "react-router-dom";
@@ -36,6 +37,20 @@ interface Announcement {
   createdAt: string;
 }
 
+interface Kudo {
+  id: string;
+  senderId: { firstName: string; lastName?: string };
+  receiverId: { firstName: string; lastName?: string };
+  message: string;
+  createdAt: string;
+}
+
+interface User {
+  _id: string;
+  firstName: string;
+  lastName?: string;
+}
+
 const EmployeeDashboard = () => {
   const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
@@ -47,6 +62,7 @@ const EmployeeDashboard = () => {
   );
 
   const [user, setUser] = useState<{
+    id?: string; // Added id for self-kudo check
     firstName: string;
     lastName?: string;
     email: string;
@@ -68,9 +84,16 @@ const EmployeeDashboard = () => {
   const [loadingAnnouncements, setLoadingAnnouncements] =
     useState<boolean>(false);
 
+  // Kudos states
+  const [kudos, setKudos] = useState<Kudo[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [kudoReceiverId, setKudoReceiverId] = useState<string>("");
+  const [kudoMessage, setKudoMessage] = useState<string>("");
+  const [loadingKudos, setLoadingKudos] = useState<boolean>(false);
+
   const navigate = useNavigate();
 
-  // Load user & fetch leave requests + attendance summary
+  // Load user & fetch data
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
@@ -81,18 +104,19 @@ const EmployeeDashboard = () => {
     const userData = JSON.parse(storedUser);
     setUser(userData);
 
-    //fetch user data
+    // Fetch user profile
     const fetchUserProfile = async () => {
       try {
         const res = await Api.get(`/api/v1/users/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(res.data); // <-- now we have full profile info
+        setUser(res.data);
       } catch (err) {
         console.error("Failed to fetch user profile:", err);
-        setUser(userData); // fallback to stored
+        setUser(userData);
       }
     };
+
     // Fetch leave requests
     const fetchLeaveRequests = async () => {
       try {
@@ -113,7 +137,7 @@ const EmployeeDashboard = () => {
       }
     };
 
-    //fetch announcement
+    // Fetch announcements
     const fetchAnnouncements = async () => {
       setLoadingAnnouncements(true);
       try {
@@ -136,38 +160,74 @@ const EmployeeDashboard = () => {
     const fetchAttendanceSummary = async () => {
       try {
         if (!userData?.id) {
-          console.error(" User ID missing, cannot fetch logs");
+          console.error("User ID missing, cannot fetch logs");
           return;
         }
-
         const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Backend returns an array of attendance logs
         const logs = Array.isArray(res.data) ? res.data : [];
-
         const presentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "present"
         ).length;
-
         const absentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "absent"
         ).length;
-
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
       } catch (err) {
-        console.error(" Failed to fetch attendance summary:", err);
+        console.error("Failed to fetch attendance summary:", err);
         setDaysPresent(0);
         setDaysAbsent(0);
       }
     };
 
+    // Fetch kudos
+    const fetchKudos = async () => {
+      setLoadingKudos(true);
+      try {
+        const res = await Api.get("/api/v1/kudos", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const formatted: Kudo[] = res.data.map((k: any) => ({
+          id: k._id,
+          senderId: {
+            firstName: k.senderId.firstName,
+            lastName: k.senderId.lastName,
+          },
+          receiverId: {
+            firstName: k.receiverId.firstName,
+            lastName: k.receiverId.lastName,
+          },
+          message: k.message,
+          createdAt: k.createdAt,
+        }));
+        setKudos(formatted);
+      } catch (err) {
+        console.error("Failed to fetch kudos:", err);
+      } finally {
+        setLoadingKudos(false);
+      }
+    };
+
+    // Fetch users for kudo recipient dropdown
+    const fetchUsers = async () => {
+      try {
+        const res = await Api.get("/api/v1/users/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUsers(res.data);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      }
+    };
+
+    fetchUserProfile();
     fetchLeaveRequests();
     fetchAttendanceSummary();
-    fetchUserProfile();
     fetchAnnouncements();
+    fetchKudos();
+    fetchUsers();
   }, [navigate]);
 
   // Clock-in
@@ -233,7 +293,6 @@ const EmployeeDashboard = () => {
       });
       const pos = await getPosition();
       const { latitude, longitude, accuracy } = pos.coords;
-      console.log(accuracy);
 
       if (accuracy > 100) throw new Error("Geolocation accuracy too low");
 
@@ -322,6 +381,68 @@ const EmployeeDashboard = () => {
         title: "Error",
         text:
           err.response?.data?.message || err.message || "Leave request failed",
+        icon: "error",
+      });
+    }
+  };
+
+  // Kudo submission
+  const submitKudo = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!kudoReceiverId || !kudoMessage)
+      return MySwal.fire(
+        "Missing fields",
+        "Please select a recipient and enter a message.",
+        "warning"
+      );
+    if (kudoReceiverId === user?.id)
+      return MySwal.fire(
+        "Invalid recipient",
+        "You cannot send a kudo to yourself.",
+        "warning"
+      );
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("Auth token missing");
+
+      await Api.post(
+        "/api/v1/kudos",
+        {
+          receiverId: kudoReceiverId,
+          message: kudoMessage,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      MySwal.fire("Success", "Kudo sent successfully!", "success");
+
+      // Refetch kudos to update the list
+      const res = await Api.get("/api/kudos", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const formatted: Kudo[] = res.data.map((k: any) => ({
+        id: k._id,
+        senderId: {
+          firstName: k.senderId.firstName,
+          lastName: k.senderId.lastName,
+        },
+        receiverId: {
+          firstName: k.receiverId.firstName,
+          lastName: k.receiverId.lastName,
+        },
+        message: k.message,
+        createdAt: k.createdAt,
+      }));
+      setKudos(formatted);
+
+      setKudoReceiverId("");
+      setKudoMessage("");
+    } catch (err: any) {
+      Swal.fire({
+        title: "Error",
+        text:
+          err.response?.data?.message || err.message || "Failed to send kudo",
         icon: "error",
       });
     }
@@ -703,13 +824,114 @@ const EmployeeDashboard = () => {
             )}
           </section>
         </div>
+
+        {/* Kudos Form & History */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          {/* Kudo Form */}
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700">
+            <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
+              <LuHeart size={28} className="text-purple-500" />
+              <span>Send Kudo</span>
+            </h2>
+            <form onSubmit={submitKudo} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="kudoReceiver"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Send Kudo To
+                </label>
+                <select
+                  id="kudoReceiver"
+                  className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
+                  value={kudoReceiverId}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                    setKudoReceiverId(e.target.value)
+                  }
+                >
+                  <option value="">Select a colleague</option>
+                  {users
+                    .filter((u) => u._id !== user?.id) // Prevent self-kudos
+                    .map((user) => (
+                      <option key={user._id} value={user._id}>
+                        {user.firstName} {user.lastName || ""}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="kudoMessage"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Kudo Message
+                </label>
+                <textarea
+                  id="kudoMessage"
+                  placeholder="Write your kudo message"
+                  className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
+                  value={kudoMessage}
+                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                    setKudoMessage(e.target.value)
+                  }
+                  rows={4}
+                  aria-required="true"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white py-3 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                Send Kudo
+              </button>
+            </form>
+          </section>
+
+          {/* Kudo History */}
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[430px] overflow-y-auto">
+            <h2 className="font-bold text-xl md:text-2xl text-gray-900 dark:text-white mb-6">
+              Kudo Wall
+            </h2>
+            {loadingKudos ? (
+              <div className="flex justify-center py-8">
+                <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : kudos.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                No kudos yet. Send one to get started!
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {kudos.map((kudo) => (
+                  <li
+                    key={kudo.id}
+                    className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 animate-fade-in"
+                  >
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {kudo.senderId.firstName} {kudo.senderId.lastName || ""}{" "}
+                      to {kudo.receiverId.firstName}{" "}
+                      {kudo.receiverId.lastName || ""}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      {kudo.message}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      {new Date(kudo.createdAt).toLocaleString()}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </main>
+
+      {/* Announcements Section */}
       <section className="w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
         <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 text-center">
           <LuClipboardList size={28} className="text-purple-500" />
           <span>Announcements</span>
         </h2>
-
         {loadingAnnouncements ? (
           <div className="flex justify-center py-8">
             <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
