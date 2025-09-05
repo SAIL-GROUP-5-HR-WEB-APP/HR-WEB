@@ -907,7 +907,7 @@ const EmployeeDashboard = () => {
           {/* Kudo History */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[430px] overflow-y-auto">
             <h2 className="font-bold text-xl md:text-2xl text-gray-900 dark:text-white mb-6">
-              Kudo Wall
+              Kudos Wall
             </h2>
             {loadingKudos ? (
               <div className="flex justify-center py-8">

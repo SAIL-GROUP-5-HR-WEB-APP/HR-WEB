@@ -46,9 +46,9 @@ const Setting = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // Store fetched avatarUrl
 
   // Cloudinary configuration
-  const CLOUDINARY_UPLOAD_PRESET = "zyrahrrr"; // Replace with your Cloudinary upload preset
+  const CLOUDINARY_UPLOAD_PRESET = "ml_default"; // Replace with your Cloudinary upload preset
   const CLOUDINARY_UPLOAD_URL =
-    "https://api.cloudinary.com/v1_1/zyrahrrr/image/upload";
+    "https://api.cloudinary.com/v1_1/db4ra5gcl/image/upload";
 
   // Fetch profile and departments
   useEffect(() => {
