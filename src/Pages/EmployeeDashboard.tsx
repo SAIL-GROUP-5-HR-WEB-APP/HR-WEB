@@ -487,13 +487,23 @@ const EmployeeDashboard = () => {
           ))}
         </div>
 
-        {/* Vote Button */}
-        <div className="mb-8 text-center">
+        {/* Vote and Survey Buttons */}
+        <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={() => navigate("/vote")}
-            className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+            className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2"
           >
-            Vote for Employee of the Month
+            <LuThumbsUp size={20} />
+            <span>Vote for Employee of the Month</span>
+          </button>
+          <button
+            onClick={() => navigate("/survey")}
+            className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2"
+          >
+            <span role="img" aria-label="survey">
+              📋
+            </span>
+            <span>Take Anonymous Survey</span>
           </button>
         </div>
 

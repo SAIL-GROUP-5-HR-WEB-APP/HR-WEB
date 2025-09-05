@@ -132,12 +132,6 @@ const HRVoteLeaderboard: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <button
-            onClick={() => navigate("/EmployeeDashboard/hr")}
-            className="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-md"
-          >
-            Back to Dashboard
-          </button>
         </div>
       </div>
     </section>
