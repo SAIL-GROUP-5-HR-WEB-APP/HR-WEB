@@ -109,7 +109,8 @@ const LoginPage: React.FC = () => {
 
   // Handle Google login
   const handleGoogleLogin = (): void => {
-    window.location.href = "https://zyrahr.netlify.app/api/auth/google";
+    window.location.href =
+      "https://zyrahr-backend.onrender.com/api/v1/auth/google";
   };
 
   // Handle Apple login
