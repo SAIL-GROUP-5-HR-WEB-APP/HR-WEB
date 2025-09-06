@@ -1,3 +1,4 @@
+// src/components/SuperAdmin.tsx
 import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
 import Api from "../Components/Reuseable/Api";
@@ -6,8 +7,8 @@ import { useNavigate } from "react-router-dom";
 import withReactContent from "sweetalert2-react-content";
 import { LuLogOut } from "react-icons/lu";
 
-// Define allowed roles
-type Role = "employee" | "hr";
+type Role = "employee" | "hr" | "admin";
+type DemoStatus = "new" | "contacted" | "converted";
 
 interface CreateUserForm {
   firstName: string;
@@ -37,6 +38,18 @@ interface Department {
   createdAt: string;
 }
 
+interface DemoRequest {
+  id: string;
+  fullName: string;
+  email: string;
+  company: string;
+  phone: string;
+  message: string;
+  rolePreference: Role;
+  status: DemoStatus;
+  createdAt: string;
+}
+
 const SuperAdmin = () => {
   const [form, setForm] = useState<CreateUserForm>({
     firstName: "",
@@ -45,9 +58,9 @@ const SuperAdmin = () => {
     password: "",
     role: "employee",
   });
-
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [demoRequests, setDemoRequests] = useState<DemoRequest[]>([]);
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [showUserForm, setShowUserForm] = useState<boolean>(false);
@@ -59,7 +72,7 @@ const SuperAdmin = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch all users and departments on mount
+  // Fetch data on mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -85,8 +98,21 @@ const SuperAdmin = () => {
       }
     };
 
+    const fetchDemoRequests = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await Api.get<DemoRequest[]>("/api/v1/demo", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setDemoRequests(res.data);
+      } catch (error) {
+        console.error("Failed to fetch demo requests");
+      }
+    };
+
     fetchUsers();
     fetchDepartments();
+    fetchDemoRequests();
   }, []);
 
   const handleChange = (
@@ -121,6 +147,13 @@ const SuperAdmin = () => {
 
   const filteredDepartments = departments.filter((d) =>
     d.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredDemoRequests = demoRequests.filter(
+    (d) =>
+      d.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const navigate = useNavigate();
@@ -254,6 +287,55 @@ const SuperAdmin = () => {
     }
   };
 
+  const handleConvertDemo = async (demoId: string) => {
+    const result = await MySwal.fire({
+      title: "Convert Demo Request",
+      text: "Are you sure you want to convert this demo request to a user?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, convert",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await Api.post<{ message: string }>(
+          `/api/v1/demo/${demoId}/convert`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        setDemoRequests((prev) =>
+          prev.map((demo) =>
+            demo.id === demoId ? { ...demo, status: "converted" } : demo
+          )
+        );
+
+        Swal.fire({
+          title: "Success",
+          text: res.data.message,
+          icon: "success",
+          confirmButtonColor: "#4F46E5",
+        });
+      } catch (error) {
+        const err = error as AxiosError<{ message: string }>;
+        Swal.fire({
+          title: "Error",
+          text: err.response?.data?.message || "Failed to convert demo request",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-gray-100 to-purple-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -278,17 +360,15 @@ const SuperAdmin = () => {
         </header>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
           {[
             { label: "Total Users", value: users.length },
-            {
-              label: "Departments",
-              value: departments.length,
-            },
+            { label: "Departments", value: departments.length },
             {
               label: "Employees",
               value: users.filter((u) => u.role === "employee").length,
             },
+            { label: "Demo Requests", value: demoRequests.length },
           ].map((stat, index) => (
             <div
               key={index}
@@ -307,26 +387,19 @@ const SuperAdmin = () => {
         {/* Tabs */}
         <div className="mb-6">
           <div className="flex space-x-4 border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`py-2 px-4 font-semibold ${
-                activeTab === "users"
-                  ? "text-indigo-600 border-b-2 border-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Users
-            </button>
-            <button
-              onClick={() => setActiveTab("departments")}
-              className={`py-2 px-4 font-semibold ${
-                activeTab === "departments"
-                  ? "text-indigo-600 border-b-2 border-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Departments
-            </button>
+            {["users", "departments", "demoRequests"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`py-2 px-4 font-semibold capitalize ${
+                  activeTab === tab
+                    ? "text-indigo-600 border-b-2 border-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tab.replace("demoRequests", "Demo Requests")}
+              </button>
+            ))}
           </div>
           <div className="mt-4">
             {activeTab === "users" && (
@@ -451,6 +524,91 @@ const SuperAdmin = () => {
                 </div>
               </div>
             )}
+            {activeTab === "demoRequests" && (
+              <div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                    Demo Requests
+                  </h2>
+                  <div className="flex flex-col sm:flex-row sm:space-x-4 mt-3 sm:mt-0">
+                    <input
+                      type="text"
+                      placeholder="Search demo requests..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      className="w-full sm:w-64 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                    />
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                  <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                    <table className="w-full text-left text-sm sm:text-base">
+                      <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 text-gray-700 sticky top-0">
+                        <tr>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Name
+                          </th>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Email
+                          </th>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Company
+                          </th>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Role
+                          </th>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Status
+                          </th>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Created
+                          </th>
+                          <th className="py-3 px-4 sm:px-6 font-semibold">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredDemoRequests.map((d, index) => (
+                          <tr
+                            key={d.id}
+                            className={`border-t hover:bg-indigo-50/50 transition-colors duration-200 ${
+                              index % 2 === 0 ? "bg-gray-50/50" : "bg-white"
+                            }`}
+                          >
+                            <td className="py-3 px-4 sm:px-6">{d.fullName}</td>
+                            <td className="py-3 px-4 sm:px-6">{d.email}</td>
+                            <td className="py-3 px-4 sm:px-6">{d.company}</td>
+                            <td className="py-3 px-4 sm:px-6 capitalize">
+                              {d.rolePreference}
+                            </td>
+                            <td className="py-3 px-4 sm:px-6 capitalize">
+                              {d.status}
+                            </td>
+                            <td className="py-3 px-4 sm:px-6">
+                              {new Date(d.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="py-3 px-4 sm:px-6">
+                              <button
+                                onClick={() => handleConvertDemo(d.id)}
+                                disabled={d.status === "converted" || loading}
+                                className={`px-3 py-1.5 rounded-lg text-sm ${
+                                  d.status === "converted"
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700"
+                                } transition-all duration-200`}
+                              >
+                                {loading ? "Converting..." : "Convert"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -495,6 +653,7 @@ const SuperAdmin = () => {
                 >
                   <option value="employee">Employee</option>
                   <option value="hr">HR</option>
+                  <option value="admin">Admin</option>
                 </select>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <button
