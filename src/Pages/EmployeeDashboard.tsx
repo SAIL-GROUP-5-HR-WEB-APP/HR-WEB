@@ -124,7 +124,8 @@ const EmployeeDashboard = () => {
         notification.type === "leave_request" ||
         notification.type === "leave_approval" ||
         notification.type === "leave_rejection" ||
-        notification.type === "kudo"
+        notification.type === "kudo" ||
+        notification.type === "announcement"
       ) {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
@@ -162,7 +163,8 @@ const EmployeeDashboard = () => {
               n.type === "leave_request" ||
               n.type === "leave_approval" ||
               n.type === "leave_rejection" ||
-              n.type === "kudo"
+              n.type === "kudo" ||
+              n.type === "announcement"
           )
           .map((n: Notification) => ({
             ...n,
@@ -233,7 +235,7 @@ const EmployeeDashboard = () => {
           const oldReq = leaveRequests.find((req) => req.id === newReq.id);
           if (oldReq && oldReq.status !== newReq.status) {
             const notification = {
-              _id: `${newReq.id}-${newReq.status}`, // Temporary ID for client-side notification
+              _id: `${newReq.id}-${newReq.status}`,
               message: `Your ${newReq.type} leave request has been ${newReq.status}.`,
               type:
                 newReq.status === "approved"
@@ -714,9 +716,11 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-
+                    <span className="text-sm font-medium max-[700px]:hidden">
+                      Notifications
+                    </span>
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-6 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
