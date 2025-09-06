@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Api from "../Components/Reuseable/Api";
-import { FaBell, FaBug } from "react-icons/fa";
+import { FaBell } from "react-icons/fa";
 import io from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -47,7 +47,6 @@ const Feedback: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSurveys(surveyRes.data);
-      console.log("Fetched surveys:", surveyRes.data);
 
       // Fetch survey_submission notifications
       const notifRes = await Api.get<Notification[]>("/api/v1/notifications", {
@@ -62,7 +61,6 @@ const Feedback: React.FC = () => {
           ...n,
           read: readNotificationIds.includes(n._id) ? true : n.read,
         }));
-      console.log("Fetched notifications:", surveyNotifications);
       setNotifications(surveyNotifications);
       setUnreadCount(surveyNotifications.filter((n) => !n.read).length);
     } catch (err: any) {
@@ -87,10 +85,6 @@ const Feedback: React.FC = () => {
         localStorage.setItem(
           "readNotifications",
           JSON.stringify(readNotificationIds)
-        );
-        console.log(
-          "Marked notification as read in localStorage:",
-          notificationId
         );
       }
       setNotifications((prev) =>
@@ -118,10 +112,6 @@ const Feedback: React.FC = () => {
         ...new Set([...currentReadIds, ...readNotificationIds]),
       ];
       localStorage.setItem("readNotifications", JSON.stringify(updatedReadIds));
-      console.log(
-        "Marked all notifications as read in localStorage:",
-        updatedReadIds
-      );
       setNotifications((prev) =>
         prev.map((n) => (n.read ? n : { ...n, read: true }))
       );
@@ -131,29 +121,14 @@ const Feedback: React.FC = () => {
     setShowNotifications(!showNotifications);
   };
 
-  const handleDebug = () => {
-    console.log("Debug Info:");
-    console.log("Socket.IO connected:", socket.connected);
-    console.log("Socket.IO ID:", socket.id);
-    console.log("Current notifications:", notifications);
-    console.log(
-      "localStorage readNotifications:",
-      JSON.parse(localStorage.getItem("readNotifications") || "[]")
-    );
-    console.log("Unread count:", unreadCount);
-    toast.info("Debug info logged to console");
-  };
-
   useEffect(() => {
     fetchSurveysAndNotifications();
 
     // Join admin room for notifications
     socket.emit("join_admin");
-    console.log("Socket.IO: Emitted join_admin event");
 
-    // Listen for notifications
+    // Listen for survey_submission notifications
     socket.on("notification", (notification: Notification) => {
-      console.log("Received Socket.IO notification:", notification);
       if (notification.type === "survey_submission") {
         setNotifications((prev) => {
           const readNotificationIds = JSON.parse(
@@ -175,26 +150,12 @@ const Feedback: React.FC = () => {
             ? "dark"
             : "light",
         });
-      } else {
-        console.log("Ignored notification with type:", notification.type);
       }
     });
 
-    // Catch all Socket.IO events for debugging
-    socket.onAny((event, ...args) => {
-      console.log(`Received Socket.IO event: ${event}`, args);
-    });
-
-    // Debug Socket.IO connection
+    // Handle Socket.IO reconnection
     socket.on("connect", () => {
-      console.log("Connected to Socket.IO server:", socket.id);
       socket.emit("join_admin"); // Rejoin on reconnect
-    });
-    socket.on("connect_error", (err) => {
-      console.error("Socket.IO connection error:", err.message);
-    });
-    socket.on("reconnect_attempt", (attempt) => {
-      console.log("Socket.IO reconnect attempt:", attempt);
     });
 
     // Polling for notifications as a fallback
@@ -202,10 +163,7 @@ const Feedback: React.FC = () => {
 
     return () => {
       socket.off("notification");
-      socket.offAny();
       socket.off("connect");
-      socket.off("connect_error");
-      socket.off("reconnect_attempt");
       clearInterval(pollingInterval);
     };
   }, [token]);
@@ -231,15 +189,7 @@ const Feedback: React.FC = () => {
                   timeZone: "Africa/Lagos",
                 })}
               </p>
-              <div className="relative flex items-center space-x-2">
-                <button
-                  onClick={handleDebug}
-                  className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-md hover:shadow-lg"
-                  title="Debug Notifications"
-                >
-                  <FaBug size={16} />
-                  <span className="text-sm font-medium">Debug</span>
-                </button>
+              <div className="relative">
                 <button
                   onClick={handleToggleNotifications}
                   className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
@@ -273,9 +223,6 @@ const Feedback: React.FC = () => {
                             >
                               <p className="text-sm text-gray-900">
                                 {notif.message}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                Type: {notif.type}
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
                                 {new Date(notif.createdAt).toLocaleString(
