@@ -17,7 +17,7 @@ interface Employee {
     phone?: string;
     address?: string;
     department?: string;
-    departmentId?: { _id: string; name: string }; // Populated departmentId
+    departmentId?: string | { _id: string; name: string };
     position?: string;
     emergencyContact?: string;
     dateOfBirth?: string;
@@ -324,10 +324,6 @@ const EmployeesDetails = () => {
     setShowDropdown(showDropdown === employeeId ? null : employeeId);
   };
 
-  const getDepartmentName = (emp: Employee) => {
-    return emp.profile?.department || emp.profile?.departmentId?.name || "N/A";
-  };
-
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -433,8 +429,10 @@ const EmployeesDetails = () => {
                     {emp.profile?.address || "N/A"}
                   </p>
                   <p>
-                    <span className="font-medium">Department:</span>{" "}
-                    {getDepartmentName(emp)}
+                    <span className="font-medium">Role:</span>{" "}
+                    {emp.role
+                      ? emp.role.charAt(0).toUpperCase() + emp.role.slice(1)
+                      : "N/A"}
                   </p>
                 </div>
                 <div className="mt-4 space-y-2 text-sm text-gray-600">
@@ -486,6 +484,7 @@ const EmployeesDetails = () => {
                 className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
               >
                 <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
               </select>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
