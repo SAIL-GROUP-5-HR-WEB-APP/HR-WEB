@@ -137,7 +137,11 @@ const EmployeesDetails = () => {
     }
   };
 
-  const handleAssignDepartment = async (employeeId: string) => {
+  const handleAssignDepartment = async (
+    employeeId: string,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation(); // Prevent event from bubbling up to parent
     setShowDropdown(null);
     const { value: department } = await Swal.fire({
       title: "Assign Department",
@@ -184,7 +188,11 @@ const EmployeesDetails = () => {
     }
   };
 
-  const handleDeleteUser = async (employeeId: string) => {
+  const handleDeleteUser = async (
+    employeeId: string,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation(); // Prevent event from bubbling up to parent
     setShowDropdown(null);
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -222,6 +230,11 @@ const EmployeesDetails = () => {
         setLoading(false);
       }
     }
+  };
+
+  const toggleDropdown = (employeeId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent click from bubbling to document
+    setShowDropdown(showDropdown === employeeId ? null : employeeId);
   };
 
   return (
@@ -302,30 +315,26 @@ const EmployeesDetails = () => {
                   <div className="relative" ref={dropdownRef}>
                     <FiMoreHorizontal
                       className="text-gray-400 cursor-pointer"
-                      onClick={() =>
-                        setShowDropdown(
-                          showDropdown === emp._id ? null : emp._id
-                        )
-                      }
+                      onClick={(e) => toggleDropdown(emp._id, e)}
                     />
                     {showDropdown === emp._id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                         <Link
                           to={`/SingleEmployeedetails/${emp._id}`}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50"
-                          onClick={() => setShowDropdown(null)}
+                          onClick={(e) => e.stopPropagation()} // Prevent closing dropdown
                         >
                           View Details
                         </Link>
                         <button
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50"
-                          onClick={() => handleAssignDepartment(emp._id)}
+                          onClick={(e) => handleAssignDepartment(emp._id, e)}
                         >
                           Assign Department
                         </button>
                         <button
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          onClick={() => handleDeleteUser(emp._id)}
+                          onClick={(e) => handleDeleteUser(emp._id, e)}
                         >
                           Delete User
                         </button>
