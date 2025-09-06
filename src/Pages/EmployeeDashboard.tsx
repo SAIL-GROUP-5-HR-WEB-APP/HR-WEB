@@ -622,7 +622,7 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-                    <span className="text-sm font-medium">Notifications</span>
+
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
@@ -675,7 +675,9 @@ const EmployeeDashboard = () => {
                 <Link to="/setting">
                   <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg">
                     <LuPen size={16} />
-                    <span className="text-sm font-medium">Edit</span>
+                    <span className="text-sm font-medium max-[700px]:hidden">
+                      Edit
+                    </span>
                   </button>
                 </Link>
                 <button
@@ -683,7 +685,9 @@ const EmployeeDashboard = () => {
                   className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   <LuLogOut size={16} />
-                  <span className="text-sm font-medium">Logout</span>
+                  <span className="text-sm font-medium  max-[700px]:hidden">
+                    Logout
+                  </span>
                 </button>
               </div>
             </div>
