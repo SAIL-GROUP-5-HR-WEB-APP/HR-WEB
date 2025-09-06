@@ -168,6 +168,42 @@ const EmployeeDashboard = () => {
     }
   };
 
+  // Move fetchAttendanceSummary to component scope so it's accessible everywhere
+  const fetchAttendanceSummary = async () => {
+    const token = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("user");
+    const userData: User = storedUser ? JSON.parse(storedUser) : null;
+    try {
+      if (!userData?.id && !userData?._id) {
+        console.error("User ID missing, cannot fetch logs");
+        return;
+      }
+      const res = await Api.get(
+        `/api/v1/attendance/logs/${userData.id || userData._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const logs = Array.isArray(res.data) ? res.data : [];
+      const presentCount = logs.filter(
+        (log: any) => log.status?.toLowerCase() === "present"
+      ).length;
+      const absentCount = logs.filter(
+        (log: any) => log.status?.toLowerCase() === "absent"
+      ).length;
+      setDaysPresent(presentCount);
+      setDaysAbsent(absentCount);
+    } catch (err: any) {
+      console.error("Failed to fetch attendance summary:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setDaysPresent(0);
+      setDaysAbsent(0);
+    }
+  };
+
   useEffect(() => {
     if (isMounted.current) return;
     isMounted.current = true;
@@ -384,38 +420,6 @@ const EmployeeDashboard = () => {
         });
       } finally {
         setLoadingAnnouncements(false);
-      }
-    };
-
-    const fetchAttendanceSummary = async () => {
-      try {
-        if (!userData?.id && !userData?._id) {
-          console.error("User ID missing, cannot fetch logs");
-          return;
-        }
-        const res = await Api.get(
-          `/api/v1/attendance/logs/${userData.id || userData._id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const logs = Array.isArray(res.data) ? res.data : [];
-        const presentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "present"
-        ).length;
-        const absentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "absent"
-        ).length;
-        setDaysPresent(presentCount);
-        setDaysAbsent(absentCount);
-      } catch (err: any) {
-        console.error("Failed to fetch attendance summary:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
-        setDaysPresent(0);
-        setDaysAbsent(0);
       }
     };
 
