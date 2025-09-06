@@ -5,18 +5,12 @@ import { ArrowLeftCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 
-interface Department {
-  _id: string;
-  name: string;
-}
-
 interface ProfileData {
   phone: string;
   address: string;
   city: string;
   state: string;
   country: string;
-  departmentId: string;
   position: string;
   emergencyContact: string;
   dateOfBirth: string;
@@ -33,14 +27,12 @@ const Setting = () => {
     city: "",
     state: "",
     country: "",
-    departmentId: "",
     position: "",
     emergencyContact: "",
     dateOfBirth: "",
     avatar: null,
   });
 
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // Store fetched avatarUrl
@@ -50,7 +42,7 @@ const Setting = () => {
   const CLOUDINARY_UPLOAD_URL =
     "https://api.cloudinary.com/v1_1/db4ra5gcl/image/upload";
 
-  // Fetch profile and departments
+  // Fetch profile
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const token = localStorage.getItem("authToken");
@@ -77,7 +69,6 @@ const Setting = () => {
           city: u.profile?.city || "",
           state: u.profile?.state || "",
           country: u.profile?.country || "",
-          departmentId: u.profile?.departmentId || "",
           position: u.profile?.position || "",
           emergencyContact: u.profile?.emergencyContact || "",
           dateOfBirth: u.profile?.dateOfBirth
@@ -100,13 +91,6 @@ const Setting = () => {
           confirmButtonColor: "#DC2626",
         });
       });
-
-    // Fetch departments
-    Api.get(`/api/v1/departments`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => setDepartments(res.data))
-      .catch((err) => console.error("Failed to fetch departments:", err));
   }, [navigate]);
 
   const handleChange = (
@@ -158,10 +142,10 @@ const Setting = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (!profile.departmentId || !profile.position || !profile.phone) {
+    if (!profile.position || !profile.phone) {
       MySwal.fire({
         title: "Validation Error",
-        text: "Department, Position, and Phone are required.",
+        text: "Position and Phone are required.",
         icon: "warning",
         confirmButtonColor: "#DC2626",
       });
@@ -186,7 +170,6 @@ const Setting = () => {
         city: profile.city,
         state: profile.state,
         country: profile.country,
-        departmentId: profile.departmentId,
         position: profile.position,
         emergencyContact: profile.emergencyContact,
         dateOfBirth: profile.dateOfBirth,
@@ -245,25 +228,7 @@ const Setting = () => {
           <span className="w-7" />
         </div>
 
-        {/* Department dropdown */}
-        <div className="flex flex-col">
-          <label className="mb-1">Department</label>
-          <select
-            value={profile.departmentId}
-            onChange={(e) => handleChange(e, "departmentId")}
-            className="border px-3 py-2 rounded-md"
-            required
-          >
-            <option value="">Select a department</option>
-            {departments.map((dept) => (
-              <option key={dept._id} value={dept._id}>
-                {dept.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Other profile fields */}
+        {/* Profile fields */}
         {[
           "position",
           "phone",
