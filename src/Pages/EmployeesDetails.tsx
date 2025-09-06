@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiSearch, FiMail, FiPhone, FiMoreHorizontal } from "react-icons/fi";
 import ClipLoader from "react-spinners/ClipLoader";
 import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 import Api from "../Components/Reuseable/Api";
 import { AxiosError } from "axios";
 
@@ -31,8 +32,15 @@ interface CreateUserForm {
   role: string;
 }
 
+interface Department {
+  _id: string;
+  name: string;
+}
+
 const EmployeesDetails = () => {
+  const MySwal = withReactContent(Swal);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +69,27 @@ const EmployeesDetails = () => {
     }
   };
 
+  const fetchDepartments = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await Api.get("/api/v1/departments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDepartments(res.data || []);
+    } catch (err: any) {
+      console.error("Error fetching departments:", err);
+      MySwal.fire({
+        title: "Error",
+        text: "Failed to fetch departments.",
+        icon: "error",
+        confirmButtonColor: "#DC2626",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchEmployees();
+    fetchDepartments();
   }, []);
 
   useEffect(() => {
@@ -117,7 +144,7 @@ const EmployeesDetails = () => {
       });
       setShowForm(false);
 
-      Swal.fire({
+      MySwal.fire({
         title: "Employee Created!",
         text: res.data.message,
         icon: "success",
@@ -129,7 +156,7 @@ const EmployeesDetails = () => {
       const err = error as AxiosError<{ message: string }>;
       setMessage(err.response?.data?.message || "Error creating Employee");
 
-      Swal.fire({
+      MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Error creating Employee",
         icon: "error",
@@ -146,31 +173,45 @@ const EmployeesDetails = () => {
   ) => {
     event.stopPropagation();
     setShowDropdown(null);
-    const { value: department } = await Swal.fire({
+
+    if (departments.length === 0) {
+      MySwal.fire({
+        title: "Error",
+        text: "No departments available. Please create a department first.",
+        icon: "error",
+        confirmButtonColor: "#DC2626",
+      });
+      return;
+    }
+
+    const { value: departmentId } = await MySwal.fire({
       title: "Assign Department",
-      input: "text",
-      inputLabel: "Enter department name",
-      inputPlaceholder: "e.g., Engineering",
+      input: "select",
+      inputOptions: departments.reduce((options, dept) => {
+        options[dept._id] = dept.name;
+        return options;
+      }, {} as Record<string, string>),
+      inputPlaceholder: "Select a department",
       showCancelButton: true,
       confirmButtonColor: "#4F46E5",
       cancelButtonColor: "#DC2626",
       inputValidator: (value) => {
         if (!value) {
-          return "Department name is required!";
+          return "Please select a department!";
         }
       },
     });
 
-    if (department) {
+    if (departmentId) {
       try {
         setLoading(true);
         const token = localStorage.getItem("authToken");
         await Api.post(
           "/api/v1/departments/assign-department",
-          { userId: employeeId, department },
+          { userId: employeeId, departmentId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        Swal.fire({
+        MySwal.fire({
           title: "Success!",
           text: "Department assigned successfully",
           icon: "success",
@@ -178,10 +219,17 @@ const EmployeesDetails = () => {
         });
         fetchEmployees();
       } catch (error) {
-        const err = error as AxiosError<{ message: string }>;
-        Swal.fire({
+        const err = error as AxiosError<{ message: string; details?: string }>;
+        console.error("Assign department error:", {
+          message: err.message,
+          response: err.response?.data,
+        });
+        MySwal.fire({
           title: "Error",
-          text: err.response?.data?.message || "Failed to assign department",
+          text:
+            err.response?.data?.details ||
+            err.response?.data?.message ||
+            "Failed to assign department",
           icon: "error",
           confirmButtonColor: "#DC2626",
         });
@@ -197,7 +245,7 @@ const EmployeesDetails = () => {
   ) => {
     event.stopPropagation();
     setShowDropdown(null);
-    const result = await Swal.fire({
+    const result = await MySwal.fire({
       title: "Are you sure?",
       text: "This action cannot be undone!",
       icon: "warning",
@@ -218,7 +266,7 @@ const EmployeesDetails = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId));
-        Swal.fire({
+        MySwal.fire({
           title: "Deleted!",
           text: "Employee has been deleted.",
           icon: "success",
@@ -230,7 +278,7 @@ const EmployeesDetails = () => {
           message: err.message,
           response: err.response?.data,
         });
-        Swal.fire({
+        MySwal.fire({
           title: "Error",
           text:
             err.response?.data?.details ||
