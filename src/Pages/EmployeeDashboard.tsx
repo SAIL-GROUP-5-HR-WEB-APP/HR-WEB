@@ -388,71 +388,115 @@ const EmployeeDashboard = () => {
 
   const getPosition = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) => {
-      if (!navigator.geolocation)
-        reject(new Error("Geolocation not supported"));
-      else
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation not supported by your browser"));
+      } else {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
           timeout: 15000,
           maximumAge: 0,
         });
+      }
     });
 
-  const handleClockIn = async () => {
+  const handleClockIn = async (setAttendance: (status: string) => void) => {
     try {
       Swal.fire({
         title: "Clocking in...",
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(),
       });
+
       const pos = await getPosition();
       const { latitude, longitude, accuracy } = pos.coords;
 
-      if (accuracy > 100) throw new Error("Geolocation accuracy too low");
+      if (accuracy > 100) {
+        throw new Error(
+          "Geolocation accuracy too low. Please ensure a stronger GPS signal."
+        );
+      }
+
+      // Validate latitude and longitude ranges
+      if (
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+      ) {
+        throw new Error("Invalid coordinates provided");
+      }
 
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Authentication token missing");
+      if (!token) {
+        throw new Error("Please log in to continue");
+      }
 
       const res = await Api.post(
         "/api/v1/attendance/clock-in",
         {
           latitude: Number(latitude),
-          longitude: Number(longitude),
+          longitude: Number(latitude),
           consent: true,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       Swal.close();
-      Swal.fire(
-        "Success",
-        res.data.isWithinGeofence
-          ? "Clock-In successful!"
-          : "Clock-In outside geofence",
-        "success"
-      );
+      Swal.fire({
+        title: "Success",
+        text: res.data.message,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
       setAttendance("ClockIn");
     } catch (err: any) {
       Swal.close();
-      Swal.fire("Error", err.message || "Clock-In failed", "error");
-      console.log(err, err.message);
+      Swal.fire({
+        title: "Clock-In Failed",
+        text:
+          err.response?.data?.message ||
+          err.message ||
+          "An unexpected error occurred",
+        icon: "error",
+        timer: 3000,
+        showConfirmButton: true,
+      });
+      console.error("Clock-in error:", err);
     }
   };
 
-  const handleClockOut = async () => {
+  const handleClockOut = async (setAttendance: (status: string) => void) => {
     try {
       Swal.fire({
         title: "Clocking out...",
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading(),
       });
+
       const pos = await getPosition();
       const { latitude, longitude, accuracy } = pos.coords;
 
-      if (accuracy > 100) throw new Error("Geolocation accuracy too low");
+      if (accuracy > 100) {
+        throw new Error(
+          "Geolocation accuracy too low. Please ensure a stronger GPS signal."
+        );
+      }
+
+      // Validate latitude and longitude ranges
+      if (
+        latitude < -90 ||
+        latitude > 90 ||
+        longitude < -180 ||
+        longitude > 180
+      ) {
+        throw new Error("Invalid coordinates provided");
+      }
 
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Authentication token missing");
+      if (!token) {
+        throw new Error("Please log in to continue");
+      }
 
       const res = await Api.post(
         "/api/v1/attendance/clock-out",
@@ -465,17 +509,27 @@ const EmployeeDashboard = () => {
       );
 
       Swal.close();
-      Swal.fire(
-        "Success",
-        res.data.isWithinGeofence
-          ? "Clock-Out successful!"
-          : "Clock-Out outside geofence",
-        "success"
-      );
+      Swal.fire({
+        title: "Success",
+        text: res.data.message,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
       setAttendance("ClockOut");
     } catch (err: any) {
       Swal.close();
-      Swal.fire("Error", err.message || "Clock-Out failed", "error");
+      Swal.fire({
+        title: "Clock-Out Failed",
+        text:
+          err.response?.data?.message ||
+          err.message ||
+          "An unexpected error occurred",
+        icon: "error",
+        timer: 3000,
+        showConfirmButton: true,
+      });
+      console.error("Clock-out error:", err);
     }
   };
 
