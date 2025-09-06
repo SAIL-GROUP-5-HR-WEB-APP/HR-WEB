@@ -1,4 +1,10 @@
-import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import {
   LuClipboardList,
   LuClock10,
@@ -22,6 +28,23 @@ import withReactContent from "sweetalert2-react-content";
 import io from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+// Fallback avatar URL (public domain placeholder)
+const FALLBACK_AVATAR = "https://via.placeholder.com/64?text=User";
+
+// Validate and transform Cloudinary URL
+const validateCloudinaryUrl = (url?: string): string => {
+  if (!url || !url.startsWith("https://res.cloudinary.com/")) {
+    console.warn(`Invalid Cloudinary URL: ${url}`);
+    return FALLBACK_AVATAR;
+  }
+  // Apply avatar-specific transformations: resize, face detection, auto quality
+  const parts = url.split("/upload/");
+  if (parts.length === 2) {
+    return `${parts[0]}/upload/w_64,h_64,c_fill,g_face,q_auto,f_auto/${parts[1]}`;
+  }
+  return url;
+};
 
 const MySwal = withReactContent(Swal);
 
@@ -50,9 +73,19 @@ interface Kudo {
 }
 
 interface User {
-  _id: string;
+  id?: string;
+  _id?: string;
   firstName: string;
   lastName?: string;
+  email: string;
+  role?: string;
+  profile?: {
+    department?: string;
+    position?: string;
+    phone?: string;
+    address?: string;
+    avatarUrl?: string; // Optional to prevent TypeScript errors
+  };
 }
 
 interface Notification {
@@ -74,20 +107,7 @@ const EmployeeDashboard = () => {
   const [attendance, setAttendance] = useState<"ClockIn" | "ClockOut" | null>(
     null
   );
-  const [user, setUser] = useState<{
-    id?: string;
-    firstName: string;
-    lastName?: string;
-    email: string;
-    role?: string;
-    profile?: {
-      department?: string;
-      position?: string;
-      phone?: string;
-      address?: string;
-      avatarUrl: string;
-    };
-  } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [daysPresent, setDaysPresent] = useState<number>(0);
   const [daysAbsent, setDaysAbsent] = useState<number>(0);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -103,19 +123,76 @@ const EmployeeDashboard = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const navigate = useNavigate();
+  const isMounted = useRef(false);
+  const fetchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const CACHE_KEYS = {
+    user: "cache_user",
+    avatar: "cache_avatar",
+  };
+
+  // Load cached user data
+  const loadCachedUser = () => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS.user);
+      if (!cached) return null;
+      const { data, expires } = JSON.parse(cached);
+      if (new Date(expires) < new Date()) {
+        localStorage.removeItem(CACHE_KEYS.user);
+        return null;
+      }
+      if (data?.profile?.avatarUrl) {
+        data.profile.avatarUrl = validateCloudinaryUrl(data.profile.avatarUrl);
+      }
+      return data as User;
+    } catch (err) {
+      console.error("Error loading cached user:", err);
+      return null;
+    }
+  };
+
+  // Save user data to cache
+  const saveUserToCache = (userData: User, maxAgeHours: number = 24) => {
+    try {
+      localStorage.setItem(
+        CACHE_KEYS.user,
+        JSON.stringify({
+          data: userData,
+          expires: new Date(
+            new Date().getTime() + maxAgeHours * 60 * 60 * 1000
+          ).toISOString(),
+        })
+      );
+    } catch (err) {
+      console.error("Failed to save user to cache:", err);
+    }
+  };
 
   useEffect(() => {
+    if (isMounted.current) return;
+    isMounted.current = true;
+
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
     if (!token || !storedUser) {
       navigate("/login", { replace: true });
       return;
     }
-    const userData = JSON.parse(storedUser);
-    setUser(userData);
+    const userData: User = JSON.parse(storedUser);
+    setUser({
+      ...userData,
+      profile: {
+        ...userData.profile,
+        avatarUrl: validateCloudinaryUrl(userData.profile?.avatarUrl),
+      },
+    });
+    saveUserToCache(userData);
 
-    socket.emit("join", userData.id);
-    console.log("Socket.IO: Joined room with user ID:", userData.id);
+    socket.emit("join", userData.id || userData._id);
+    console.log(
+      "Socket.IO: Joined room with user ID:",
+      userData.id || userData._id
+    );
 
     // Listen for notifications
     socket.on("notification", (notification: Notification) => {
@@ -185,14 +262,35 @@ const EmployeeDashboard = () => {
     };
 
     const fetchUserProfile = async () => {
+      if (fetchTimeout.current) return; // Prevent duplicate calls
+      fetchTimeout.current = setTimeout(() => {
+        fetchTimeout.current = null;
+      }, 1000); // 1-second debounce
       try {
-        const res = await Api.get(`/api/v1/users/${userData.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await Api.get(
+          `/api/v1/users/${userData.id || userData._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const updatedUser: User = {
+          ...res.data,
+          profile: {
+            ...res.data.profile,
+            avatarUrl: validateCloudinaryUrl(res.data.profile?.avatarUrl),
+          },
+        };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        saveUserToCache(updatedUser);
+      } catch (err: any) {
+        console.error("Failed to fetch user profile:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
         });
-        setUser(res.data);
-      } catch (err) {
-        console.error("Failed to fetch user profile:", err);
-        setUser(userData);
+        const cachedUser = loadCachedUser();
+        if (cachedUser) setUser(cachedUser);
       }
     };
 
@@ -210,12 +308,15 @@ const EmployeeDashboard = () => {
           status: r.status,
         }));
         setLeaveRequests(formatted);
-      } catch (err) {
-        console.error("Failed to fetch leave requests:", err);
+      } catch (err: any) {
+        console.error("Failed to fetch leave requests:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
       }
     };
 
-    // Polling for leave request updates as a fallback
     const pollLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
@@ -230,7 +331,6 @@ const EmployeeDashboard = () => {
           status: r.status,
         }));
 
-        // Check for status changes
         updatedRequests.forEach((newReq) => {
           const oldReq = leaveRequests.find((req) => req.id === newReq.id);
           if (oldReq && oldReq.status !== newReq.status) {
@@ -256,8 +356,12 @@ const EmployeeDashboard = () => {
           }
         });
         setLeaveRequests(updatedRequests);
-      } catch (err) {
-        console.error("Failed to poll leave requests:", err);
+      } catch (err: any) {
+        console.error("Failed to poll leave requests:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
       }
     };
 
@@ -272,8 +376,12 @@ const EmployeeDashboard = () => {
           createdAt: a.createdAt,
         }));
         setAnnouncements(formatted);
-      } catch (err) {
-        console.error("Failed to fetch announcements:", err);
+      } catch (err: any) {
+        console.error("Failed to fetch announcements:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
       } finally {
         setLoadingAnnouncements(false);
       }
@@ -281,13 +389,16 @@ const EmployeeDashboard = () => {
 
     const fetchAttendanceSummary = async () => {
       try {
-        if (!userData?.id) {
+        if (!userData?.id && !userData?._id) {
           console.error("User ID missing, cannot fetch logs");
           return;
         }
-        const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await Api.get(
+          `/api/v1/attendance/logs/${userData.id || userData._id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         const logs = Array.isArray(res.data) ? res.data : [];
         const presentCount = logs.filter(
           (log: any) => log.status?.toLowerCase() === "present"
@@ -297,8 +408,12 @@ const EmployeeDashboard = () => {
         ).length;
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
-      } catch (err) {
-        console.error("Failed to fetch attendance summary:", err);
+      } catch (err: any) {
+        console.error("Failed to fetch attendance summary:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
         setDaysPresent(0);
         setDaysAbsent(0);
       }
@@ -350,28 +465,39 @@ const EmployeeDashboard = () => {
       }
     };
 
-    fetchUserProfile();
-    fetchLeaveRequests();
-    fetchAttendanceSummary();
-    fetchAnnouncements();
-    fetchKudos();
-    fetchUsers();
-    fetchNotifications();
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchUserProfile(),
+          fetchLeaveRequests(),
+          fetchAttendanceSummary(),
+          fetchAnnouncements(),
+          fetchKudos(),
+          fetchUsers(),
+          fetchNotifications(),
+        ]);
+        console.log("Initial data fetch completed");
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
 
-    // Set up polling for leave requests (every 30 seconds)
+    loadData();
+
     const pollingInterval = setInterval(pollLeaveRequests, 30000);
 
     return () => {
+      isMounted.current = false;
       socket.off("notification");
       socket.off("connect");
       socket.off("connect_error");
       clearInterval(pollingInterval);
+      if (fetchTimeout.current) clearTimeout(fetchTimeout.current);
     };
   }, [navigate]);
 
   const handleToggleNotifications = () => {
     if (!showNotifications && unreadCount > 0) {
-      // Mark all unread notifications as read and save to localStorage
       const readNotificationIds = notifications.map((n) => n._id);
       setNotifications((prev) =>
         prev.map((n) => (n.read ? n : { ...n, read: true }))
@@ -416,7 +542,6 @@ const EmployeeDashboard = () => {
         );
       }
 
-      // Validate latitude and longitude ranges
       if (
         latitude < -90 ||
         latitude > 90 ||
@@ -435,7 +560,7 @@ const EmployeeDashboard = () => {
         "/api/v1/attendance/clock-in",
         {
           latitude: Number(latitude),
-          longitude: Number(longitude), // Fixed bug: was Number(latitude)
+          longitude: Number(longitude),
           consent: true,
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -450,6 +575,7 @@ const EmployeeDashboard = () => {
         showConfirmButton: false,
       });
       setAttendance("ClockIn");
+      await fetchAttendanceSummary();
     } catch (err: any) {
       Swal.close();
       Swal.fire({
@@ -462,7 +588,11 @@ const EmployeeDashboard = () => {
         timer: 3000,
         showConfirmButton: true,
       });
-      console.error("Clock-in error:", err);
+      console.error("Clock-in error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
   };
 
@@ -483,7 +613,6 @@ const EmployeeDashboard = () => {
         );
       }
 
-      // Validate latitude and longitude ranges
       if (
         latitude < -90 ||
         latitude > 90 ||
@@ -517,6 +646,7 @@ const EmployeeDashboard = () => {
         showConfirmButton: false,
       });
       setAttendance("ClockOut");
+      await fetchAttendanceSummary();
     } catch (err: any) {
       Swal.close();
       Swal.fire({
@@ -529,7 +659,11 @@ const EmployeeDashboard = () => {
         timer: 3000,
         showConfirmButton: true,
       });
-      console.error("Clock-out error:", err);
+      console.error("Clock-out error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
   };
 
@@ -572,7 +706,7 @@ const EmployeeDashboard = () => {
       setLeaveRequests((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id: res.data._id || Date.now().toString(),
           type: leaveType,
           reason: leaveReason,
           startDate,
@@ -591,6 +725,11 @@ const EmployeeDashboard = () => {
           err.response?.data?.message || err.message || "Leave request failed",
         icon: "error",
       });
+      console.error("Leave request error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
   };
 
@@ -602,7 +741,7 @@ const EmployeeDashboard = () => {
         "Please select a recipient and enter a message.",
         "warning"
       );
-    if (kudoReceiverId === user?.id)
+    if (kudoReceiverId === (user?.id || user?._id))
       return MySwal.fire(
         "Invalid recipient",
         "You cannot send a kudo to yourself.",
@@ -699,6 +838,11 @@ const EmployeeDashboard = () => {
         text: err.response?.data?.message || "Logout failed",
         icon: "error",
       });
+      console.error("Logout error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
   };
 
@@ -712,9 +856,19 @@ const EmployeeDashboard = () => {
               <div className="flex items-center space-x-4">
                 {user?.profile?.avatarUrl ? (
                   <img
-                    src={user.profile.avatarUrl}
+                    src={validateCloudinaryUrl(user.profile.avatarUrl)}
                     alt={`${user.firstName} ${user.lastName || ""}`}
                     className="h-16 w-16 rounded-full object-cover border-2 border-purple-400 dark:border-purple-600 shadow-md hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      console.error("Failed to load avatar:", {
+                        url: user.profile?.avatarUrl,
+                        error: (e as any).target?.error,
+                        xCldError: (e as any).target?.getResponseHeader?.(
+                          "x-cld-error"
+                        ),
+                      });
+                      e.currentTarget.src = FALLBACK_AVATAR;
+                    }}
                   />
                 ) : (
                   <div className="h-16 w-16 rounded-full shadow-lg bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white">
@@ -770,7 +924,6 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
@@ -1103,7 +1256,7 @@ const EmployeeDashboard = () => {
                 >
                   <option value="">Select a colleague</option>
                   {users
-                    .filter((u) => u._id !== user?.id)
+                    .filter((u) => u._id !== (user?.id || user?._id))
                     .map((user) => (
                       <option key={user._id} value={user._id}>
                         {user.firstName} {user.lastName || ""}
