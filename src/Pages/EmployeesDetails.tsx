@@ -211,6 +211,9 @@ const EmployeesDetails = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("Authentication token missing");
+        }
         await Api.delete(`/api/v1/users/${employeeId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -222,10 +225,17 @@ const EmployeesDetails = () => {
           confirmButtonColor: "#4F46E5",
         });
       } catch (error) {
-        const err = error as AxiosError<{ message: string }>;
+        const err = error as AxiosError<{ message: string; details?: string }>;
+        console.error("Delete user error:", {
+          message: err.message,
+          response: err.response?.data,
+        });
         Swal.fire({
           title: "Error",
-          text: err.response?.data?.message || "Failed to delete employee",
+          text:
+            err.response?.data?.details ||
+            err.response?.data?.message ||
+            "Failed to delete employee",
           icon: "error",
           confirmButtonColor: "#DC2626",
         });
