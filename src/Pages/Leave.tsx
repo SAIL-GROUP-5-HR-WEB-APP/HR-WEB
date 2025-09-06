@@ -65,8 +65,10 @@ const AdminLeavePage: React.FC = () => {
       const { data } = await Api.get<Notification[]>("/api/v1/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setNotifications(data);
-      setUnreadCount(data.filter((n) => !n.read).length);
+      // Filter for leave_request notifications only
+      const leaveNotifications = data.filter((n) => n.type === "leave_request");
+      setNotifications(leaveNotifications);
+      setUnreadCount(leaveNotifications.filter((n) => !n.read).length);
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     }
@@ -127,17 +129,19 @@ const AdminLeavePage: React.FC = () => {
     // Join admin room for notifications
     socket.emit("join_admin");
 
-    // Listen for leave_request notifications
+    // Listen for leave_request notifications only
     socket.on("leave_request", (notification: Notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-      toast.info(notification.message, {
-        position: "top-right",
-        autoClose: 5000,
-        theme: document.documentElement.classList.contains("dark")
-          ? "dark"
-          : "light",
-      });
+      if (notification.type === "leave_request") {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+        toast.info(notification.message, {
+          position: "top-right",
+          autoClose: 5000,
+          theme: document.documentElement.classList.contains("dark")
+            ? "dark"
+            : "light",
+        });
+      }
     });
 
     // Debug Socket.IO connection
@@ -285,11 +289,11 @@ const AdminLeavePage: React.FC = () => {
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-indigo-200 z-10 max-h-96 overflow-y-auto">
                 <div className="p-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Notifications
+                    Leave Notifications
                   </h3>
                   {notifications.length === 0 ? (
                     <p className="text-gray-500 text-sm">
-                      No notifications available.
+                      No leave notifications available.
                     </p>
                   ) : (
                     <ul className="space-y-2">
