@@ -46,7 +46,7 @@ const Feedback: React.FC = () => {
       setSurveys(surveyRes.data);
 
       // Fetch survey_submission notifications
-      const notifRes = await Api.get<Notification[]>("/api/notifications", {
+      const notifRes = await Api.get<Notification[]>("/api/v1/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const surveyNotifications = notifRes.data.filter(
@@ -65,7 +65,7 @@ const Feedback: React.FC = () => {
   const markAsRead = async (notificationId: string) => {
     try {
       await Api.put(
-        `/api/notifications/${notificationId}/read`,
+        `/api/v1/notifications/${notificationId}/read`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

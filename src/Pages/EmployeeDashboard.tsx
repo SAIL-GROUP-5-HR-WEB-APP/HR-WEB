@@ -130,7 +130,7 @@ const EmployeeDashboard = () => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await Api.get("/api/notifications", {
+        const res = await Api.get("/api/v1/notifications", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setNotifications(res.data);
