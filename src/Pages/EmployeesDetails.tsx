@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiSearch, FiMail, FiPhone, FiMoreHorizontal } from "react-icons/fi";
 import ClipLoader from "react-spinners/ClipLoader";
@@ -46,7 +46,6 @@ const EmployeesDetails = () => {
   });
   const [message, setMessage] = useState("");
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -68,10 +67,14 @@ const EmployeesDetails = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      const dropdowns = document.querySelectorAll(".dropdown-menu");
+      let isDropdownClick = false;
+      dropdowns.forEach((dropdown) => {
+        if (dropdown && dropdown.contains(event.target as Node)) {
+          isDropdownClick = true;
+        }
+      });
+      if (!isDropdownClick) {
         setShowDropdown(null);
       }
     };
@@ -141,7 +144,7 @@ const EmployeesDetails = () => {
     employeeId: string,
     event: React.MouseEvent
   ) => {
-    event.stopPropagation(); // Prevent event from bubbling up to parent
+    event.stopPropagation();
     setShowDropdown(null);
     const { value: department } = await Swal.fire({
       title: "Assign Department",
@@ -192,7 +195,7 @@ const EmployeesDetails = () => {
     employeeId: string,
     event: React.MouseEvent
   ) => {
-    event.stopPropagation(); // Prevent event from bubbling up to parent
+    event.stopPropagation();
     setShowDropdown(null);
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -233,7 +236,7 @@ const EmployeesDetails = () => {
   };
 
   const toggleDropdown = (employeeId: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent click from bubbling to document
+    event.stopPropagation();
     setShowDropdown(showDropdown === employeeId ? null : employeeId);
   };
 
@@ -312,17 +315,20 @@ const EmployeesDetails = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="relative" ref={dropdownRef}>
+                  <div className="relative">
                     <FiMoreHorizontal
                       className="text-gray-400 cursor-pointer"
                       onClick={(e) => toggleDropdown(emp._id, e)}
                     />
                     {showDropdown === emp._id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="dropdown-menu absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                         <Link
                           to={`/SingleEmployeedetails/${emp._id}`}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50"
-                          onClick={(e) => e.stopPropagation()} // Prevent closing dropdown
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDropdown(null);
+                          }}
                         >
                           View Details
                         </Link>
