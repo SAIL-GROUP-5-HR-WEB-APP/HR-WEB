@@ -13,11 +13,15 @@ import {
   LuUserX,
   LuUserCheck,
   LuHeart,
+  LuBell,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import io from "socket.io-client";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const MySwal = withReactContent(Swal);
 
@@ -51,6 +55,16 @@ interface User {
   lastName?: string;
 }
 
+interface Notification {
+  _id: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+}
+
+const socket = io("https://zyrahr-backend.onrender.com"); // Replace with your backend URL
+
 const EmployeeDashboard = () => {
   const [leaveType, setLeaveType] = useState<string>("sick");
   const [leaveReason, setLeaveReason] = useState<string>("");
@@ -60,7 +74,6 @@ const EmployeeDashboard = () => {
   const [attendance, setAttendance] = useState<"ClockIn" | "ClockOut" | null>(
     null
   );
-
   const [user, setUser] = useState<{
     id?: string;
     firstName: string;
@@ -75,25 +88,22 @@ const EmployeeDashboard = () => {
       avatarUrl: string;
     };
   } | null>(null);
-
-  // KPI states
   const [daysPresent, setDaysPresent] = useState<number>(0);
   const [daysAbsent, setDaysAbsent] = useState<number>(0);
-
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] =
     useState<boolean>(false);
-
-  // Kudos states
   const [kudos, setKudos] = useState<Kudo[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [kudoReceiverId, setKudoReceiverId] = useState<string>("");
   const [kudoMessage, setKudoMessage] = useState<string>("");
   const [loadingKudos, setLoadingKudos] = useState<boolean>(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const navigate = useNavigate();
 
-  // Load user & fetch data
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
@@ -104,7 +114,32 @@ const EmployeeDashboard = () => {
     const userData = JSON.parse(storedUser);
     setUser(userData);
 
-    // Fetch user profile
+    socket.emit("join", userData.id);
+
+    socket.on("notification", (notification: Notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+      toast.info(notification.message, {
+        position: "top-right",
+        autoClose: 5000,
+        theme: document.documentElement.classList.contains("dark")
+          ? "dark"
+          : "light",
+      });
+    });
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await Api.get("/api/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(res.data);
+        setUnreadCount(res.data.filter((n: Notification) => !n.read).length);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    };
+
     const fetchUserProfile = async () => {
       try {
         const res = await Api.get(`/api/v1/users/${userData.id}`, {
@@ -117,7 +152,6 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Fetch leave requests
     const fetchLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
@@ -137,7 +171,6 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Fetch announcements
     const fetchAnnouncements = async () => {
       setLoadingAnnouncements(true);
       try {
@@ -156,7 +189,6 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Fetch attendance KPI
     const fetchAttendanceSummary = async () => {
       try {
         if (!userData?.id) {
@@ -182,7 +214,6 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Fetch kudos
     const fetchKudos = async () => {
       setLoadingKudos(true);
       try {
@@ -214,7 +245,6 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Fetch users for kudo recipient dropdown
     const fetchUsers = async () => {
       try {
         const res = await Api.get("/api/v1/users/all", {
@@ -236,9 +266,33 @@ const EmployeeDashboard = () => {
     fetchAnnouncements();
     fetchKudos();
     fetchUsers();
+    fetchNotifications();
+
+    return () => {
+      socket.off("notification");
+    };
   }, [navigate]);
 
-  // Clock-in
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await Api.put(
+        `/api/notifications/${notificationId}/read`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
+      );
+      setUnreadCount((prev) => prev - 1);
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+      toast.error("Failed to mark notification as read");
+    }
+  };
+
   const getPosition = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) => {
       if (!navigator.geolocation)
@@ -332,7 +386,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // Leave request submission
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
     if (!leaveReason || !startDate || !endDate)
@@ -394,7 +447,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // Kudo submission
   const submitKudo = async (e: FormEvent) => {
     e.preventDefault();
     if (!kudoReceiverId || !kudoMessage)
@@ -425,7 +477,6 @@ const EmployeeDashboard = () => {
 
       MySwal.fire("Success", "Kudo sent successfully!", "success");
 
-      // Refetch kudos to update the list
       const res = await Api.get("/api/v1/kudos", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -465,7 +516,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  // Logout
   const handleLogout = async () => {
     const result = await MySwal.fire({
       title: "Are you sure?",
@@ -506,7 +556,7 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
-      {/* Profile Section */}
+      <ToastContainer />
       <header className="p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
           <div className="relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 max-w-lg mx-auto border border-gray-200 dark:border-gray-700">
@@ -566,6 +616,62 @@ const EmployeeDashboard = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-3">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    <LuBell size={16} />
+                    <span className="text-sm font-medium">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-10 max-h-96 overflow-y-auto">
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          Notifications
+                        </h3>
+                        {notifications.length === 0 ? (
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            No notifications available.
+                          </p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {notifications.map((notif) => (
+                              <li
+                                key={notif._id}
+                                className={`p-3 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-200 animate-fade-in ${
+                                  notif.read
+                                    ? "bg-gray-100 dark:bg-gray-700"
+                                    : "bg-blue-100 dark:bg-blue-900"
+                                }`}
+                              >
+                                <p className="text-sm text-gray-900 dark:text-white">
+                                  {notif.message}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {new Date(notif.createdAt).toLocaleString()}
+                                </p>
+                                {!notif.read && (
+                                  <button
+                                    onClick={() => markAsRead(notif._id)}
+                                    className="text-xs text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 mt-1"
+                                  >
+                                    Mark as read
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <Link to="/setting">
                   <button className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg">
                     <LuPen size={16} />
@@ -584,10 +690,7 @@ const EmployeeDashboard = () => {
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 max-w-6xl mx-auto w-full">
-        {/* KPI Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {[
             {
@@ -624,8 +727,6 @@ const EmployeeDashboard = () => {
             </div>
           ))}
         </div>
-
-        {/* Vote and Survey Buttons */}
         <div className="mb-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={() => navigate("/vote")}
@@ -644,8 +745,6 @@ const EmployeeDashboard = () => {
             <span>Take Anonymous Survey</span>
           </button>
         </div>
-
-        {/* Attendance Section */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
           <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 justify-center">
             <LuClipboardList size={28} className="text-purple-500" />
@@ -695,10 +794,7 @@ const EmployeeDashboard = () => {
             </div>
           )}
         </section>
-
-        {/* Leave Form & History */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Leave Form */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700">
             <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
               <LuCalendar size={28} className="text-purple-500" />
@@ -788,8 +884,6 @@ const EmployeeDashboard = () => {
               </button>
             </form>
           </section>
-
-          {/* Leave History */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[430px] overflow-y-auto">
             <h2 className="font-bold text-xl md:text-2xl text-gray-900 dark:text-white mb-6">
               Leave Requests
@@ -841,10 +935,7 @@ const EmployeeDashboard = () => {
             )}
           </section>
         </div>
-
-        {/* Kudos Form & History */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-          {/* Kudo Form */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700">
             <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
               <LuHeart size={28} className="text-purple-500" />
@@ -868,7 +959,7 @@ const EmployeeDashboard = () => {
                 >
                   <option value="">Select a colleague</option>
                   {users
-                    .filter((u) => u._id !== user?.id) // Prevent self-kudos
+                    .filter((u) => u._id !== user?.id)
                     .map((user) => (
                       <option key={user._id} value={user._id}>
                         {user.firstName} {user.lastName || ""}
@@ -903,8 +994,6 @@ const EmployeeDashboard = () => {
               </button>
             </form>
           </section>
-
-          {/* Kudo History */}
           <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[430px] overflow-y-auto">
             <h2 className="font-bold text-xl md:text-2xl text-gray-900 dark:text-white mb-6">
               Kudos Wall
@@ -942,8 +1031,6 @@ const EmployeeDashboard = () => {
           </section>
         </div>
       </main>
-
-      {/* Announcements Section */}
       <section className="w-full max-w-5xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
         <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6 text-center">
           <LuClipboardList size={28} className="text-purple-500" />
@@ -978,7 +1065,6 @@ const EmployeeDashboard = () => {
           </ul>
         )}
       </section>
-
       <style>{`
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }
