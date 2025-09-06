@@ -216,9 +216,9 @@ const EmployeesDetails = () => {
           userId: employeeId,
           departmentId,
         }); // Debug log
-        const res = await Api.post(
-          "/api/v1/departments/assign-department",
-          { userId: employeeId, departmentId },
+        const res = await Api.patch(
+          `/api/v1/departments/${employeeId}/assign-department`,
+          { departmentId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
         console.log("Assign department response:", res.data); // Debug log
