@@ -162,7 +162,7 @@ const SuperAdmin = () => {
   const handleLogout = async () => {
     const result = await MySwal.fire({
       title: "Are you sure?",
-      text: "You will be logged out of your account.",
+      text: "You will be logged out of your account",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, logout",
