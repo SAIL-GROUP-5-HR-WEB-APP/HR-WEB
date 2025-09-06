@@ -5,7 +5,11 @@ import {
   FaClock,
   FaCheckCircle,
   FaTimesCircle,
+  FaBell,
 } from "react-icons/fa";
+import io from "socket.io-client";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Leave {
   _id: string;
@@ -20,6 +24,16 @@ interface Leave {
   status: "pending" | "approved" | "rejected";
 }
 
+interface Notification {
+  _id: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+}
+
+const socket = io("https://zyrahr-backend.onrender.com"); // Backend Socket.IO URL
+
 const AdminLeavePage: React.FC = () => {
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,6 +42,9 @@ const AdminLeavePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "pending" | "approved" | "rejected"
   >("pending");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const fetchLeaves = async () => {
     setLoading(true);
@@ -39,6 +56,39 @@ const AdminLeavePage: React.FC = () => {
       setError("Failed to fetch leave requests");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const { data } = await Api.get<Notification[]>("/api/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(data);
+      setUnreadCount(data.filter((n) => !n.read).length);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await Api.put(
+        `/api/notifications/${notificationId}/read`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
+      );
+      setUnreadCount((prev) => prev - 1);
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+      toast.error("Failed to mark notification as read");
     }
   };
 
@@ -72,6 +122,37 @@ const AdminLeavePage: React.FC = () => {
 
   useEffect(() => {
     fetchLeaves();
+    fetchNotifications();
+
+    // Join admin room for notifications
+    socket.emit("join_admin");
+
+    // Listen for leave_request notifications
+    socket.on("leave_request", (notification: Notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+      toast.info(notification.message, {
+        position: "top-right",
+        autoClose: 5000,
+        theme: document.documentElement.classList.contains("dark")
+          ? "dark"
+          : "light",
+      });
+    });
+
+    // Debug Socket.IO connection
+    socket.on("connect", () => {
+      console.log("Connected to Socket.IO server:", socket.id);
+    });
+    socket.on("connect_error", (err) => {
+      console.error("Socket.IO connection error:", err.message);
+    });
+
+    return () => {
+      socket.off("leave_request");
+      socket.off("connect");
+      socket.off("connect_error");
+    };
   }, []);
 
   // Filter leaves based on search term and active tab
@@ -182,12 +263,67 @@ const AdminLeavePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-gray-50 p-0">
       <div className="max-w-7xl mx-auto p-6 lg:p-10">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-2">
-          <FaClock className="text-indigo-600" />
-          Leave Requests Management
-        </h2>
-
-        {/* Search Bar */}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <FaClock className="text-indigo-600" />
+            Leave Requests Management
+          </h2>
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              <FaBell size={16} />
+              <span className="text-sm font-medium">Notifications</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-indigo-200 z-10 max-h-96 overflow-y-auto">
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Notifications
+                  </h3>
+                  {notifications.length === 0 ? (
+                    <p className="text-gray-500 text-sm">
+                      No notifications available.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {notifications.map((notif) => (
+                        <li
+                          key={notif._id}
+                          className={`p-3 rounded-lg border border-indigo-200 transition-all duration-200 ${
+                            notif.read ? "bg-gray-100" : "bg-blue-100"
+                          }`}
+                        >
+                          <p className="text-sm text-gray-900">
+                            {notif.message}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(notif.createdAt).toLocaleString()}
+                          </p>
+                          {!notif.read && (
+                            <button
+                              onClick={() => markAsRead(notif._id)}
+                              className="text-xs text-indigo-500 hover:text-indigo-600 mt-1"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <ToastContainer />
         <div className="mb-6">
           <div className="relative">
             <input
@@ -200,8 +336,6 @@ const AdminLeavePage: React.FC = () => {
             <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
         </div>
-
-        {/* Tab Navigation */}
         <div className="flex gap-4 mb-6 border-b-2 border-indigo-100">
           {["pending", "approved", "rejected"].map((tab) => (
             <button
@@ -219,8 +353,6 @@ const AdminLeavePage: React.FC = () => {
             </button>
           ))}
         </div>
-
-        {/* Render Active Tab Content */}
         {renderTable("pending", <FaClock className="text-yellow-600" />)}
         {renderTable("approved", <FaCheckCircle className="text-green-600" />)}
         {renderTable("rejected", <FaTimesCircle className="text-red-600" />)}
