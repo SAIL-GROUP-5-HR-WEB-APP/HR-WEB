@@ -399,7 +399,7 @@ const EmployeeDashboard = () => {
       }
     });
 
-  const handleClockIn = async (setAttendance: (status: string) => void) => {
+  const handleClockIn = async () => {
     try {
       Swal.fire({
         title: "Clocking in...",
@@ -435,7 +435,7 @@ const EmployeeDashboard = () => {
         "/api/v1/attendance/clock-in",
         {
           latitude: Number(latitude),
-          longitude: Number(latitude),
+          longitude: Number(longitude), // Fixed bug: was Number(latitude)
           consent: true,
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -466,7 +466,7 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const handleClockOut = async (setAttendance: (status: string) => void) => {
+  const handleClockOut = async () => {
     try {
       Swal.fire({
         title: "Clocking out...",
