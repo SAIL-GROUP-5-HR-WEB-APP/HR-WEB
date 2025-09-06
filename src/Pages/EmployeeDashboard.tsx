@@ -63,7 +63,7 @@ interface Notification {
   createdAt: string;
 }
 
-const socket = io("https://zyrahr-backend.onrender.com"); // Replace with your backend URL
+const socket = io("https://zyrahr-backend.onrender.com");
 
 const EmployeeDashboard = () => {
   const [leaveType, setLeaveType] = useState<string>("sick");
@@ -116,16 +116,30 @@ const EmployeeDashboard = () => {
 
     socket.emit("join", userData.id);
 
+    // Listen for leave_request and kudo notifications only
     socket.on("notification", (notification: Notification) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-      toast.info(notification.message, {
-        position: "top-right",
-        autoClose: 5000,
-        theme: document.documentElement.classList.contains("dark")
-          ? "dark"
-          : "light",
-      });
+      if (
+        notification.type === "leave_request" ||
+        notification.type === "kudo"
+      ) {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+        toast.info(notification.message, {
+          position: "top-right",
+          autoClose: 5000,
+          theme: document.documentElement.classList.contains("dark")
+            ? "dark"
+            : "light",
+        });
+      }
+    });
+
+    // Debug Socket.IO connection
+    socket.on("connect", () => {
+      console.log("Connected to Socket.IO server:", socket.id);
+    });
+    socket.on("connect_error", (err) => {
+      console.error("Socket.IO connection error:", err.message);
     });
 
     const fetchNotifications = async () => {
@@ -133,10 +147,19 @@ const EmployeeDashboard = () => {
         const res = await Api.get("/api/v1/notifications", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setNotifications(res.data);
-        setUnreadCount(res.data.filter((n: Notification) => !n.read).length);
-      } catch (err) {
-        console.error("Failed to fetch notifications:", err);
+        const filteredNotifications = res.data.filter(
+          (n: Notification) => n.type === "leave_request" || n.type === "kudo"
+        );
+        setNotifications(filteredNotifications);
+        setUnreadCount(
+          filteredNotifications.filter((n: Notification) => !n.read).length
+        );
+      } catch (err: any) {
+        console.error("Failed to fetch notifications:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
       }
     };
 
@@ -270,27 +293,21 @@ const EmployeeDashboard = () => {
 
     return () => {
       socket.off("notification");
+      socket.off("connect");
+      socket.off("connect_error");
     };
   }, [navigate]);
 
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const token = localStorage.getItem("authToken");
-      await Api.put(
-        `/api/v1/notifications/${notificationId}/read`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  const handleToggleNotifications = () => {
+    if (!showNotifications && unreadCount > 0) {
+      // Mark all unread notifications as read when opening the dropdown
       setNotifications((prev) =>
-        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
+        prev.map((n) => (n.read ? n : { ...n, read: true }))
       );
-      setUnreadCount((prev) => prev - 1);
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
-      toast.error("Failed to mark notification as read");
+      setUnreadCount(0);
+      toast.success("All notifications marked as read");
     }
+    setShowNotifications(!showNotifications);
   };
 
   const getPosition = (): Promise<GeolocationPosition> =>
@@ -618,11 +635,13 @@ const EmployeeDashboard = () => {
               <div className="flex flex-col gap-3">
                 <div className="relative">
                   <button
-                    onClick={() => setShowNotifications(!showNotifications)}
+                    onClick={handleToggleNotifications}
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-
+                    <span className="text-sm font-medium max-[700px]:hidden">
+                      Notifications
+                    </span>
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
@@ -630,7 +649,7 @@ const EmployeeDashboard = () => {
                     )}
                   </button>
                   {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-10 max-h-96 overflow-y-auto">
+                    <div className="absolute right-4 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-10 max-h-96 overflow-y-auto">
                       <div className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                           Notifications
@@ -656,14 +675,6 @@ const EmployeeDashboard = () => {
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   {new Date(notif.createdAt).toLocaleString()}
                                 </p>
-                                {!notif.read && (
-                                  <button
-                                    onClick={() => markAsRead(notif._id)}
-                                    className="text-xs text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300 mt-1"
-                                  >
-                                    Mark as read
-                                  </button>
-                                )}
                               </li>
                             ))}
                           </ul>
@@ -685,7 +696,7 @@ const EmployeeDashboard = () => {
                   className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   <LuLogOut size={16} />
-                  <span className="text-sm font-medium  max-[700px]:hidden">
+                  <span className="text-sm font-medium max-[700px]:hidden">
                     Logout
                   </span>
                 </button>
