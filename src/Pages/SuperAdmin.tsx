@@ -39,7 +39,7 @@ interface Department {
 }
 
 interface DemoRequest {
-  id: string;
+  _id: string;
   fullName: string;
   email: string;
   company: string;
@@ -303,16 +303,14 @@ const SuperAdmin = () => {
       try {
         const token = localStorage.getItem("authToken");
         const res = await Api.post<{ message: string }>(
-          `/api/v1/demo/${demoId}/convert`,
+          `/api/v1/demo/${demoId}/convert`, // use the param
           {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         setDemoRequests((prev) =>
           prev.map((demo) =>
-            demo.id === demoId ? { ...demo, status: "converted" } : demo
+            demo._id === demoId ? { ...demo, status: "converted" } : demo
           )
         );
 
