@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { LuCalendar } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
 interface FormData {
   fullName: string;
@@ -11,6 +13,8 @@ interface FormData {
   message: string;
   rolePreference: string;
 }
+
+const MySwal = withReactContent(Swal);
 
 const DemoPage: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -41,7 +45,14 @@ const DemoPage: React.FC = () => {
       newErrors.phone = "Please enter a valid phone number";
     }
     if (!formData.message.trim()) newErrors.message = "Message is required";
-    if (!formData.rolePreference) newErrors.rolePreference = "Role is required";
+    else if (formData.message.length > 500) {
+      newErrors.message = "Message cannot exceed 500 characters";
+    }
+    if (!formData.rolePreference) {
+      newErrors.rolePreference = "Role is required";
+    } else if (!["admin", "hr", "employee"].includes(formData.rolePreference)) {
+      newErrors.rolePreference = "Invalid role selection";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -65,7 +76,7 @@ const DemoPage: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      await Api.post("/api/v1/demo", formData);
+      const response = await Api.post("/api/v1/demo", formData);
       setIsSubmitted(true);
       setFormData({
         fullName: "",
@@ -77,11 +88,23 @@ const DemoPage: React.FC = () => {
       });
       setErrors({});
       setErrorMessage("");
+      MySwal.fire({
+        title: "Success",
+        text: response.data.message || "Demo request submitted successfully!",
+        icon: "success",
+        confirmButtonColor: "#4F46E5",
+      });
     } catch (error: any) {
-      setErrorMessage(
-        error.response?.data?.errors?.[0]?.msg ||
-          "Failed to submit demo request. Please try again."
-      );
+      const errorMsg =
+        error.response?.data?.message ||
+        "Failed to submit demo request. Please try again.";
+      setErrorMessage(errorMsg);
+      MySwal.fire({
+        title: "Error",
+        text: errorMsg,
+        icon: "error",
+        confirmButtonColor: "#DC2626",
+      });
     }
   };
 
