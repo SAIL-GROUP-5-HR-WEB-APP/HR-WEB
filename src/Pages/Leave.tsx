@@ -51,8 +51,12 @@ const AdminLeavePage: React.FC = () => {
     try {
       const { data } = await Api.get<Leave[]>("/api/v1/leave/all");
       setLeaves(data);
-    } catch (err) {
-      console.error("Error fetching leaves:", err);
+    } catch (err: any) {
+      console.error("Error fetching leaves:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setError("Failed to fetch leave requests");
     } finally {
       setLoading(false);
@@ -65,33 +69,82 @@ const AdminLeavePage: React.FC = () => {
       const { data } = await Api.get<Notification[]>("/api/v1/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Filter for leave_request notifications only
-      const leaveNotifications = data.filter((n) => n.type === "leave_request");
+      const readNotificationIds = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
+      );
+      // Filter for leave-related notifications
+      const leaveNotifications = data
+        .filter((n) => n.type.toLowerCase().includes("leave"))
+        .map((n) => ({
+          ...n,
+          read: readNotificationIds.includes(n._id) ? true : n.read,
+        }));
+      console.log("Fetched notifications:", leaveNotifications);
       setNotifications(leaveNotifications);
       setUnreadCount(leaveNotifications.filter((n) => !n.read).length);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
+    } catch (err: any) {
+      console.error("Failed to fetch notifications:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      toast.error("Failed to fetch notifications");
     }
   };
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = (notificationId: string) => {
     try {
-      const token = localStorage.getItem("authToken");
-      await Api.put(
-        `/api/v1/notifications/${notificationId}/read`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const readNotificationIds = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
       );
+      if (!readNotificationIds.includes(notificationId)) {
+        readNotificationIds.push(notificationId);
+        localStorage.setItem(
+          "readNotifications",
+          JSON.stringify(readNotificationIds)
+        );
+        console.log(
+          "Marked notification as read in localStorage:",
+          notificationId
+        );
+      }
       setNotifications((prev) =>
         prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
       );
       setUnreadCount((prev) => prev - 1);
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
+      toast.success("Notification marked as read");
+    } catch (err: any) {
+      console.error("Failed to mark notification as read in localStorage:", {
+        message: err.message,
+      });
       toast.error("Failed to mark notification as read");
     }
+  };
+
+  const handleToggleNotifications = () => {
+    if (!showNotifications && unreadCount > 0) {
+      // Mark all unread notifications as read
+      const readNotificationIds = notifications
+        .filter((n) => !n.read)
+        .map((n) => n._id);
+      const currentReadIds = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
+      );
+      const updatedReadIds = [
+        ...new Set([...currentReadIds, ...readNotificationIds]),
+      ];
+      localStorage.setItem("readNotifications", JSON.stringify(updatedReadIds));
+      console.log(
+        "Marked all notifications as read in localStorage:",
+        updatedReadIds
+      );
+      setNotifications((prev) =>
+        prev.map((n) => (n.read ? n : { ...n, read: true }))
+      );
+      setUnreadCount(0);
+      toast.success("All notifications marked as read");
+    }
+    setShowNotifications(!showNotifications);
   };
 
   const handleApprove = async (id: string) => {
@@ -103,8 +156,14 @@ const AdminLeavePage: React.FC = () => {
         )
       );
       if (activeTab !== "approved") setActiveTab("approved");
-    } catch (err) {
-      console.error("Approve error:", err);
+      toast.success("Leave request approved");
+    } catch (err: any) {
+      console.error("Approve error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      toast.error("Failed to approve leave request");
     }
   };
 
@@ -117,8 +176,14 @@ const AdminLeavePage: React.FC = () => {
         )
       );
       if (activeTab !== "rejected") setActiveTab("rejected");
-    } catch (err) {
-      console.error("Reject error:", err);
+      toast.success("Leave request rejected");
+    } catch (err: any) {
+      console.error("Reject error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      toast.error("Failed to reject leave request");
     }
   };
 
@@ -128,11 +193,24 @@ const AdminLeavePage: React.FC = () => {
 
     // Join admin room for notifications
     socket.emit("join_admin");
+    console.log("Socket.IO: Joined admin room");
 
-    // Listen for leave_request notifications only
-    socket.on("leave_request", (notification: Notification) => {
-      if (notification.type === "leave_request") {
-        setNotifications((prev) => [notification, ...prev]);
+    // Listen for all notifications to debug
+    socket.on("notification", (notification: Notification) => {
+      console.log("Received Socket.IO notification:", notification);
+      if (notification.type.toLowerCase().includes("leave")) {
+        setNotifications((prev) => {
+          const readNotificationIds = JSON.parse(
+            localStorage.getItem("readNotifications") || "[]"
+          );
+          const updatedNotification = {
+            ...notification,
+            read: readNotificationIds.includes(notification._id)
+              ? true
+              : notification.read,
+          };
+          return [updatedNotification, ...prev];
+        });
         setUnreadCount((prev) => prev + 1);
         toast.info(notification.message, {
           position: "top-right",
@@ -141,6 +219,8 @@ const AdminLeavePage: React.FC = () => {
             ? "dark"
             : "light",
         });
+      } else {
+        console.log("Ignored notification with type:", notification.type);
       }
     });
 
@@ -152,10 +232,14 @@ const AdminLeavePage: React.FC = () => {
       console.error("Socket.IO connection error:", err.message);
     });
 
+    // Polling for notifications as a fallback
+    const pollingInterval = setInterval(fetchNotifications, 30000);
+
     return () => {
-      socket.off("leave_request");
+      socket.off("notification");
       socket.off("connect");
       socket.off("connect_error");
+      clearInterval(pollingInterval);
     };
   }, []);
 
@@ -274,7 +358,7 @@ const AdminLeavePage: React.FC = () => {
           </h2>
           <div className="relative">
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={handleToggleNotifications}
               className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
             >
               <FaBell size={16} />
@@ -308,7 +392,9 @@ const AdminLeavePage: React.FC = () => {
                             {notif.message}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {new Date(notif.createdAt).toLocaleString()}
+                            {new Date(notif.createdAt).toLocaleString("en-NG", {
+                              timeZone: "Africa/Lagos",
+                            })}
                           </p>
                           {!notif.read && (
                             <button
