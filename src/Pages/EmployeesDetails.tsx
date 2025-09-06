@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FiSearch, FiMail, FiPhone, FiMoreHorizontal } from "react-icons/fi";
 import ClipLoader from "react-spinners/ClipLoader";
@@ -36,8 +36,6 @@ const EmployeesDetails = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // 🔹 State for modal + form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CreateUserForm>({
     firstName: "",
@@ -47,6 +45,8 @@ const EmployeesDetails = () => {
     role: "employee",
   });
   const [message, setMessage] = useState("");
+  const [showDropdown, setShowDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -66,20 +66,31 @@ const EmployeesDetails = () => {
     fetchEmployees();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const filteredEmployees = employees.filter((emp) =>
     `${emp.firstName} ${emp.lastName}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
-  // 🔹 Handle input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Submit form
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -126,6 +137,93 @@ const EmployeesDetails = () => {
     }
   };
 
+  const handleAssignDepartment = async (employeeId: string) => {
+    setShowDropdown(null);
+    const { value: department } = await Swal.fire({
+      title: "Assign Department",
+      input: "text",
+      inputLabel: "Enter department name",
+      inputPlaceholder: "e.g., Engineering",
+      showCancelButton: true,
+      confirmButtonColor: "#4F46E5",
+      cancelButtonColor: "#DC2626",
+      inputValidator: (value) => {
+        if (!value) {
+          return "Department name is required!";
+        }
+      },
+    });
+
+    if (department) {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("authToken");
+        await Api.post(
+          "/api/v1/departments/assign-department",
+          { userId: employeeId, department },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        Swal.fire({
+          title: "Success!",
+          text: "Department assigned successfully",
+          icon: "success",
+          confirmButtonColor: "#4F46E5",
+        });
+        fetchEmployees();
+      } catch (error) {
+        const err = error as AxiosError<{ message: string }>;
+        Swal.fire({
+          title: "Error",
+          text: err.response?.data?.message || "Failed to assign department",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDeleteUser = async (employeeId: string) => {
+    setShowDropdown(null);
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DC2626",
+      cancelButtonColor: "#4F46E5",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("authToken");
+        await Api.delete(`/api/v1/users/${employeeId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId));
+        Swal.fire({
+          title: "Deleted!",
+          text: "Employee has been deleted.",
+          icon: "success",
+          confirmButtonColor: "#4F46E5",
+        });
+      } catch (error) {
+        const err = error as AxiosError<{ message: string }>;
+        Swal.fire({
+          title: "Error",
+          text: err.response?.data?.message || "Failed to delete employee",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -146,7 +244,6 @@ const EmployeesDetails = () => {
           />
         </div>
 
-        {/* 🔹 Add Employee Button */}
         <button
           onClick={() => setShowForm(true)}
           className="mt-3 sm:mt-0 bg-indigo-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
@@ -202,9 +299,39 @@ const EmployeesDetails = () => {
                       </p>
                     </div>
                   </div>
-                  <Link to={`/SingleEmployeedetails/${emp._id}`}>
-                    <FiMoreHorizontal className="text-gray-400 cursor-pointer" />
-                  </Link>
+                  <div className="relative" ref={dropdownRef}>
+                    <FiMoreHorizontal
+                      className="text-gray-400 cursor-pointer"
+                      onClick={() =>
+                        setShowDropdown(
+                          showDropdown === emp._id ? null : emp._id
+                        )
+                      }
+                    />
+                    {showDropdown === emp._id && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <Link
+                          to={`/SingleEmployeedetails/${emp._id}`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50"
+                          onClick={() => setShowDropdown(null)}
+                        >
+                          View Details
+                        </Link>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50"
+                          onClick={() => handleAssignDepartment(emp._id)}
+                        >
+                          Assign Department
+                        </button>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          onClick={() => handleDeleteUser(emp._id)}
+                        >
+                          Delete User
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 space-y-2 text-sm text-gray-600">
@@ -233,7 +360,7 @@ const EmployeesDetails = () => {
         </div>
       )}
 
-      {/* 🔹 Add Employee Modal */}
+      {/* Add Employee Modal */}
       {showForm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg transform transition-all duration-300">
