@@ -75,6 +75,7 @@ const EmployeesDetails = () => {
       const res = await Api.get("/api/v1/departments", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Fetched departments:", res.data); // Debug log
       setDepartments(res.data || []);
     } catch (err: any) {
       console.error("Error fetching departments:", err);
@@ -206,14 +207,19 @@ const EmployeesDetails = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("authToken");
-        await Api.post(
+        console.log("Assigning department:", {
+          userId: employeeId,
+          departmentId,
+        }); // Debug log
+        const res = await Api.post(
           "/api/v1/departments/assign-department",
           { userId: employeeId, departmentId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        console.log("Assign department response:", res.data); // Debug log
         MySwal.fire({
           title: "Success!",
-          text: "Department assigned successfully",
+          text: res.data.message || "Department assigned successfully",
           icon: "success",
           confirmButtonColor: "#4F46E5",
         });
@@ -262,13 +268,15 @@ const EmployeesDetails = () => {
         if (!token) {
           throw new Error("Authentication token missing");
         }
-        await Api.delete(`/api/v1/users/${employeeId}`, {
+        console.log("Deleting user with ID:", employeeId); // Debug log
+        const res = await Api.delete(`/api/v1/users/${employeeId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("Delete user response:", res.data); // Debug log
         setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId));
         MySwal.fire({
           title: "Deleted!",
-          text: "Employee has been deleted.",
+          text: res.data.message || "Employee has been deleted.",
           icon: "success",
           confirmButtonColor: "#4F46E5",
         });
