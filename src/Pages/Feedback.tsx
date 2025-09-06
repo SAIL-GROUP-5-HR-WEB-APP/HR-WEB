@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Api from "../Components/Reuseable/Api";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaBug } from "react-icons/fa";
 import io from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -20,7 +20,10 @@ interface Notification {
   createdAt: string;
 }
 
-const socket = io("https://zyrahr-backend.onrender.com"); // Backend Socket.IO URL
+const socket = io("https://zyrahr-backend.onrender.com", {
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+}); // Backend Socket.IO URL with reconnection options
 
 const Feedback: React.FC = () => {
   const [surveys, setSurveys] = useState<Survey[]>([]);
@@ -44,41 +47,101 @@ const Feedback: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSurveys(surveyRes.data);
+      console.log("Fetched surveys:", surveyRes.data);
 
       // Fetch survey_submission notifications
       const notifRes = await Api.get<Notification[]>("/api/v1/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const surveyNotifications = notifRes.data.filter(
-        (n) => n.type === "survey_submission"
+      const readNotificationIds = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
       );
+      const surveyNotifications = notifRes.data
+        .filter((n) => n.type === "survey_submission")
+        .map((n) => ({
+          ...n,
+          read: readNotificationIds.includes(n._id) ? true : n.read,
+        }));
+      console.log("Fetched notifications:", surveyNotifications);
       setNotifications(surveyNotifications);
       setUnreadCount(surveyNotifications.filter((n) => !n.read).length);
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Error fetching surveys or notifications:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setError("Failed to fetch surveys or notifications");
-      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = (notificationId: string) => {
     try {
-      await Api.put(
-        `/api/v1/notifications/${notificationId}/read`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const readNotificationIds = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
       );
+      if (!readNotificationIds.includes(notificationId)) {
+        readNotificationIds.push(notificationId);
+        localStorage.setItem(
+          "readNotifications",
+          JSON.stringify(readNotificationIds)
+        );
+        console.log(
+          "Marked notification as read in localStorage:",
+          notificationId
+        );
+      }
       setNotifications((prev) =>
         prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
       );
       setUnreadCount((prev) => prev - 1);
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
+      toast.success("Notification marked as read");
+    } catch (err: any) {
+      console.error("Failed to mark notification as read in localStorage:", {
+        message: err.message,
+      });
       toast.error("Failed to mark notification as read");
     }
+  };
+
+  const handleToggleNotifications = () => {
+    if (!showNotifications && unreadCount > 0) {
+      const readNotificationIds = notifications
+        .filter((n) => !n.read)
+        .map((n) => n._id);
+      const currentReadIds = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
+      );
+      const updatedReadIds = [
+        ...new Set([...currentReadIds, ...readNotificationIds]),
+      ];
+      localStorage.setItem("readNotifications", JSON.stringify(updatedReadIds));
+      console.log(
+        "Marked all notifications as read in localStorage:",
+        updatedReadIds
+      );
+      setNotifications((prev) =>
+        prev.map((n) => (n.read ? n : { ...n, read: true }))
+      );
+      setUnreadCount(0);
+      toast.success("All notifications marked as read");
+    }
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleDebug = () => {
+    console.log("Debug Info:");
+    console.log("Socket.IO connected:", socket.connected);
+    console.log("Socket.IO ID:", socket.id);
+    console.log("Current notifications:", notifications);
+    console.log(
+      "localStorage readNotifications:",
+      JSON.parse(localStorage.getItem("readNotifications") || "[]")
+    );
+    console.log("Unread count:", unreadCount);
+    toast.info("Debug info logged to console");
   };
 
   useEffect(() => {
@@ -86,11 +149,24 @@ const Feedback: React.FC = () => {
 
     // Join admin room for notifications
     socket.emit("join_admin");
+    console.log("Socket.IO: Emitted join_admin event");
 
-    // Listen for survey_submission notifications only
-    socket.on("survey_submission", (notification: Notification) => {
+    // Listen for notifications
+    socket.on("notification", (notification: Notification) => {
+      console.log("Received Socket.IO notification:", notification);
       if (notification.type === "survey_submission") {
-        setNotifications((prev) => [notification, ...prev]);
+        setNotifications((prev) => {
+          const readNotificationIds = JSON.parse(
+            localStorage.getItem("readNotifications") || "[]"
+          );
+          const updatedNotification = {
+            ...notification,
+            read: readNotificationIds.includes(notification._id)
+              ? true
+              : notification.read,
+          };
+          return [updatedNotification, ...prev];
+        });
         setUnreadCount((prev) => prev + 1);
         toast.info(notification.message, {
           position: "top-right",
@@ -99,21 +175,38 @@ const Feedback: React.FC = () => {
             ? "dark"
             : "light",
         });
+      } else {
+        console.log("Ignored notification with type:", notification.type);
       }
+    });
+
+    // Catch all Socket.IO events for debugging
+    socket.onAny((event, ...args) => {
+      console.log(`Received Socket.IO event: ${event}`, args);
     });
 
     // Debug Socket.IO connection
     socket.on("connect", () => {
       console.log("Connected to Socket.IO server:", socket.id);
+      socket.emit("join_admin"); // Rejoin on reconnect
     });
     socket.on("connect_error", (err) => {
       console.error("Socket.IO connection error:", err.message);
     });
+    socket.on("reconnect_attempt", (attempt) => {
+      console.log("Socket.IO reconnect attempt:", attempt);
+    });
+
+    // Polling for notifications as a fallback
+    const pollingInterval = setInterval(fetchSurveysAndNotifications, 30000);
 
     return () => {
-      socket.off("survey_submission");
+      socket.off("notification");
+      socket.offAny();
       socket.off("connect");
       socket.off("connect_error");
+      socket.off("reconnect_attempt");
+      clearInterval(pollingInterval);
     };
   }, [token]);
 
@@ -127,7 +220,7 @@ const Feedback: React.FC = () => {
             </h2>
             <div className="flex items-center space-x-4">
               <p className="text-sm text-gray-500">
-                {new Date().toLocaleString("en-US", {
+                {new Date().toLocaleString("en-NG", {
                   weekday: "long",
                   year: "numeric",
                   month: "long",
@@ -135,12 +228,20 @@ const Feedback: React.FC = () => {
                   hour: "2-digit",
                   minute: "2-digit",
                   hour12: true,
-                })}{" "}
-                WAT
+                  timeZone: "Africa/Lagos",
+                })}
               </p>
-              <div className="relative">
+              <div className="relative flex items-center space-x-2">
                 <button
-                  onClick={() => setShowNotifications(!showNotifications)}
+                  onClick={handleDebug}
+                  className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-all duration-300 shadow-md hover:shadow-lg"
+                  title="Debug Notifications"
+                >
+                  <FaBug size={16} />
+                  <span className="text-sm font-medium">Debug</span>
+                </button>
+                <button
+                  onClick={handleToggleNotifications}
                   className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 >
                   <FaBell size={16} />
@@ -174,7 +275,13 @@ const Feedback: React.FC = () => {
                                 {notif.message}
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
-                                {new Date(notif.createdAt).toLocaleString()}
+                                Type: {notif.type}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(notif.createdAt).toLocaleString(
+                                  "en-NG",
+                                  { timeZone: "Africa/Lagos" }
+                                )}
                               </p>
                               {!notif.read && (
                                 <button
@@ -214,9 +321,10 @@ const Feedback: React.FC = () => {
                 >
                   <p className="text-sm text-gray-600 mb-4">
                     Submitted:{" "}
-                    {new Date(survey.createdAt).toLocaleString("en-US", {
+                    {new Date(survey.createdAt).toLocaleString("en-NG", {
                       dateStyle: "medium",
                       timeStyle: "short",
+                      timeZone: "Africa/Lagos",
                     })}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
