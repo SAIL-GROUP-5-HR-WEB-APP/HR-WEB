@@ -115,12 +115,15 @@ const EmployeeDashboard = () => {
     setUser(userData);
 
     socket.emit("join", userData.id);
+    console.log("Socket.IO: Joined room with user ID:", userData.id);
 
-    // Listen for leave_request and kudo notifications only
+    // Listen for notifications
     socket.on("notification", (notification: Notification) => {
       console.log("Received Socket.IO notification:", notification);
       if (
         notification.type === "leave_request" ||
+        notification.type === "leave_approval" ||
+        notification.type === "leave_rejection" ||
         notification.type === "kudo"
       ) {
         setNotifications((prev) => [notification, ...prev]);
@@ -155,7 +158,11 @@ const EmployeeDashboard = () => {
         );
         const filteredNotifications = res.data
           .filter(
-            (n: Notification) => n.type === "leave_request" || n.type === "kudo"
+            (n: Notification) =>
+              n.type === "leave_request" ||
+              n.type === "leave_approval" ||
+              n.type === "leave_rejection" ||
+              n.type === "kudo"
           )
           .map((n: Notification) => ({
             ...n,
@@ -203,6 +210,52 @@ const EmployeeDashboard = () => {
         setLeaveRequests(formatted);
       } catch (err) {
         console.error("Failed to fetch leave requests:", err);
+      }
+    };
+
+    // Polling for leave request updates as a fallback
+    const pollLeaveRequests = async () => {
+      try {
+        const res = await Api.get("/api/v1/leave/my-requests", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const updatedRequests: LeaveRequest[] = res.data.map((r: any) => ({
+          id: r._id,
+          type: r.type,
+          reason: r.reason,
+          startDate: new Date(r.startDate).toISOString().split("T")[0],
+          endDate: new Date(r.endDate).toISOString().split("T")[0],
+          status: r.status,
+        }));
+
+        // Check for status changes
+        updatedRequests.forEach((newReq) => {
+          const oldReq = leaveRequests.find((req) => req.id === newReq.id);
+          if (oldReq && oldReq.status !== newReq.status) {
+            const notification = {
+              _id: `${newReq.id}-${newReq.status}`, // Temporary ID for client-side notification
+              message: `Your ${newReq.type} leave request has been ${newReq.status}.`,
+              type:
+                newReq.status === "approved"
+                  ? "leave_approval"
+                  : "leave_rejection",
+              read: false,
+              createdAt: new Date().toISOString(),
+            };
+            setNotifications((prev) => [notification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+            toast.info(notification.message, {
+              position: "top-right",
+              autoClose: 5000,
+              theme: document.documentElement.classList.contains("dark")
+                ? "dark"
+                : "light",
+            });
+          }
+        });
+        setLeaveRequests(updatedRequests);
+      } catch (err) {
+        console.error("Failed to poll leave requests:", err);
       }
     };
 
@@ -303,10 +356,14 @@ const EmployeeDashboard = () => {
     fetchUsers();
     fetchNotifications();
 
+    // Set up polling for leave requests (every 30 seconds)
+    const pollingInterval = setInterval(pollLeaveRequests, 30000);
+
     return () => {
       socket.off("notification");
       socket.off("connect");
       socket.off("connect_error");
+      clearInterval(pollingInterval);
     };
   }, [navigate]);
 
@@ -659,7 +716,7 @@ const EmployeeDashboard = () => {
                     <LuBell size={16} />
 
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-4 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-2 -right-6 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
