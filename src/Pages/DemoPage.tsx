@@ -76,7 +76,10 @@ const DemoPage: React.FC = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await Api.post("/api/v1/demo", formData);
+      const response = await Api.post("/api/v1/demo", formData, {
+        headers: { "Content-Type": "application/json" },
+      });
+
       setIsSubmitted(true);
       setFormData({
         fullName: "",
@@ -95,13 +98,10 @@ const DemoPage: React.FC = () => {
         confirmButtonColor: "#4F46E5",
       });
     } catch (error: any) {
-      let errorMsg = "Failed to submit demo request. Please try again.";
-      if (error.response?.status === 500) {
+      let errorMsg = "Failed to submit demo request.";
+      if (error.response) {
         errorMsg =
-          error.response?.data?.message ||
-          "Server error occurred. Please try again later.";
-      } else if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
+          error.response.data?.message || `Error: ${error.response.status}`;
       }
       setErrorMessage(errorMsg);
       MySwal.fire({
