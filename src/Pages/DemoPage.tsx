@@ -95,9 +95,14 @@ const DemoPage: React.FC = () => {
         confirmButtonColor: "#4F46E5",
       });
     } catch (error: any) {
-      const errorMsg =
-        error.response?.data?.message ||
-        "Failed to submit demo request. Please try again.";
+      let errorMsg = "Failed to submit demo request. Please try again.";
+      if (error.response?.status === 500) {
+        errorMsg =
+          error.response?.data?.message ||
+          "Server error occurred. Please try again later.";
+      } else if (error.response?.data?.message) {
+        errorMsg = error.response.data.message;
+      }
       setErrorMessage(errorMsg);
       MySwal.fire({
         title: "Error",
@@ -129,9 +134,7 @@ const DemoPage: React.FC = () => {
       <div className="max-w-6xl w-full flex flex-col md:flex-row items-center gap-8">
         {/* Form Card */}
         <div className="w-full md:w-96 bg-white p-6 rounded-2xl shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center"></div>
-          </div>
+          <div className="flex items-center justify-between mb-4"></div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Book product demo
           </h3>
@@ -213,9 +216,9 @@ const DemoPage: React.FC = () => {
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select a role</option>
-                <option value="hr">HR</option>
-                <option value="admin">Admin</option>
-                <option value="employee">Employee</option>
+                <option value="hr">hr</option>
+                <option value="admin">admin</option>
+                <option value="employee">employee</option>
               </select>
               {errors.rolePreference && (
                 <p className="text-red-500 text-sm">{errors.rolePreference}</p>
@@ -228,17 +231,17 @@ const DemoPage: React.FC = () => {
             </p>
             <button
               type="submit"
-              className="w-full bg-black text-white p-2 rounded-full flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+              disabled={isSubmitted}
+              className={`w-full p-2 rounded-full flex items-center justify-center gap-2 text-white transition-colors ${
+                isSubmitted
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-black hover:bg-gray-800"
+              }`}
             >
               <LuCalendar size={20} />
-              Submit
+              {isSubmitted ? "Submitted" : "Submit"}
             </button>
           </form>
-          {isSubmitted && (
-            <p className="text-green-500 text-sm mt-2">
-              Demo request submitted successfully!
-            </p>
-          )}
           {errorMessage && (
             <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
           )}
