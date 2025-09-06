@@ -716,9 +716,7 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-                    <span className="text-sm font-medium max-[700px]:hidden">
-                      Notifications
-                    </span>
+
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
