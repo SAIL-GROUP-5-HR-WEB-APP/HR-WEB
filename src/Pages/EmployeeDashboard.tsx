@@ -118,6 +118,7 @@ const EmployeeDashboard = () => {
 
     // Listen for leave_request and kudo notifications only
     socket.on("notification", (notification: Notification) => {
+      console.log("Received Socket.IO notification:", notification);
       if (
         notification.type === "leave_request" ||
         notification.type === "kudo"
@@ -131,6 +132,8 @@ const EmployeeDashboard = () => {
             ? "dark"
             : "light",
         });
+      } else {
+        console.log("Ignored notification with type:", notification.type);
       }
     });
 
@@ -147,9 +150,18 @@ const EmployeeDashboard = () => {
         const res = await Api.get("/api/v1/notifications", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const filteredNotifications = res.data.filter(
-          (n: Notification) => n.type === "leave_request" || n.type === "kudo"
+        const readNotificationIds = JSON.parse(
+          localStorage.getItem("readNotifications") || "[]"
         );
+        const filteredNotifications = res.data
+          .filter(
+            (n: Notification) => n.type === "leave_request" || n.type === "kudo"
+          )
+          .map((n: Notification) => ({
+            ...n,
+            read: readNotificationIds.includes(n._id) ? true : n.read,
+          }));
+        console.log("Fetched notifications:", filteredNotifications);
         setNotifications(filteredNotifications);
         setUnreadCount(
           filteredNotifications.filter((n: Notification) => !n.read).length
@@ -300,9 +312,14 @@ const EmployeeDashboard = () => {
 
   const handleToggleNotifications = () => {
     if (!showNotifications && unreadCount > 0) {
-      // Mark all unread notifications as read when opening the dropdown
+      // Mark all unread notifications as read and save to localStorage
+      const readNotificationIds = notifications.map((n) => n._id);
       setNotifications((prev) =>
         prev.map((n) => (n.read ? n : { ...n, read: true }))
+      );
+      localStorage.setItem(
+        "readNotifications",
+        JSON.stringify(readNotificationIds)
       );
       setUnreadCount(0);
       toast.success("All notifications marked as read");
@@ -559,6 +576,7 @@ const EmployeeDashboard = () => {
       );
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("readNotifications");
       Swal.close();
       MySwal.fire("Logged out!", "You have been logged out.", "success");
       navigate("/login", { replace: true });
@@ -639,11 +657,9 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-                    <span className="text-sm font-medium max-[700px]:hidden">
-                      Notifications
-                    </span>
+
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-2 -right-4 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
