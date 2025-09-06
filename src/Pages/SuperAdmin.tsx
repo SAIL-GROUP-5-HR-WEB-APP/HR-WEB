@@ -39,7 +39,7 @@ interface Department {
 }
 
 interface DemoRequest {
-  id: string;
+  _id: string;
   fullName: string;
   email: string;
   company: string;
@@ -162,7 +162,7 @@ const SuperAdmin = () => {
   const handleLogout = async () => {
     const result = await MySwal.fire({
       title: "Are you sure?",
-      text: "You will be logged out of your account.",
+      text: "You will be logged out of your account",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, logout",
@@ -303,16 +303,14 @@ const SuperAdmin = () => {
       try {
         const token = localStorage.getItem("authToken");
         const res = await Api.post<{ message: string }>(
-          `/api/v1/demo/${demoId}/convert`,
+          `/api/v1/demo/${demoId}/convert`, // use the param
           {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         setDemoRequests((prev) =>
           prev.map((demo) =>
-            demo.id === demoId ? { ...demo, status: "converted" } : demo
+            demo._id === demoId ? { ...demo, status: "converted" } : demo
           )
         );
 
@@ -571,7 +569,7 @@ const SuperAdmin = () => {
                       <tbody>
                         {filteredDemoRequests.map((d, index) => (
                           <tr
-                            key={d.id}
+                            key={d._id}
                             className={`border-t hover:bg-indigo-50/50 transition-colors duration-200 ${
                               index % 2 === 0 ? "bg-gray-50/50" : "bg-white"
                             }`}
@@ -590,7 +588,7 @@ const SuperAdmin = () => {
                             </td>
                             <td className="py-3 px-4 sm:px-6">
                               <button
-                                onClick={() => handleConvertDemo(d.id)}
+                                onClick={() => handleConvertDemo(d._id)}
                                 disabled={d.status === "converted" || loading}
                                 className={`px-3 py-1.5 rounded-lg text-sm ${
                                   d.status === "converted"
