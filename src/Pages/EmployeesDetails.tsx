@@ -17,6 +17,7 @@ interface Employee {
     phone?: string;
     address?: string;
     department?: string;
+    departmentId?: string; // ObjectId as string
     position?: string;
     emergencyContact?: string;
     dateOfBirth?: string;
@@ -41,6 +42,9 @@ const EmployeesDetails = () => {
   const MySwal = withReactContent(Swal);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentMap, setDepartmentMap] = useState<Record<string, string>>(
+    {}
+  ); // departmentId -> name
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +66,8 @@ const EmployeesDetails = () => {
       const res = await Api.get("/api/v1/users/all");
       console.log("Fetched employees:", res.data); // Debug log
       setEmployees(res.data || []);
+      // Fetch department names for users with departmentId
+      await fetchDepartmentNames(res.data);
     } catch (err: any) {
       console.error("Error fetching employees:", err);
       setError("Failed to fetch employees.");
@@ -73,6 +79,9 @@ const EmployeesDetails = () => {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("Authentication token missing");
+      }
       const res = await Api.get("/api/v1/departments", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -82,10 +91,39 @@ const EmployeesDetails = () => {
       console.error("Error fetching departments:", err);
       MySwal.fire({
         title: "Error",
-        text: "Failed to fetch departments.",
+        text: "Failed to fetch departments. Please check your authentication.",
         icon: "error",
         confirmButtonColor: "#DC2626",
       });
+    }
+  };
+
+  const fetchDepartmentNames = async (employees: Employee[]) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const departmentIds = employees
+      .filter((emp) => emp.profile?.departmentId && !emp.profile?.department)
+      .map((emp) => emp.profile!.departmentId!);
+
+    if (departmentIds.length === 0) return;
+
+    try {
+      const uniqueIds = [...new Set(departmentIds)];
+      const promises = uniqueIds.map((id) =>
+        Api.get(`/api/v1/departments/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      );
+      const responses = await Promise.all(promises);
+      const newMap: Record<string, string> = {};
+      responses.forEach((res) => {
+        newMap[res.data._id] = res.data.name;
+      });
+      setDepartmentMap((prev) => ({ ...prev, ...newMap }));
+      console.log("Fetched department names:", newMap); // Debug log
+    } catch (err: any) {
+      console.error("Error fetching department names:", err);
     }
   };
 
@@ -130,6 +168,9 @@ const EmployeesDetails = () => {
 
     try {
       const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("Authentication token missing");
+      }
       const res = await Api.post<{ message: string; user: Employee }>(
         "/api/v1/admin/create-user",
         form,
@@ -298,7 +339,7 @@ const EmployeesDetails = () => {
           text:
             err.response?.data?.details ||
             err.response?.data?.message ||
-            "Failed to delete employee",
+            "Failed to delete employee. Please try again.",
           icon: "error",
           confirmButtonColor: "#DC2626",
         });
@@ -311,6 +352,15 @@ const EmployeesDetails = () => {
   const toggleDropdown = (employeeId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setShowDropdown(showDropdown === employeeId ? null : employeeId);
+  };
+
+  // Helper to get department name
+  const getDepartmentName = (emp: Employee) => {
+    return (
+      emp.profile?.department ||
+      departmentMap[emp.profile?.departmentId || ""] ||
+      "N/A"
+    );
   };
 
   return (
@@ -419,7 +469,7 @@ const EmployeesDetails = () => {
                   </p>
                   <p>
                     <span className="font-medium">Department:</span>{" "}
-                    {emp.profile?.department || "N/A"}
+                    {getDepartmentName(emp)}
                   </p>
                 </div>
                 <div className="mt-4 space-y-2 text-sm text-gray-600">
