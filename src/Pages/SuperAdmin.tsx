@@ -569,7 +569,7 @@ const SuperAdmin = () => {
                       <tbody>
                         {filteredDemoRequests.map((d, index) => (
                           <tr
-                            key={d.id}
+                            key={d._id}
                             className={`border-t hover:bg-indigo-50/50 transition-colors duration-200 ${
                               index % 2 === 0 ? "bg-gray-50/50" : "bg-white"
                             }`}
@@ -588,7 +588,7 @@ const SuperAdmin = () => {
                             </td>
                             <td className="py-3 px-4 sm:px-6">
                               <button
-                                onClick={() => handleConvertDemo(d.id)}
+                                onClick={() => handleConvertDemo(d._id)}
                                 disabled={d.status === "converted" || loading}
                                 className={`px-3 py-1.5 rounded-lg text-sm ${
                                   d.status === "converted"
