@@ -209,6 +209,9 @@ const EmployeesDetails = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("Authentication token missing");
+        }
         console.log("Assigning department:", {
           userId: employeeId,
           departmentId,
@@ -231,13 +234,14 @@ const EmployeesDetails = () => {
         console.error("Assign department error:", {
           message: err.message,
           response: err.response?.data,
+          status: err.response?.status,
         });
         MySwal.fire({
           title: "Error",
           text:
             err.response?.data?.details ||
             err.response?.data?.message ||
-            "Failed to assign department",
+            "Failed to assign department. Please check if the department exists.",
           icon: "error",
           confirmButtonColor: "#DC2626",
         });
@@ -287,6 +291,7 @@ const EmployeesDetails = () => {
         console.error("Delete user error:", {
           message: err.message,
           response: err.response?.data,
+          status: err.response?.status,
         });
         MySwal.fire({
           title: "Error",
