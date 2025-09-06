@@ -17,7 +17,7 @@ interface Employee {
     phone?: string;
     address?: string;
     department?: string;
-    departmentId?: string; // ObjectId as string
+    departmentId?: { _id: string; name: string }; // Populated departmentId
     position?: string;
     emergencyContact?: string;
     dateOfBirth?: string;
@@ -42,9 +42,6 @@ const EmployeesDetails = () => {
   const MySwal = withReactContent(Swal);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [departmentMap, setDepartmentMap] = useState<Record<string, string>>(
-    {}
-  ); // departmentId -> name
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,10 +63,12 @@ const EmployeesDetails = () => {
       const res = await Api.get("/api/v1/users/all");
       console.log("Fetched employees:", res.data); // Debug log
       setEmployees(res.data || []);
-      // Fetch department names for users with departmentId
-      await fetchDepartmentNames(res.data);
     } catch (err: any) {
-      console.error("Error fetching employees:", err);
+      console.error("Error fetching employees:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setError("Failed to fetch employees.");
     } finally {
       setLoading(false);
@@ -95,35 +94,6 @@ const EmployeesDetails = () => {
         icon: "error",
         confirmButtonColor: "#DC2626",
       });
-    }
-  };
-
-  const fetchDepartmentNames = async (employees: Employee[]) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return;
-
-    const departmentIds = employees
-      .filter((emp) => emp.profile?.departmentId && !emp.profile?.department)
-      .map((emp) => emp.profile!.departmentId!);
-
-    if (departmentIds.length === 0) return;
-
-    try {
-      const uniqueIds = [...new Set(departmentIds)];
-      const promises = uniqueIds.map((id) =>
-        Api.get(`/api/v1/departments/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      );
-      const responses = await Promise.all(promises);
-      const newMap: Record<string, string> = {};
-      responses.forEach((res) => {
-        newMap[res.data._id] = res.data.name;
-      });
-      setDepartmentMap((prev) => ({ ...prev, ...newMap }));
-      console.log("Fetched department names:", newMap); // Debug log
-    } catch (err: any) {
-      console.error("Error fetching department names:", err);
     }
   };
 
@@ -176,7 +146,7 @@ const EmployeesDetails = () => {
         form,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("Create user response:", res.data); // Debug log
+      console.log("Create user response:", res.data);
       setEmployees((prev) => [...prev, res.data.user]);
       setForm({
         firstName: "",
@@ -256,13 +226,13 @@ const EmployeesDetails = () => {
         console.log("Assigning department:", {
           userId: employeeId,
           departmentId,
-        }); // Debug log
+        });
         const res = await Api.patch(
           `/api/v1/departments/${employeeId}/assign-department`,
           { departmentId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("Assign department response:", res.data); // Debug log
+        console.log("Assign department response:", res.data);
         MySwal.fire({
           title: "Success!",
           text: res.data.message || "Department assigned successfully",
@@ -315,11 +285,11 @@ const EmployeesDetails = () => {
         if (!token) {
           throw new Error("Authentication token missing");
         }
-        console.log("Deleting user with ID:", employeeId); // Debug log
+        console.log("Deleting user with ID:", employeeId);
         const res = await Api.delete(`/api/v1/users/${employeeId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Delete user response:", res.data); // Debug log
+        console.log("Delete user response:", res.data);
         setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId));
         MySwal.fire({
           title: "Deleted!",
@@ -354,13 +324,8 @@ const EmployeesDetails = () => {
     setShowDropdown(showDropdown === employeeId ? null : employeeId);
   };
 
-  // Helper to get department name
   const getDepartmentName = (emp: Employee) => {
-    return (
-      emp.profile?.department ||
-      departmentMap[emp.profile?.departmentId || ""] ||
-      "N/A"
-    );
+    return emp.profile?.department || emp.profile?.departmentId?.name || "N/A";
   };
 
   return (
