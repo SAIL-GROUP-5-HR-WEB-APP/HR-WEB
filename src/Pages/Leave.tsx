@@ -62,7 +62,7 @@ const AdminLeavePage: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const { data } = await Api.get<Notification[]>("/api/notifications", {
+      const { data } = await Api.get<Notification[]>("/api/v1/notifications", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(data);
