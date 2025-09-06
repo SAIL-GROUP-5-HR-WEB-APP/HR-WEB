@@ -60,6 +60,7 @@ const EmployeesDetails = () => {
     setError(null);
     try {
       const res = await Api.get("/api/v1/users/all");
+      console.log("Fetched employees:", res.data); // Debug log
       setEmployees(res.data || []);
     } catch (err: any) {
       console.error("Error fetching employees:", err);
@@ -134,7 +135,7 @@ const EmployeesDetails = () => {
         form,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+      console.log("Create user response:", res.data); // Debug log
       setEmployees((prev) => [...prev, res.data.user]);
       setForm({
         firstName: "",
@@ -155,6 +156,7 @@ const EmployeesDetails = () => {
       });
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
+      console.error("Create user error:", err.response?.data);
       setMessage(err.response?.data?.message || "Error creating Employee");
 
       MySwal.fire({
@@ -308,13 +310,10 @@ const EmployeesDetails = () => {
 
   return (
     <div className="p-6">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">
           <span className="text-indigo-900">{employees.length}</span> Employee
         </h2>
-
-        {/* Search */}
         <div className="relative w-full max-w-md">
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
@@ -325,7 +324,6 @@ const EmployeesDetails = () => {
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
           />
         </div>
-
         <button
           onClick={() => setShowForm(true)}
           className="mt-3 sm:mt-0 bg-indigo-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm sm:text-base"
@@ -333,8 +331,6 @@ const EmployeesDetails = () => {
           + Add Employees
         </button>
       </div>
-
-      {/* Loading / Error */}
       {loading && (
         <div className="flex justify-center items-center h-32">
           <ClipLoader color="#5B5CE6" size={40} />
@@ -351,15 +347,12 @@ const EmployeesDetails = () => {
           </button>
         </div>
       )}
-
-      {/* Employee Cards */}
       {!loading && !error && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEmployees.map((emp) => {
             const avatar =
               emp.profile?.avatarUrl ||
               `https://ui-avatars.com/api/?name=${emp.firstName}+${emp.lastName}&background=0D8ABC&color=fff`;
-
             return (
               <div
                 key={emp._id}
@@ -414,7 +407,6 @@ const EmployeesDetails = () => {
                     )}
                   </div>
                 </div>
-
                 <div className="mt-4 space-y-2 text-sm text-gray-600">
                   <p>
                     <span className="font-medium">Address:</span>{" "}
@@ -425,7 +417,6 @@ const EmployeesDetails = () => {
                     {emp.profile?.department || "N/A"}
                   </p>
                 </div>
-
                 <div className="mt-4 space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <FiMail className="text-indigo-900" /> {emp.email || "N/A"}
@@ -440,8 +431,6 @@ const EmployeesDetails = () => {
           })}
         </div>
       )}
-
-      {/* Add Employee Modal */}
       {showForm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg transform transition-all duration-300">
