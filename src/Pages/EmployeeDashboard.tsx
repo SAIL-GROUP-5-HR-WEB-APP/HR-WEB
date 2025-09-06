@@ -277,7 +277,7 @@ const EmployeeDashboard = () => {
     try {
       const token = localStorage.getItem("authToken");
       await Api.put(
-        `/api/notifications/${notificationId}/read`,
+        `/api/v1/notifications/${notificationId}/read`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
