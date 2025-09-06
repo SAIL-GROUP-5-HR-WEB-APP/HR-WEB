@@ -727,7 +727,6 @@ const SuperAdmin = () => {
                   </button>
                   <button
                     type="submit"
-                    previ
                     disabled={loading}
                     className={`flex-1 px-4 py-2.5 rounded-lg text-white text-sm sm:text-base ${
                       loading
