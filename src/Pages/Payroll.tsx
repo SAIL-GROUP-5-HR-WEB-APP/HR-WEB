@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { LuDollarSign, LuGift, LuHistory } from "react-icons/lu";
+import Select from "react-select";
 import Api from "../Components/Reuseable/Api";
 
-// Define interfaces for Payroll and Bonus based on backend schemas
+// Define interfaces for Payroll, Bonus, and User
 interface Payroll {
   _id: string;
   userId: string;
@@ -30,6 +31,12 @@ interface Bonus {
   createdAt: string;
 }
 
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+}
+
 interface FormData {
   userId: string;
   amount: string;
@@ -39,12 +46,18 @@ interface FormData {
   reason: string;
 }
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 const Payroll: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"payroll" | "bonus" | "history">(
     "payroll"
   );
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [bonuses, setBonuses] = useState<Bonus[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -55,6 +68,18 @@ const Payroll: React.FC = () => {
     bonusAmount: "",
     reason: "",
   });
+
+  // Fetch employees for dropdown
+  const fetchEmployees = async (): Promise<void> => {
+    try {
+      const response = await Api.get<User[]>("/api/v1/users/all");
+      setEmployees(response.data);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch employees"
+      );
+    }
+  };
 
   // Fetch payroll data
   const fetchPayrolls = async (): Promise<void> => {
@@ -86,6 +111,17 @@ const Payroll: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle employee selection
+  const handleEmployeeSelect = (
+    selected: SelectOption | null,
+    field: "userId" | "employeeId"
+  ): void => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: selected ? selected.value : "",
+    }));
   };
 
   // Handle payroll submission
@@ -140,9 +176,16 @@ const Payroll: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchEmployees();
     if (activeTab === "payroll" || activeTab === "history") fetchPayrolls();
     if (activeTab === "bonus" || activeTab === "history") fetchBonuses();
   }, [activeTab]);
+
+  // Prepare employee options for react-select
+  const employeeOptions: SelectOption[] = employees.map((employee) => ({
+    value: employee._id,
+    label: `${employee.firstName} ${employee.lastName}`,
+  }));
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto py-10">
@@ -210,13 +253,15 @@ const Payroll: React.FC = () => {
           >
             <h2 className="text-xl font-semibold mb-4">Process Payroll</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <input
-                type="text"
-                name="userId"
-                value={formData.userId}
-                onChange={handleInputChange}
-                placeholder="Employee ID"
-                className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              <Select
+                options={employeeOptions}
+                onChange={(selected) =>
+                  handleEmployeeSelect(selected, "userId")
+                }
+                placeholder="Select Employee"
+                className="text-sm"
+                isClearable
+                isSearchable
                 required
               />
               <input
@@ -295,13 +340,15 @@ const Payroll: React.FC = () => {
           >
             <h2 className="text-xl font-semibold mb-4">Award Bonus</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <input
-                type="text"
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleInputChange}
-                placeholder="Employee ID"
-                className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              <Select
+                options={employeeOptions}
+                onChange={(selected) =>
+                  handleEmployeeSelect(selected, "employeeId")
+                }
+                placeholder="Select Employee"
+                className="text-sm"
+                isClearable
+                isSearchable
                 required
               />
               <input
