@@ -71,6 +71,7 @@ const Payroll: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     userId: "",
     amount: "",
@@ -82,6 +83,8 @@ const Payroll: React.FC = () => {
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState<boolean>(false);
   const [isBonusModalOpen, setIsBonusModalOpen] = useState<boolean>(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
   const [confirmData, setConfirmData] = useState<ConfirmData | null>(null);
 
   // Fetch employees for dropdown
@@ -117,7 +120,7 @@ const Payroll: React.FC = () => {
   const fetchBonuses = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Bonus[]>("/api/v1/bonuses/all");
+      const response = await Api.get<Bonus[]>("/api/v1/bonuses/all"); // Updated to HR endpoint
       const data = response.data;
       setBonuses(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
@@ -147,12 +150,22 @@ const Payroll: React.FC = () => {
 
   // Open confirmation modal for payroll or bonus
   const openConfirm = (type: "payroll" | "bonus") => {
-    if (!selectedEmployee) return;
+    if (!selectedEmployee) {
+      setError("Please select an employee");
+      setIsErrorModalOpen(true);
+      return;
+    }
     const amount = parseFloat(
       type === "payroll" ? formData.amount : formData.bonusAmount
     );
     if (isNaN(amount)) {
       setError("Invalid amount");
+      setIsErrorModalOpen(true);
+      return;
+    }
+    if (!selectedEmployee.bankAccount || !selectedEmployee.bankCode) {
+      setError("Selected employee has no bank details");
+      setIsErrorModalOpen(true);
       return;
     }
     setConfirmData({
@@ -178,10 +191,17 @@ const Payroll: React.FC = () => {
           userId: formData.userId,
           amount: confirmData.amount,
           month: confirmData.month,
+          bankAccount: confirmData.bankAccount, // Added for controller
+          bankCode: confirmData.bankCode, // Added for controller
         });
         setFormData((prev) => ({ ...prev, userId: "", amount: "", month: "" }));
         setIsPayrollModalOpen(false);
         await fetchPayrolls();
+        setSuccessMessage(
+          `Payroll of ₦${confirmData.amount.toLocaleString()} processed successfully for ${
+            confirmData.employeeName
+          }!`
+        );
       } else {
         await Api.post("/api/v1/bonuses", {
           employeeId: formData.employeeId,
@@ -196,18 +216,21 @@ const Payroll: React.FC = () => {
         }));
         setIsBonusModalOpen(false);
         await fetchBonuses();
+        setSuccessMessage(
+          `Bonus of ₦${confirmData.amount.toLocaleString()} awarded successfully to ${
+            confirmData.employeeName
+          }!`
+        );
       }
-      alert(
-        `${
-          confirmData.type.charAt(0).toUpperCase() + confirmData.type.slice(1)
-        } processed successfully!`
-      );
+      setSelectedEmployee(null);
+      setIsSuccessModalOpen(true);
     } catch (err: unknown) {
       const message =
         err instanceof Error && err.message.includes("zyraHR")
           ? err.message
           : `Failed to process ${confirmData.type}. Please check the input data.`;
       setError(message);
+      setIsErrorModalOpen(true);
     } finally {
       setLoading(false);
       setIsConfirmOpen(false);
@@ -272,8 +295,8 @@ const Payroll: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
+      {/* Error Message (Page-level) */}
+      {error && !isErrorModalOpen && (
         <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6 text-center">
           {error}
         </div>
@@ -398,7 +421,7 @@ const Payroll: React.FC = () => {
 
       {/* Payroll Modal */}
       {isPayrollModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-30 z-50">
           <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Process Payroll</h2>
             <div className="space-y-4">
@@ -449,7 +472,16 @@ const Payroll: React.FC = () => {
               />
               <div className="flex justify-end space-x-4">
                 <button
-                  onClick={() => setIsPayrollModalOpen(false)}
+                  onClick={() => {
+                    setIsPayrollModalOpen(false);
+                    setSelectedEmployee(null);
+                    setFormData((prev) => ({
+                      ...prev,
+                      userId: "",
+                      amount: "",
+                      month: "",
+                    }));
+                  }}
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
                 >
                   Cancel
@@ -471,7 +503,7 @@ const Payroll: React.FC = () => {
 
       {/* Bonus Modal */}
       {isBonusModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-30 z-50">
           <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Award Bonus</h2>
             <div className="space-y-4">
@@ -522,7 +554,16 @@ const Payroll: React.FC = () => {
               />
               <div className="flex justify-end space-x-4">
                 <button
-                  onClick={() => setIsBonusModalOpen(false)}
+                  onClick={() => {
+                    setIsBonusModalOpen(false);
+                    setSelectedEmployee(null);
+                    setFormData((prev) => ({
+                      ...prev,
+                      employeeId: "",
+                      bonusAmount: "",
+                      reason: "",
+                    }));
+                  }}
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg"
                 >
                   Cancel
@@ -546,7 +587,7 @@ const Payroll: React.FC = () => {
 
       {/* Confirmation Modal */}
       {isConfirmOpen && confirmData && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-30 z-50">
           <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
             <h2 className="text-xl font-semibold mb-4">Confirm Transfer</h2>
             <p className="mb-6">
@@ -555,8 +596,8 @@ const Payroll: React.FC = () => {
               {confirmData.employeeName}'s account ({confirmData.bankAccount},{" "}
               {confirmData.bankCode})
               {confirmData.type === "payroll"
-                ? `for ${confirmData.month}?`
-                : `for reason: ${confirmData.reason}?`}
+                ? ` for ${confirmData.month}?`
+                : ` for reason: ${confirmData.reason}?`}
             </p>
             <div className="flex justify-end space-x-4">
               <button
@@ -570,6 +611,44 @@ const Payroll: React.FC = () => {
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
               >
                 Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-30 z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4 text-green-600">
+              Success
+            </h2>
+            <p className="mb-6">{successMessage}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {isErrorModalOpen && error && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-30 z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">Error</h2>
+            <p className="mb-6">{error}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsErrorModalOpen(false)}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Close
               </button>
             </div>
           </div>
