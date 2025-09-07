@@ -21,6 +21,22 @@ interface JwtPayload {
   role: string;
 }
 
+// Define the shape of the user data
+interface User {
+  _id: string;
+  firstName: string;
+  lastName?: string;
+  email: string;
+  role?: string;
+  profile?: {
+    department?: string;
+    position?: string;
+    phone?: string;
+    address?: string;
+    avatarUrl: string;
+  };
+}
+
 // Define the shape of the form data for type safety
 interface FormData {
   email: string;
@@ -54,12 +70,15 @@ const LoginPage: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const token = params.get("token");
 
+    console.log("URL Search Params:", location.search);
+    console.log("Token found:", token);
+
     if (token) {
       setIsLoading(true);
       try {
-        console.log("Received Google OAuth token:", token);
         // Store token in localStorage
         localStorage.setItem("authToken", token);
+        console.log("Stored authToken:", localStorage.getItem("authToken"));
 
         // Decode JWT to get id and role
         const decoded: JwtPayload = jwtDecode(token);
@@ -72,23 +91,29 @@ const LoginPage: React.FC = () => {
 
         // Store role in localStorage for ProtectedRoute
         localStorage.setItem("role", decoded.role);
+        console.log("Stored role:", localStorage.getItem("role"));
 
         // Store partial user data to prevent ProtectedRoute redirect
-        localStorage.setItem(
-          "user",
-          JSON.stringify({ _id: decoded.id, role: decoded.role })
-        );
+        const partialUser = { _id: decoded.id, role: decoded.role };
+        localStorage.setItem("user", JSON.stringify(partialUser));
+        console.log("Stored partial user:", localStorage.getItem("user"));
 
         // Fetch full user profile
         const fetchUserProfile = async () => {
           try {
-            const res = await Api.get(`/api/v1/users/${decoded.id}`, {
+            const res = await Api.get<User>(`/api/v1/users/${decoded.id}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             console.log("Fetched user profile:", res.data);
             localStorage.setItem("user", JSON.stringify(res.data));
+            console.log("Stored full user:", localStorage.getItem("user"));
+            return res.data;
           } catch (err) {
-            console.error("Failed to fetch user profile:", err);
+            const axiosErr = err as AxiosError<{ message: string }>;
+            console.error(
+              "Failed to fetch user profile:",
+              axiosErr.response?.data || axiosErr.message
+            );
             throw err;
           }
         };
@@ -116,6 +141,7 @@ const LoginPage: React.FC = () => {
               icon: "error",
               confirmButtonColor: "#DC2626",
             });
+            navigate("/login", { replace: true });
             setIsLoading(false);
           });
       } catch (error) {
@@ -132,6 +158,8 @@ const LoginPage: React.FC = () => {
         navigate("/login", { replace: true });
         setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
   }, [navigate, location]);
 
@@ -176,7 +204,7 @@ const LoginPage: React.FC = () => {
     try {
       const { data } = await Api.post<{
         token: string;
-        user: { role: string; [key: string]: any };
+        user: User;
       }>("/api/v1/auth/login", {
         email: formData.email,
         password: formData.password,
@@ -184,7 +212,7 @@ const LoginPage: React.FC = () => {
 
       // Store JWT + user info
       localStorage.setItem("authToken", data.token);
-      localStorage.setItem("role", data.user.role);
+      localStorage.setItem("role", data.user.role || "");
       localStorage.setItem("user", JSON.stringify(data.user));
 
       console.log("✅ Login success:", data);
@@ -196,6 +224,8 @@ const LoginPage: React.FC = () => {
         navigate("/admin", { replace: true });
       } else if (data.user.role === "employee") {
         navigate("/EmployeeDashboard", { replace: true });
+      } else {
+        throw new Error("Invalid role in user data");
       }
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
@@ -208,6 +238,7 @@ const LoginPage: React.FC = () => {
 
   // Handle Google login
   const handleGoogleLogin = (): void => {
+    console.log("Initiating Google OAuth");
     window.location.href =
       "https://zyrahr-backend.onrender.com/api/v1/auth/google";
   };
