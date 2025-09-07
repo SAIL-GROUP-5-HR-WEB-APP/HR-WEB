@@ -240,14 +240,22 @@ const EmployeeDashboard = () => {
     const fetchPayrollHistory = async () => {
       setLoadingPayroll(true);
       try {
+        const token = localStorage.getItem("authToken");
         const res = await Api.get("/api/v1/payroll/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const formatted: Payroll[] = res.data.map((p: any) => ({
-          id: p._id,
-          amount: p.amount,
-          date: new Date(p.date).toISOString().split("T")[0],
-          status: p.status,
+        console.log("Payroll API response:", res);
+        if (!res.data || !res.data.payrolls) {
+          console.warn("No payroll data in response");
+          setPayrollHistory([]);
+          return;
+        }
+        const data = Array.isArray(res.data.payrolls) ? res.data.payrolls : [];
+        const formatted: Payroll[] = data.map((p: any) => ({
+          id: p.id || p._id || Date.now().toString(),
+          amount: Number(p.amount) || 0,
+          date: p.month ? new Date(p.month).toISOString().split("T")[0] : "",
+          status: p.status || "unknown",
         }));
         setPayrollHistory(formatted);
       } catch (err: any) {
@@ -255,6 +263,13 @@ const EmployeeDashboard = () => {
           message: err.message,
           response: err.response?.data,
           status: err.response?.status,
+        });
+        setPayrollHistory([]);
+        Swal.fire({
+          title: "Error",
+          text:
+            err.response?.data?.message || "Failed to fetch payroll history",
+          icon: "error",
         });
       } finally {
         setLoadingPayroll(false);
@@ -264,14 +279,22 @@ const EmployeeDashboard = () => {
     const fetchBonuses = async () => {
       setLoadingBonuses(true);
       try {
+        const token = localStorage.getItem("authToken");
         const res = await Api.get("/api/v1/bonuses/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const formatted: Bonus[] = res.data.map((b: any) => ({
-          id: b._id,
-          amount: b.amount,
-          description: b.description,
-          date: new Date(b.date).toISOString().split("T")[0],
+        console.log("Bonuses API response:", res);
+        if (!res.data || !res.data.bonuses) {
+          console.warn("No bonuses data in response");
+          setBonuses([]);
+          return;
+        }
+        const data = Array.isArray(res.data.bonuses) ? res.data.bonuses : [];
+        const formatted: Bonus[] = data.map((b: any) => ({
+          id: b.id || b._id || Date.now().toString(),
+          amount: Number(b.amount) || 0,
+          description: b.description || "No description",
+          date: b.date ? new Date(b.date).toISOString().split("T")[0] : "",
         }));
         setBonuses(formatted);
       } catch (err: any) {
@@ -279,6 +302,12 @@ const EmployeeDashboard = () => {
           message: err.message,
           response: err.response?.data,
           status: err.response?.status,
+        });
+        setBonuses([]);
+        Swal.fire({
+          title: "Error",
+          text: err.response?.data?.message || "Failed to fetch bonuses",
+          icon: "error",
         });
       } finally {
         setLoadingBonuses(false);
@@ -1274,7 +1303,7 @@ const EmployeeDashboard = () => {
                             className={`px-2 py-1 rounded-full text-xs ${
                               payroll.status === "pending"
                                 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200"
-                                : payroll.status === "paid"
+                                : payroll.status === "success"
                                 ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200"
                                 : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200"
                             }`}
@@ -1283,7 +1312,7 @@ const EmployeeDashboard = () => {
                           </span>
                         </p>
                       </div>
-                      {payroll.status === "paid" && (
+                      {payroll.status === "success" && (
                         <LuCheck
                           className="text-green-500 dark:text-green-400 animate-check"
                           size={24}
