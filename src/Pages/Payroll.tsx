@@ -87,12 +87,14 @@ const Payroll: React.FC = () => {
   // Fetch employees for dropdown
   const fetchEmployees = async (): Promise<void> => {
     try {
-      const response = await Api.get<User[]>("/api/v1/users/all");
-      setEmployees(response.data);
+      const response = await Api.get<User[]>("/api/v1/users");
+      const data = response.data;
+      setEmployees(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch employees"
       );
+      setEmployees([]);
     }
   };
 
@@ -100,10 +102,12 @@ const Payroll: React.FC = () => {
   const fetchPayrolls = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Payroll[]>("/api/v1/payroll/all");
-      setPayrolls(response.data);
+      const response = await Api.get<Payroll[]>("/api/v1/payroll");
+      const data = response.data;
+      setPayrolls(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch payrolls");
+      setPayrolls([]);
     } finally {
       setLoading(false);
     }
@@ -113,10 +117,12 @@ const Payroll: React.FC = () => {
   const fetchBonuses = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Bonus[]>("/api/v1/bonuses/all");
-      setBonuses(response.data);
+      const response = await Api.get<Bonus[]>("/api/v1/bonuses");
+      const data = response.data;
+      setBonuses(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch bonuses");
+      setBonuses([]);
     } finally {
       setLoading(false);
     }
