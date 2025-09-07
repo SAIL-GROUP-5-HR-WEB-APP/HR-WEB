@@ -87,7 +87,7 @@ const Payroll: React.FC = () => {
   // Fetch employees for dropdown
   const fetchEmployees = async (): Promise<void> => {
     try {
-      const response = await Api.get<User[]>("/api/v1/users");
+      const response = await Api.get<User[]>("/api/v1/users/all");
       const data = response.data;
       setEmployees(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
@@ -102,7 +102,7 @@ const Payroll: React.FC = () => {
   const fetchPayrolls = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Payroll[]>("/api/v1/payroll");
+      const response = await Api.get<Payroll[]>("/api/v1/payroll/all");
       const data = response.data;
       setPayrolls(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
@@ -117,7 +117,7 @@ const Payroll: React.FC = () => {
   const fetchBonuses = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Bonus[]>("/api/v1/bonuses");
+      const response = await Api.get<Bonus[]>("/api/v1/bonuses/all");
       const data = response.data;
       setBonuses(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
