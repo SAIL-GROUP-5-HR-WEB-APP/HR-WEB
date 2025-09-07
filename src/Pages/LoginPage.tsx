@@ -1,13 +1,25 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import { ClipLoader } from "react-spinners";
 import Logo from "../Components/Reuseable/Logo";
 import PasswordInput from "../Components/Reuseable/PasswordInput";
 import SocialButton from "../Components/Reuseable/SocialButton";
 import Button from "../Components/Reuseable/Button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Api from "../Components/Reuseable/Api";
 import { AxiosError } from "axios";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 import dash from "../assets/dashboard.png";
+
+const MySwal = withReactContent(Swal);
+
+// Define the shape of the JWT payload
+interface JwtPayload {
+  id: string;
+  role: string;
+}
 
 // Define the shape of the form data for type safety
 interface FormData {
@@ -19,6 +31,8 @@ interface FormData {
 // Main LoginPage component for user authentication
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   // State for form inputs
   const [formData, setFormData] = useState<FormData>({
     email: "",
@@ -34,6 +48,92 @@ const LoginPage: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   // State for loading
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Handle Google OAuth redirect
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+
+    if (token) {
+      setIsLoading(true);
+      try {
+        console.log("Received Google OAuth token:", token);
+        // Store token in localStorage
+        localStorage.setItem("authToken", token);
+
+        // Decode JWT to get id and role
+        const decoded: JwtPayload = jwtDecode(token);
+        console.log("Decoded JWT:", decoded);
+
+        // Validate role
+        if (!["employee", "admin", "hr"].includes(decoded.role)) {
+          throw new Error("Invalid role in token");
+        }
+
+        // Store role in localStorage for ProtectedRoute
+        localStorage.setItem("role", decoded.role);
+
+        // Store partial user data to prevent ProtectedRoute redirect
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ _id: decoded.id, role: decoded.role })
+        );
+
+        // Fetch full user profile
+        const fetchUserProfile = async () => {
+          try {
+            const res = await Api.get(`/api/v1/users/${decoded.id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log("Fetched user profile:", res.data);
+            localStorage.setItem("user", JSON.stringify(res.data));
+          } catch (err) {
+            console.error("Failed to fetch user profile:", err);
+            throw err;
+          }
+        };
+
+        fetchUserProfile()
+          .then(() => {
+            // Redirect based on role
+            const redirectPath =
+              decoded.role === "employee"
+                ? "/EmployeeDashboard"
+                : decoded.role === "admin"
+                ? "/admin"
+                : "/dashboard";
+            console.log("Redirecting to:", redirectPath);
+            navigate(redirectPath, { replace: true });
+          })
+          .catch((error) => {
+            console.error("Error during user profile fetch:", error);
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("role");
+            localStorage.removeItem("user");
+            MySwal.fire({
+              title: "Authentication Failed",
+              text: "Failed to fetch user data. Please try again.",
+              icon: "error",
+              confirmButtonColor: "#DC2626",
+            });
+            setIsLoading(false);
+          });
+      } catch (error) {
+        console.error("Error processing Google OAuth token:", error);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("role");
+        localStorage.removeItem("user");
+        MySwal.fire({
+          title: "Authentication Failed",
+          text: "Invalid token or insufficient permissions. Please try again.",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
+        navigate("/login", { replace: true });
+        setIsLoading(false);
+      }
+    }
+  }, [navigate, location]);
 
   // Validate form inputs
   const validateForm = (): boolean => {
@@ -82,14 +182,13 @@ const LoginPage: React.FC = () => {
         password: formData.password,
       });
 
-      // ✅ Store JWT + user info
+      // Store JWT + user info
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("role", data.user.role);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       console.log("✅ Login success:", data);
 
-      // ✅ Navigate based on role
       // Navigate based on role
       if (data.user.role === "hr") {
         navigate("/dashboard", { replace: true });
