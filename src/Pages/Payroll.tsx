@@ -36,8 +36,8 @@ interface User {
   firstName: string;
   lastName: string;
   profile: {
-    bankAccount: string;
-    bankCode: string;
+    bankAccount?: string; // Optional to handle missing data
+    bankCode?: string; // Optional to handle missing data
   };
 }
 
@@ -92,8 +92,9 @@ const Payroll: React.FC = () => {
   // Fetch employees for dropdown
   const fetchEmployees = async (): Promise<void> => {
     try {
-      const response = await Api.get<User[]>("/api/v1/users/all");
+      const response = await Api.get<User[]>("/api/v1/users");
       const data = response.data;
+      console.log("Fetched Employees:", data);
       setEmployees(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
       setError(
@@ -148,24 +149,48 @@ const Payroll: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: userId }));
     const employee = employees.find((emp) => emp._id === userId) || null;
     setSelectedEmployee(employee);
+    if (employee) {
+      console.log("Selected Employee:", {
+        id: employee._id,
+        name: `${employee.firstName} ${employee.lastName}`,
+        bankAccount: employee.profile?.bankAccount || "Not set",
+        bankCode: employee.profile?.bankCode || "Not set",
+      });
+    }
   };
 
   // Open confirmation modal for payroll or bonus
   const openConfirm = (type: "payroll" | "bonus") => {
-    if (!selectedEmployee) return;
+    if (!selectedEmployee) {
+      setError("Please select an employee");
+      setIsErrorModalOpen(true);
+      return;
+    }
     const amount = parseFloat(
       type === "payroll" ? formData.amount : formData.bonusAmount
     );
-    if (isNaN(amount)) {
-      setError("Invalid amount");
+    if (isNaN(amount) || amount <= 0) {
+      setError("Please enter a valid amount");
+      setIsErrorModalOpen(true);
+      return;
+    }
+    if (
+      type === "payroll" &&
+      (!selectedEmployee.profile?.bankAccount ||
+        !selectedEmployee.profile?.bankCode)
+    ) {
+      setError(
+        "Selected employee has no bank details. Please update their profile."
+      );
+      setIsErrorModalOpen(true);
       return;
     }
     setConfirmData({
       type,
       employeeName: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
       amount,
-      bankAccount: selectedEmployee.profile.bankAccount,
-      bankCode: selectedEmployee.profile.bankCode,
+      bankAccount: selectedEmployee.profile?.bankAccount || "",
+      bankCode: selectedEmployee.profile?.bankCode || "",
       month: type === "payroll" ? formData.month : undefined,
       reason: type === "bonus" ? formData.reason : undefined,
     });
@@ -179,21 +204,31 @@ const Payroll: React.FC = () => {
       setLoading(true);
       setError(null);
       if (confirmData.type === "payroll") {
-        await Api.post("/api/v1/payroll", {
+        const payload = {
           userId: formData.userId,
           amount: confirmData.amount,
           month: confirmData.month,
-        });
+          bankAccount: confirmData.bankAccount,
+          bankCode: confirmData.bankCode,
+        };
+        console.log("Sending Payroll Payload:", payload);
+        await Api.post("/api/v1/payroll", payload);
         setFormData((prev) => ({ ...prev, userId: "", amount: "", month: "" }));
         setIsPayrollModalOpen(false);
         await fetchPayrolls();
-        setSuccessMessage("Payroll processed successfully!");
+        setSuccessMessage(
+          `Payroll of ₦${confirmData.amount.toLocaleString()} processed successfully for ${
+            confirmData.employeeName
+          }!`
+        );
       } else {
-        await Api.post("/api/v1/bonuses", {
+        const payload = {
           employeeId: formData.employeeId,
           amount: confirmData.amount,
           reason: confirmData.reason,
-        });
+        };
+        console.log("Sending Bonus Payload:", payload);
+        await Api.post("/api/v1/bonuses", payload);
         setFormData((prev) => ({
           ...prev,
           employeeId: "",
@@ -202,8 +237,13 @@ const Payroll: React.FC = () => {
         }));
         setIsBonusModalOpen(false);
         await fetchBonuses();
-        setSuccessMessage("Bonus awarded successfully!");
+        setSuccessMessage(
+          `Bonus of ₦${confirmData.amount.toLocaleString()} awarded successfully to ${
+            confirmData.employeeName
+          }!`
+        );
       }
+      setSelectedEmployee(null);
       setIsSuccessModalOpen(true);
     } catch (err: unknown) {
       const message =
@@ -245,10 +285,10 @@ const Payroll: React.FC = () => {
           {activeTab === "payroll" && <LuDollarSign />}
           {activeTab === "bonus" && <LuGift />}
         </span>
-        <h1>
+        <h2>
           {activeTab === "payroll" && "Payroll Management"}
           {activeTab === "bonus" && "Bonus Awards"}
-        </h1>
+        </h2>
       </div>
       <p className="text-gray-600 mb-8 text-center text-sm sm:text-base">
         {activeTab === "payroll" &&
@@ -276,8 +316,8 @@ const Payroll: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
+      {/* Error Message (Page-level) */}
+      {error && !isErrorModalOpen && (
         <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6 text-center">
           {error}
         </div>
@@ -419,14 +459,14 @@ const Payroll: React.FC = () => {
               />
               <input
                 type="text"
-                value={selectedEmployee?.profile.bankAccount || ""}
+                value={selectedEmployee?.profile?.bankAccount || ""}
                 placeholder="Bank Account"
                 className="border p-3 rounded-lg w-full bg-gray-100"
                 disabled
               />
               <input
                 type="text"
-                value={selectedEmployee?.profile.bankCode || ""}
+                value={selectedEmployee?.profile?.bankCode || ""}
                 placeholder="Bank Code"
                 className="border p-3 rounded-lg w-full bg-gray-100"
                 disabled
@@ -471,7 +511,11 @@ const Payroll: React.FC = () => {
                   onClick={() => openConfirm("payroll")}
                   className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
                   disabled={
-                    !selectedEmployee || !formData.amount || !formData.month
+                    !selectedEmployee ||
+                    !formData.amount ||
+                    !formData.month ||
+                    !selectedEmployee?.profile?.bankAccount ||
+                    !selectedEmployee?.profile?.bankCode
                   }
                 >
                   Pay
@@ -501,14 +545,14 @@ const Payroll: React.FC = () => {
               />
               <input
                 type="text"
-                value={selectedEmployee?.profile.bankAccount || ""}
+                value={selectedEmployee?.profile?.bankAccount || ""}
                 placeholder="Bank Account"
                 className="border p-3 rounded-lg w-full bg-gray-100"
                 disabled
               />
               <input
                 type="text"
-                value={selectedEmployee?.profile.bankCode || ""}
+                value={selectedEmployee?.profile?.bankCode || ""}
                 placeholder="Bank Code"
                 className="border p-3 rounded-lg w-full bg-gray-100"
                 disabled
@@ -577,8 +621,8 @@ const Payroll: React.FC = () => {
               {confirmData.employeeName}'s account ({confirmData.bankAccount},{" "}
               {confirmData.bankCode})
               {confirmData.type === "payroll"
-                ? `for ${confirmData.month}?`
-                : `for reason: ${confirmData.reason}?`}
+                ? ` for ${confirmData.month}?`
+                : ` for reason: ${confirmData.reason}?`}
             </p>
             <div className="flex justify-end space-x-4">
               <button
