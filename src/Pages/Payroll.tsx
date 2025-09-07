@@ -208,8 +208,8 @@ const Payroll: React.FC = () => {
           userId: formData.userId,
           amount: confirmData.amount,
           month: confirmData.month,
-          account: confirmData.bankAccount,
-          code: confirmData.bankCode,
+          bankAccount: confirmData.bankAccount,
+          bankCode: confirmData.bankCode,
         };
         console.log("Sending Payroll Payload:", payload);
         await Api.post("/api/v1/payroll", payload);
