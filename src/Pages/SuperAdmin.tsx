@@ -1,14 +1,21 @@
-// src/components/SuperAdmin.tsx
 import { useState, useEffect } from "react";
 import { AxiosError } from "axios";
 import Api from "../Components/Reuseable/Api";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Added useLocation
 import withReactContent from "sweetalert2-react-content";
 import { LuLogOut } from "react-icons/lu";
+import { jwtDecode } from "jwt-decode"; // Added jwt-decode
+
+const MySwal = withReactContent(Swal);
 
 type Role = "employee" | "hr" | "admin";
 type DemoStatus = "new" | "contacted" | "converted";
+
+interface JwtPayload {
+  id: string;
+  role: string;
+}
 
 interface CreateUserForm {
   firstName: string;
@@ -71,49 +78,109 @@ const SuperAdmin = () => {
   });
   const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true); // Added for auth loading state
 
-  // Fetch data on mount
+  const navigate = useNavigate();
+  const location = useLocation(); // Added for query param handling
+
+  // Handle Google OAuth and data fetching
   useEffect(() => {
+    // Handle Google OAuth redirect
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+
+    if (token) {
+      try {
+        // Store token in localStorage
+        localStorage.setItem("authToken", token);
+
+        // Decode JWT to get user data
+        const decoded: JwtPayload = jwtDecode(token);
+        if (decoded.role !== "admin") {
+          throw new Error("Unauthorized: Admin role required");
+        }
+        localStorage.setItem("role", decoded.role); // For ProtectedRoute
+        localStorage.setItem(
+          "user",
+          JSON.stringify({ id: decoded.id, role: decoded.role })
+        );
+
+        // Clear query parameters from URL
+        navigate(location.pathname, { replace: true });
+
+        // Fetch user profile to populate additional data
+        const fetchUserProfile = async () => {
+          try {
+            const res = await Api.get(`/api/v1/users/${decoded.id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            localStorage.setItem("user", JSON.stringify(res.data));
+          } catch (err) {
+            console.error("Failed to fetch user profile:", err);
+            throw err;
+          }
+        };
+        fetchUserProfile();
+      } catch (error) {
+        console.error("Error processing Google OAuth token:", error);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("role");
+        navigate("/login", { replace: true });
+        setIsLoadingAuth(false);
+        return;
+      }
+    }
+
+    // Existing authentication check
+    const storedToken = localStorage.getItem("authToken");
+    const storedRole = localStorage.getItem("role");
+    if (!storedToken || storedRole !== "admin") {
+      navigate("/login", { replace: true });
+      setIsLoadingAuth(false);
+      return;
+    }
+
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem("authToken");
         const res = await Api.get<User[]>("/api/v1/users/all", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         setUsers(res.data);
       } catch (error) {
-        console.error("Failed to fetch users");
+        console.error("Failed to fetch users:", error);
       }
     };
 
     const fetchDepartments = async () => {
       try {
-        const token = localStorage.getItem("authToken");
         const res = await Api.get<Department[]>("/api/v1/departments", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         setDepartments(res.data);
       } catch (error) {
-        console.error("Failed to fetch departments");
+        console.error("Failed to fetch departments:", error);
       }
     };
 
     const fetchDemoRequests = async () => {
       try {
-        const token = localStorage.getItem("authToken");
         const res = await Api.get<DemoRequest[]>("/api/v1/demo", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         setDemoRequests(res.data);
       } catch (error) {
-        console.error("Failed to fetch demo requests");
+        console.error("Failed to fetch demo requests:", error);
       }
     };
 
-    fetchUsers();
-    fetchDepartments();
-    fetchDemoRequests();
-  }, []);
+    // Fetch data after authentication
+    Promise.all([
+      fetchUsers(),
+      fetchDepartments(),
+      fetchDemoRequests(),
+    ]).finally(() => setIsLoadingAuth(false));
+  }, [navigate, location]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -156,9 +223,6 @@ const SuperAdmin = () => {
       d.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const navigate = useNavigate();
-  const MySwal = withReactContent(Swal);
-
   const handleLogout = async () => {
     const result = await MySwal.fire({
       title: "Are you sure?",
@@ -180,19 +244,24 @@ const SuperAdmin = () => {
       });
 
       try {
-        await Api.post("/api/v1/auth/logout");
+        const token = localStorage.getItem("authToken");
+        await Api.post(
+          "/api/v1/auth/logout",
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         localStorage.removeItem("authToken");
         localStorage.removeItem("role");
         localStorage.removeItem("user");
         Swal.close();
-        navigate("/login");
+        navigate("/login", { replace: true });
       } catch (error) {
         console.error("Logout failed:", error);
         localStorage.removeItem("authToken");
         localStorage.removeItem("role");
         localStorage.removeItem("user");
         Swal.close();
-        navigate("/login");
+        navigate("/login", { replace: true });
       }
     }
   };
@@ -303,7 +372,7 @@ const SuperAdmin = () => {
       try {
         const token = localStorage.getItem("authToken");
         const res = await Api.post<{ message: string }>(
-          `/api/v1/demo/${demoId}/convert`, // use the param
+          `/api/v1/demo/${demoId}/convert`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -333,6 +402,14 @@ const SuperAdmin = () => {
       }
     }
   };
+
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-gray-100 to-purple-100">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-gray-100 to-purple-100 p-4 sm:p-6 lg:p-8">
