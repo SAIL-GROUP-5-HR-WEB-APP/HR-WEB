@@ -14,10 +14,12 @@ interface ProfileData {
   position: string;
   emergencyContact: string;
   dateOfBirth: string;
+  bankAccount: string; // Added for bank account
+  bankCode: string; // Added for bank code
   avatar: File | null; // File input for Cloudinary upload
 }
 
-const Setting = () => {
+const Setting: React.FC = () => {
   const navigate = useNavigate();
   const MySwal = withReactContent(Swal);
 
@@ -30,6 +32,8 @@ const Setting = () => {
     position: "",
     emergencyContact: "",
     dateOfBirth: "",
+    bankAccount: "", // Added
+    bankCode: "", // Added
     avatar: null,
   });
 
@@ -74,6 +78,8 @@ const Setting = () => {
           dateOfBirth: u.profile?.dateOfBirth
             ? new Date(u.profile.dateOfBirth).toISOString().split("T")[0]
             : "",
+          bankAccount: u.profile?.bankAccount || "", // Added
+          bankCode: u.profile?.bankCode || "", // Added
           avatar: null,
         });
         setAvatarUrl(u.profile?.avatarUrl || null);
@@ -173,6 +179,8 @@ const Setting = () => {
         position: profile.position,
         emergencyContact: profile.emergencyContact,
         dateOfBirth: profile.dateOfBirth,
+        bankAccount: profile.bankAccount, // Added
+        bankCode: profile.bankCode, // Added
         avatarUrl: newAvatarUrl || undefined, // Send undefined if no new URL
       };
 
@@ -238,6 +246,8 @@ const Setting = () => {
           "state",
           "country",
           "dateOfBirth",
+          "bankAccount",
+          "bankCode",
         ].map((field, i) => (
           <div key={i} className="flex flex-col">
             <label className="mb-1 capitalize">
