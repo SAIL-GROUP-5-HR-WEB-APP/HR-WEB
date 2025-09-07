@@ -16,14 +16,20 @@ import {
   LuBell,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom"; // Added useLocation
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import io from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { jwtDecode } from "jwt-decode"; // Added jwt-decode
 
 const MySwal = withReactContent(Swal);
+
+interface JwtPayload {
+  id: string;
+  role: string;
+}
 
 interface LeaveRequest {
   id: string;
@@ -53,6 +59,15 @@ interface User {
   _id: string;
   firstName: string;
   lastName?: string;
+  email: string;
+  role?: string;
+  profile?: {
+    department?: string;
+    position?: string;
+    phone?: string;
+    address?: string;
+    avatarUrl: string;
+  };
 }
 
 interface Notification {
@@ -74,20 +89,7 @@ const EmployeeDashboard = () => {
   const [attendance, setAttendance] = useState<"ClockIn" | "ClockOut" | null>(
     null
   );
-  const [user, setUser] = useState<{
-    id?: string;
-    firstName: string;
-    lastName?: string;
-    email: string;
-    role?: string;
-    profile?: {
-      department?: string;
-      position?: string;
-      phone?: string;
-      address?: string;
-      avatarUrl: string;
-    };
-  } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [daysPresent, setDaysPresent] = useState<number>(0);
   const [daysAbsent, setDaysAbsent] = useState<number>(0);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -103,19 +105,68 @@ const EmployeeDashboard = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const navigate = useNavigate();
+  const location = useLocation(); // Added for query param handling
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    // Handle Google OAuth redirect
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+
+    if (token) {
+      try {
+        // Store token in localStorage
+        localStorage.setItem("authToken", token);
+
+        // Decode JWT to get user data
+        const decoded: JwtPayload = jwtDecode(token);
+        const userData = {
+          _id: decoded.id,
+          role: decoded.role,
+          firstName: "", // Will be fetched from backend
+          email: "", // Will be fetched from backend
+        };
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("role", decoded.role); // For ProtectedRoute
+
+        // Clear query parameters from URL
+        navigate(location.pathname, { replace: true });
+
+        // Fetch user profile to populate missing fields
+        const fetchUserProfile = async () => {
+          try {
+            const res = await Api.get(`/api/v1/users/${decoded.id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            setUser(res.data);
+            localStorage.setItem("user", JSON.stringify(res.data)); // Update user data
+          } catch (err) {
+            console.error("Failed to fetch user profile:", err);
+            navigate("/login", { replace: true }); // Redirect if fetch fails
+          }
+        };
+        fetchUserProfile();
+      } catch (error) {
+        console.error("Error decoding JWT:", error);
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("role");
+        navigate("/login", { replace: true });
+        return;
+      }
+    }
+
+    // Existing authentication check
+    const storedToken = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
-    if (!token || !storedUser) {
+    if (!storedToken || !storedUser) {
       navigate("/login", { replace: true });
       return;
     }
-    const userData = JSON.parse(storedUser);
+    const userData: User = JSON.parse(storedUser);
     setUser(userData);
 
-    socket.emit("join", userData.id);
-    console.log("Socket.IO: Joined room with user ID:", userData.id);
+    socket.emit("join", userData._id);
+    console.log("Socket.IO: Joined room with user ID:", userData._id);
 
     // Listen for notifications
     socket.on("notification", (notification: Notification) => {
@@ -152,7 +203,7 @@ const EmployeeDashboard = () => {
     const fetchNotifications = async () => {
       try {
         const res = await Api.get("/api/v1/notifications", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         const readNotificationIds = JSON.parse(
           localStorage.getItem("readNotifications") || "[]"
@@ -186,10 +237,11 @@ const EmployeeDashboard = () => {
 
     const fetchUserProfile = async () => {
       try {
-        const res = await Api.get(`/api/v1/users/${userData.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await Api.get(`/api/v1/users/${userData._id}`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         setUser(res.data);
+        localStorage.setItem("user", JSON.stringify(res.data));
       } catch (err) {
         console.error("Failed to fetch user profile:", err);
         setUser(userData);
@@ -199,7 +251,7 @@ const EmployeeDashboard = () => {
     const fetchLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         const formatted: LeaveRequest[] = res.data.map((r: any) => ({
           id: r._id,
@@ -215,11 +267,10 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Polling for leave request updates as a fallback
     const pollLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         const updatedRequests: LeaveRequest[] = res.data.map((r: any) => ({
           id: r._id,
@@ -230,7 +281,6 @@ const EmployeeDashboard = () => {
           status: r.status,
         }));
 
-        // Check for status changes
         updatedRequests.forEach((newReq) => {
           const oldReq = leaveRequests.find((req) => req.id === newReq.id);
           if (oldReq && oldReq.status !== newReq.status) {
@@ -281,12 +331,12 @@ const EmployeeDashboard = () => {
 
     const fetchAttendanceSummary = async () => {
       try {
-        if (!userData?.id) {
+        if (!userData?._id) {
           console.error("User ID missing, cannot fetch logs");
           return;
         }
-        const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await Api.get(`/api/v1/attendance/logs/${userData._id}`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         const logs = Array.isArray(res.data) ? res.data : [];
         const presentCount = logs.filter(
@@ -308,7 +358,7 @@ const EmployeeDashboard = () => {
       setLoadingKudos(true);
       try {
         const res = await Api.get("/api/v1/kudos", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         const formatted: Kudo[] = res.data.map((k: any) => ({
           id: k._id,
@@ -338,7 +388,7 @@ const EmployeeDashboard = () => {
     const fetchUsers = async () => {
       try {
         const res = await Api.get("/api/v1/users/all", {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         setUsers(res.data);
       } catch (err: any) {
@@ -358,7 +408,6 @@ const EmployeeDashboard = () => {
     fetchUsers();
     fetchNotifications();
 
-    // Set up polling for leave requests (every 30 seconds)
     const pollingInterval = setInterval(pollLeaveRequests, 30000);
 
     return () => {
@@ -367,11 +416,10 @@ const EmployeeDashboard = () => {
       socket.off("connect_error");
       clearInterval(pollingInterval);
     };
-  }, [navigate]);
+  }, [navigate, location]); // Added location to dependencies
 
   const handleToggleNotifications = () => {
     if (!showNotifications && unreadCount > 0) {
-      // Mark all unread notifications as read and save to localStorage
       const readNotificationIds = notifications.map((n) => n._id);
       setNotifications((prev) =>
         prev.map((n) => (n.read ? n : { ...n, read: true }))
@@ -416,7 +464,6 @@ const EmployeeDashboard = () => {
         );
       }
 
-      // Validate latitude and longitude ranges
       if (
         latitude < -90 ||
         latitude > 90 ||
@@ -435,7 +482,7 @@ const EmployeeDashboard = () => {
         "/api/v1/attendance/clock-in",
         {
           latitude: Number(latitude),
-          longitude: Number(longitude), // Fixed bug: was Number(latitude)
+          longitude: Number(longitude),
           consent: true,
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -483,7 +530,6 @@ const EmployeeDashboard = () => {
         );
       }
 
-      // Validate latitude and longitude ranges
       if (
         latitude < -90 ||
         latitude > 90 ||
@@ -602,7 +648,7 @@ const EmployeeDashboard = () => {
         "Please select a recipient and enter a message.",
         "warning"
       );
-    if (kudoReceiverId === user?.id)
+    if (kudoReceiverId === user?._id)
       return MySwal.fire(
         "Invalid recipient",
         "You cannot send a kudo to yourself.",
@@ -689,6 +735,7 @@ const EmployeeDashboard = () => {
       );
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("role"); // Added to clear role
       localStorage.removeItem("readNotifications");
       Swal.close();
       MySwal.fire("Logged out!", "You have been logged out.", "success");
@@ -770,7 +817,6 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
@@ -1103,7 +1149,7 @@ const EmployeeDashboard = () => {
                 >
                   <option value="">Select a colleague</option>
                   {users
-                    .filter((u) => u._id !== user?.id)
+                    .filter((u) => u._id !== user?._id)
                     .map((user) => (
                       <option key={user._id} value={user._id}>
                         {user.firstName} {user.lastName || ""}
