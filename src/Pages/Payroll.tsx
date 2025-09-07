@@ -81,11 +81,11 @@ const Payroll: React.FC = () => {
     }
   };
 
-  // Fetch payroll data
+  // Fetch all payrolls (HR view)
   const fetchPayrolls = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Payroll[]>("/api/v1/payroll/my");
+      const response = await Api.get<Payroll[]>("/api/v1/payroll");
       setPayrolls(response.data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch payrolls");
@@ -94,11 +94,11 @@ const Payroll: React.FC = () => {
     }
   };
 
-  // Fetch bonuses data
+  // Fetch all bonuses (HR view)
   const fetchBonuses = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Bonus[]>("/api/v1/bonuses/my");
+      const response = await Api.get<Bonus[]>("/api/v1/bonuses");
       setBonuses(response.data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to fetch bonuses");
@@ -131,6 +131,7 @@ const Payroll: React.FC = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      setError(null);
       await Api.post("/api/v1/payroll", {
         userId: formData.userId,
         amount: parseFloat(formData.amount),
@@ -140,9 +141,11 @@ const Payroll: React.FC = () => {
       await fetchPayrolls();
       alert("Payroll processed successfully!");
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to process payroll"
-      );
+      const message =
+        err instanceof Error && err.message.includes("zyraHR")
+          ? err.message
+          : "Failed to process payroll. Please check the input data.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -155,6 +158,7 @@ const Payroll: React.FC = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      setError(null);
       await Api.post("/api/v1/bonuses", {
         employeeId: formData.employeeId,
         amount: parseFloat(formData.bonusAmount),
@@ -169,7 +173,11 @@ const Payroll: React.FC = () => {
       await fetchBonuses();
       alert("Bonus awarded successfully!");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to award bonus");
+      const message =
+        err instanceof Error && err.message.includes("zyraHR")
+          ? err.message
+          : "Failed to award bonus. Please check the input data.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -207,7 +215,7 @@ const Payroll: React.FC = () => {
           "Manage and process monthly employee salaries."}
         {activeTab === "bonus" &&
           "Award micro-bonuses to boost employee morale."}
-        {activeTab === "history" && "View your payroll and bonus history."}
+        {activeTab === "history" && "View all payroll and bonus history."}
       </p>
 
       {/* Tabs */}
