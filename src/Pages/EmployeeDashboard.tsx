@@ -14,6 +14,8 @@ import {
   LuUserCheck,
   LuHeart,
   LuBell,
+  LuDollarSign,
+  LuGift,
 } from "react-icons/lu";
 import Api from "../Components/Reuseable/Api";
 import { useNavigate, Link } from "react-router-dom";
@@ -63,6 +65,20 @@ interface Notification {
   createdAt: string;
 }
 
+interface Payroll {
+  id: string;
+  amount: number;
+  date: string;
+  status: string;
+}
+
+interface Bonus {
+  id: string;
+  amount: number;
+  description: string;
+  date: string;
+}
+
 const socket = io("https://zyrahr-backend.onrender.com");
 
 const EmployeeDashboard = () => {
@@ -101,6 +117,10 @@ const EmployeeDashboard = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [payrollHistory, setPayrollHistory] = useState<Payroll[]>([]);
+  const [bonuses, setBonuses] = useState<Bonus[]>([]);
+  const [loadingPayroll, setLoadingPayroll] = useState<boolean>(false);
+  const [loadingBonuses, setLoadingBonuses] = useState<boolean>(false);
 
   const navigate = useNavigate();
 
@@ -117,7 +137,6 @@ const EmployeeDashboard = () => {
     socket.emit("join", userData.id);
     console.log("Socket.IO: Joined room with user ID:", userData.id);
 
-    // Listen for notifications
     socket.on("notification", (notification: Notification) => {
       console.log("Received Socket.IO notification:", notification);
       if (
@@ -125,7 +144,9 @@ const EmployeeDashboard = () => {
         notification.type === "leave_approval" ||
         notification.type === "leave_rejection" ||
         notification.type === "kudo" ||
-        notification.type === "announcement"
+        notification.type === "announcement" ||
+        notification.type === "payroll" ||
+        notification.type === "bonus"
       ) {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
@@ -141,7 +162,6 @@ const EmployeeDashboard = () => {
       }
     });
 
-    // Debug Socket.IO connection
     socket.on("connect", () => {
       console.log("Connected to Socket.IO server:", socket.id);
     });
@@ -164,7 +184,9 @@ const EmployeeDashboard = () => {
               n.type === "leave_approval" ||
               n.type === "leave_rejection" ||
               n.type === "kudo" ||
-              n.type === "announcement"
+              n.type === "announcement" ||
+              n.type === "payroll" ||
+              n.type === "bonus"
           )
           .map((n: Notification) => ({
             ...n,
@@ -215,7 +237,54 @@ const EmployeeDashboard = () => {
       }
     };
 
-    // Polling for leave request updates as a fallback
+    const fetchPayrollHistory = async () => {
+      setLoadingPayroll(true);
+      try {
+        const res = await Api.get("/api/v1/payroll/my", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const formatted: Payroll[] = res.data.map((p: any) => ({
+          id: p._id,
+          amount: p.amount,
+          date: new Date(p.date).toISOString().split("T")[0],
+          status: p.status,
+        }));
+        setPayrollHistory(formatted);
+      } catch (err: any) {
+        console.error("Failed to fetch payroll history:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+      } finally {
+        setLoadingPayroll(false);
+      }
+    };
+
+    const fetchBonuses = async () => {
+      setLoadingBonuses(true);
+      try {
+        const res = await Api.get("/api/v1/bonuses/my", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const formatted: Bonus[] = res.data.map((b: any) => ({
+          id: b._id,
+          amount: b.amount,
+          description: b.description,
+          date: new Date(b.date).toISOString().split("T")[0],
+        }));
+        setBonuses(formatted);
+      } catch (err: any) {
+        console.error("Failed to fetch bonuses:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+      } finally {
+        setLoadingBonuses(false);
+      }
+    };
+
     const pollLeaveRequests = async () => {
       try {
         const res = await Api.get("/api/v1/leave/my-requests", {
@@ -230,7 +299,6 @@ const EmployeeDashboard = () => {
           status: r.status,
         }));
 
-        // Check for status changes
         updatedRequests.forEach((newReq) => {
           const oldReq = leaveRequests.find((req) => req.id === newReq.id);
           if (oldReq && oldReq.status !== newReq.status) {
@@ -357,8 +425,9 @@ const EmployeeDashboard = () => {
     fetchKudos();
     fetchUsers();
     fetchNotifications();
+    fetchPayrollHistory();
+    fetchBonuses();
 
-    // Set up polling for leave requests (every 30 seconds)
     const pollingInterval = setInterval(pollLeaveRequests, 30000);
 
     return () => {
@@ -371,7 +440,6 @@ const EmployeeDashboard = () => {
 
   const handleToggleNotifications = () => {
     if (!showNotifications && unreadCount > 0) {
-      // Mark all unread notifications as read and save to localStorage
       const readNotificationIds = notifications.map((n) => n._id);
       setNotifications((prev) =>
         prev.map((n) => (n.read ? n : { ...n, read: true }))
@@ -416,7 +484,6 @@ const EmployeeDashboard = () => {
         );
       }
 
-      // Validate latitude and longitude ranges
       if (
         latitude < -90 ||
         latitude > 90 ||
@@ -435,7 +502,7 @@ const EmployeeDashboard = () => {
         "/api/v1/attendance/clock-in",
         {
           latitude: Number(latitude),
-          longitude: Number(longitude), // Fixed bug: was Number(latitude)
+          longitude: Number(longitude),
           consent: true,
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -483,7 +550,6 @@ const EmployeeDashboard = () => {
         );
       }
 
-      // Validate latitude and longitude ranges
       if (
         latitude < -90 ||
         latitude > 90 ||
@@ -770,7 +836,6 @@ const EmployeeDashboard = () => {
                     className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
                     <LuBell size={16} />
-
                     {unreadCount > 0 && (
                       <span className="absolute -top-2 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount}
@@ -1168,6 +1233,105 @@ const EmployeeDashboard = () => {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                       {new Date(kudo.createdAt).toLocaleString()}
                     </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[430px] overflow-y-auto">
+            <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
+              <LuDollarSign size={28} className="text-blue-500" />
+              <span>Payroll History</span>
+            </h2>
+            {loadingPayroll ? (
+              <div className="flex justify-center py-8">
+                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : payrollHistory.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                No payroll records available.
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {payrollHistory.map((payroll) => (
+                  <li
+                    key={payroll.id}
+                    className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 animate-fade-in"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          Amount: ${payroll.amount.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Date: {payroll.date}
+                        </p>
+                        <p className="text-xs font-medium mt-1">
+                          Status:{" "}
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              payroll.status === "pending"
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200"
+                                : payroll.status === "paid"
+                                ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200"
+                                : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200"
+                            }`}
+                          >
+                            {payroll.status.toUpperCase()}
+                          </span>
+                        </p>
+                      </div>
+                      {payroll.status === "paid" && (
+                        <LuCheck
+                          className="text-green-500 dark:text-green-400 animate-check"
+                          size={24}
+                        />
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 max-h-[430px] overflow-y-auto">
+            <h2 className="font-bold text-xl md:text-2xl flex items-center space-x-2 text-gray-900 dark:text-white mb-6">
+              <LuGift size={28} className="text-yellow-500" />
+              <span>Bonuses</span>
+            </h2>
+            {loadingBonuses ? (
+              <div className="flex justify-center py-8">
+                <div className="w-10 h-10 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : bonuses.length === 0 ? (
+              <p className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                No bonuses received.
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {bonuses.map((bonus) => (
+                  <li
+                    key={bonus.id}
+                    className="p-4 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 animate-fade-in"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          Amount: ${bonus.amount.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {bonus.description}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Date: {bonus.date}
+                        </p>
+                      </div>
+                      <LuCheck
+                        className="text-green-500 dark:text-green-400 animate-check"
+                        size={24}
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>
