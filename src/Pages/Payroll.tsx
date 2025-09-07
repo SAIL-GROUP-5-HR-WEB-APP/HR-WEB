@@ -92,7 +92,7 @@ const Payroll: React.FC = () => {
   // Fetch employees for dropdown
   const fetchEmployees = async (): Promise<void> => {
     try {
-      const response = await Api.get<User[]>("/api/v1/users");
+      const response = await Api.get<User[]>("/api/v1/users/all");
       const data = response.data;
       console.log("Fetched Employees:", data);
       setEmployees(Array.isArray(data) ? data : []);
@@ -208,8 +208,8 @@ const Payroll: React.FC = () => {
           userId: formData.userId,
           amount: confirmData.amount,
           month: confirmData.month,
-          bankAccount: confirmData.bankAccount,
-          bankCode: confirmData.bankCode,
+          account: confirmData.bankAccount,
+          code: confirmData.bankCode,
         };
         console.log("Sending Payroll Payload:", payload);
         await Api.post("/api/v1/payroll", payload);
