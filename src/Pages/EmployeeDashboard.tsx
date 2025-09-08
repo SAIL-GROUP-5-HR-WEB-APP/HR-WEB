@@ -24,6 +24,7 @@ import withReactContent from "sweetalert2-react-content";
 import io from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { toZonedTime } from "date-fns-tz";
 
 const MySwal = withReactContent(Swal);
 
@@ -79,6 +80,26 @@ interface Bonus {
   date: string;
 }
 
+interface GeolocationCoordinates {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+interface ApiResponse {
+  data: { message: string; isWithinGeofence?: boolean };
+}
+
+// Configuration constants
+const GEOLOCATION_CONFIG = {
+  MAX_ACCURACY_METERS: 100,
+  TIMEOUT_MS: 15000,
+  MAXIMUM_AGE_MS: 0,
+  CLOCK_IN_START_HOUR: 8,
+  CLOCK_IN_END_HOUR: 18,
+  CLOCK_OUT_MIN_HOUR: 18,
+};
+
 const socket = io("https://zyrahr-backend.onrender.com");
 
 const EmployeeDashboard = () => {
@@ -124,6 +145,179 @@ const EmployeeDashboard = () => {
 
   const navigate = useNavigate();
 
+  // Error message mapping for user-friendly display
+  const errorMessageMap: Record<string, string> = {
+    "Already clocked in today": "You have already clocked in today.",
+    "No active clock-in found for today": "You need to clock in first.",
+    "Outside workplace geofence": "You are not within the workplace location.",
+    "zyraHR Geolocation consent required": "Geolocation consent is required.",
+    "Location required": "Location data is missing.",
+    "Clock-in allowed only between 8am and 6pm":
+      "Clock-in is only allowed between 8 AM and 6 PM.",
+    "Clock-out allowed only after 6pm": "Clock-out is only allowed after 6 PM.",
+  };
+
+  // Validate coordinates
+  const isValidCoordinates = ({
+    latitude,
+    longitude,
+  }: GeolocationCoordinates): boolean =>
+    latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+
+  // Get geolocation
+  const getPosition = (): Promise<GeolocationPosition> =>
+    new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by your browser"));
+      } else {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: GEOLOCATION_CONFIG.TIMEOUT_MS,
+          maximumAge: GEOLOCATION_CONFIG.MAXIMUM_AGE_MS,
+        });
+      }
+    });
+
+  // Generic clock handler
+  const handleClock = async (
+    endpoint: "/api/v1/attendance/clock-in" | "/api/v1/attendance/clock-out",
+    action: "ClockIn" | "ClockOut"
+  ): Promise<void> => {
+    try {
+      // Time restriction check (WAT, UTC+1)
+      const now = toZonedTime(new Date(), "Africa/Lagos");
+      const hour = now.getHours();
+      if (
+        action === "ClockIn" &&
+        (hour < GEOLOCATION_CONFIG.CLOCK_IN_START_HOUR ||
+          hour >= GEOLOCATION_CONFIG.CLOCK_IN_END_HOUR)
+      ) {
+        throw new Error(
+          `Clock-in allowed only between ${GEOLOCATION_CONFIG.CLOCK_IN_START_HOUR}am and ${GEOLOCATION_CONFIG.CLOCK_IN_END_HOUR}pm`
+        );
+      }
+      if (
+        action === "ClockOut" &&
+        hour < GEOLOCATION_CONFIG.CLOCK_OUT_MIN_HOUR
+      ) {
+        throw new Error(
+          `Clock-out allowed only after ${GEOLOCATION_CONFIG.CLOCK_OUT_MIN_HOUR}pm`
+        );
+      }
+
+      // Prompt for geolocation consent
+      const consent = await MySwal.fire({
+        title: "Location Consent",
+        text: "Do you consent to sharing your location for attendance tracking?",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+      });
+      if (!consent.isConfirmed) {
+        throw new Error("zyraHR Geolocation consent required");
+      }
+
+      MySwal.fire({
+        title: `Clocking ${action === "ClockIn" ? "in" : "out"}...`,
+        allowOutsideClick: false,
+        didOpen: () => MySwal.showLoading(),
+      });
+
+      const pos = await getPosition();
+      const { latitude, longitude, accuracy } = pos.coords;
+
+      if (accuracy > GEOLOCATION_CONFIG.MAX_ACCURACY_METERS) {
+        throw new Error(
+          "Geolocation accuracy too low. Please ensure a stronger GPS signal."
+        );
+      }
+
+      if (!isValidCoordinates({ latitude, longitude, accuracy })) {
+        throw new Error("Invalid coordinates provided");
+      }
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        navigate("/login", { replace: true });
+        throw new Error("Please log in to continue");
+      }
+
+      const res: ApiResponse = await Api.post(
+        endpoint,
+        {
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          consent: true,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      MySwal.close();
+      MySwal.fire({
+        title: "Success",
+        text: res.data.message,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      setAttendance(action);
+
+      // Update attendance summary
+      const updatedRes = await Api.get(`/api/v1/attendance/logs/${user?.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const logs = Array.isArray(updatedRes.data) ? updatedRes.data : [];
+      const presentCount = logs.filter(
+        (log: any) => log.status?.toLowerCase() === "present"
+      ).length;
+      const absentCount = logs.filter(
+        (log: any) => log.status?.toLowerCase() === "absent"
+      ).length;
+      setDaysPresent(presentCount);
+      setDaysAbsent(absentCount);
+    } catch (err: unknown) {
+      MySwal.close();
+      const errorMessage =
+        err instanceof Error
+          ? errorMessageMap[err.message] || err.message
+          : (err as any).response?.data?.message
+          ? errorMessageMap[(err as any).response.data.message] ||
+            (err as any).response.data.message
+          : "An unexpected error occurred";
+
+      MySwal.fire({
+        title: `${action} Failed`,
+        text: errorMessage,
+        icon: "error",
+        timer: 3000,
+        showConfirmButton: true,
+      });
+
+      console.error(`${action} error:`, {
+        message: errorMessage,
+        response: (err as any).response?.data,
+        status: (err as any).response?.status,
+      });
+
+      if (
+        (err as any).response?.status === 401 ||
+        (err as any).response?.status === 403
+      ) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("readNotifications");
+        navigate("/login", { replace: true });
+        MySwal.fire("Session expired", "Please log in again.", "error");
+      }
+    }
+  };
+
+  // Exported clock handlers
+  const handleClockIn = () =>
+    handleClock("/api/v1/attendance/clock-in", "ClockIn");
+  const handleClockOut = () =>
+    handleClock("/api/v1/attendance/clock-out", "ClockOut");
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const storedUser = localStorage.getItem("user");
@@ -146,7 +340,9 @@ const EmployeeDashboard = () => {
         notification.type === "kudo" ||
         notification.type === "announcement" ||
         notification.type === "payroll" ||
-        notification.type === "bonus"
+        notification.type === "bonus" ||
+        notification.type === "attendance_clock_in" ||
+        notification.type === "attendance_clock_out"
       ) {
         setNotifications((prev) => [notification, ...prev]);
         setUnreadCount((prev) => prev + 1);
@@ -157,6 +353,13 @@ const EmployeeDashboard = () => {
             ? "dark"
             : "light",
         });
+        if (notification.type === "attendance_clock_in") {
+          setAttendance("ClockIn");
+          fetchAttendanceSummary(); // Update attendance summary
+        } else if (notification.type === "attendance_clock_out") {
+          setAttendance("ClockOut");
+          fetchAttendanceSummary(); // Update attendance summary
+        }
       } else {
         console.log("Ignored notification with type:", notification.type);
       }
@@ -186,7 +389,9 @@ const EmployeeDashboard = () => {
               n.type === "kudo" ||
               n.type === "announcement" ||
               n.type === "payroll" ||
-              n.type === "bonus"
+              n.type === "bonus" ||
+              n.type === "attendance_clock_in" ||
+              n.type === "attendance_clock_out"
           )
           .map((n: Notification) => ({
             ...n,
@@ -237,10 +442,102 @@ const EmployeeDashboard = () => {
       }
     };
 
+    const fetchAttendanceSummary = async () => {
+      try {
+        if (!userData?.id) {
+          console.error("User ID missing, cannot fetch logs");
+          return;
+        }
+        const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const logs = Array.isArray(res.data) ? res.data : [];
+        const presentCount = logs.filter(
+          (log: any) => log.status?.toLowerCase() === "present"
+        ).length;
+        const absentCount = logs.filter(
+          (log: any) => log.status?.toLowerCase() === "absent"
+        ).length;
+        setDaysPresent(presentCount);
+        setDaysAbsent(absentCount);
+      } catch (err: any) {
+        console.error("Failed to fetch attendance summary:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        setDaysPresent(0);
+        setDaysAbsent(0);
+      }
+    };
+
+    const fetchAnnouncements = async () => {
+      setLoadingAnnouncements(true);
+      try {
+        const res = await Api.get("/api/v1/announcements");
+        const formatted: Announcement[] = res.data.map((a: any) => ({
+          id: a.id || a._id,
+          title: a.title,
+          message: a.message || a.content,
+          createdAt: a.createdAt,
+        }));
+        setAnnouncements(formatted);
+      } catch (err) {
+        console.error("Failed to fetch announcements:", err);
+      } finally {
+        setLoadingAnnouncements(false);
+      }
+    };
+
+    const fetchKudos = async () => {
+      setLoadingKudos(true);
+      try {
+        const res = await Api.get("/api/v1/kudos", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const formatted: Kudo[] = res.data.map((k: any) => ({
+          id: k._id,
+          senderId: {
+            firstName: k.senderId.firstName,
+            lastName: k.senderId.lastName,
+          },
+          receiverId: {
+            firstName: k.receiverId.firstName,
+            lastName: k.receiverId.lastName,
+          },
+          message: k.message,
+          createdAt: k.createdAt,
+        }));
+        setKudos(formatted);
+      } catch (err: any) {
+        console.error("Failed to fetch kudos:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+      } finally {
+        setLoadingKudos(false);
+      }
+    };
+
+    const fetchUsers = async () => {
+      try {
+        const res = await Api.get("/api/v1/users/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUsers(res.data);
+      } catch (err: any) {
+        console.error("Failed to fetch users:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+      }
+    };
+
     const fetchPayrollHistory = async () => {
       setLoadingPayroll(true);
       try {
-        const token = localStorage.getItem("authToken");
         const res = await Api.get("/api/v1/payroll/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -279,7 +576,6 @@ const EmployeeDashboard = () => {
     const fetchBonuses = async () => {
       setLoadingBonuses(true);
       try {
-        const token = localStorage.getItem("authToken");
         const res = await Api.get("/api/v1/bonuses/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -373,99 +669,6 @@ const EmployeeDashboard = () => {
       }
     };
 
-    const fetchAnnouncements = async () => {
-      setLoadingAnnouncements(true);
-      try {
-        const res = await Api.get("/api/v1/announcements");
-        const formatted: Announcement[] = res.data.map((a: any) => ({
-          id: a.id || a._id,
-          title: a.title,
-          message: a.message || a.content,
-          createdAt: a.createdAt,
-        }));
-        setAnnouncements(formatted);
-      } catch (err) {
-        console.error("Failed to fetch announcements:", err);
-      } finally {
-        setLoadingAnnouncements(false);
-      }
-    };
-
-    const fetchAttendanceSummary = async () => {
-      try {
-        if (!userData?.id) {
-          console.error("User ID missing, cannot fetch logs");
-          return;
-        }
-        const res = await Api.get(`/api/v1/attendance/logs/${userData.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const logs = Array.isArray(res.data) ? res.data : [];
-        const presentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "present"
-        ).length;
-        const absentCount = logs.filter(
-          (log: any) => log.status?.toLowerCase() === "absent"
-        ).length;
-        setDaysPresent(presentCount);
-        setDaysAbsent(absentCount);
-      } catch (err: any) {
-        console.error("Failed to fetch attendance summary:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
-        setDaysPresent(0);
-        setDaysAbsent(0);
-      }
-    };
-
-    const fetchKudos = async () => {
-      setLoadingKudos(true);
-      try {
-        const res = await Api.get("/api/v1/kudos", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const formatted: Kudo[] = res.data.map((k: any) => ({
-          id: k._id,
-          senderId: {
-            firstName: k.senderId.firstName,
-            lastName: k.senderId.lastName,
-          },
-          receiverId: {
-            firstName: k.receiverId.firstName,
-            lastName: k.receiverId.lastName,
-          },
-          message: k.message,
-          createdAt: k.createdAt,
-        }));
-        setKudos(formatted);
-      } catch (err: any) {
-        console.error("Failed to fetch kudos:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
-      } finally {
-        setLoadingKudos(false);
-      }
-    };
-
-    const fetchUsers = async () => {
-      try {
-        const res = await Api.get("/api/v1/users/all", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUsers(res.data);
-      } catch (err: any) {
-        console.error("Failed to fetch users:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
-      }
-    };
-
     fetchUserProfile();
     fetchLeaveRequests();
     fetchAttendanceSummary();
@@ -484,7 +687,7 @@ const EmployeeDashboard = () => {
       socket.off("connect_error");
       clearInterval(pollingInterval);
     };
-  }, [navigate]);
+  }, [navigate, leaveRequests, user?.id]);
 
   const handleToggleNotifications = () => {
     if (!showNotifications && unreadCount > 0) {
@@ -500,161 +703,6 @@ const EmployeeDashboard = () => {
       toast.success("All notifications marked as read");
     }
     setShowNotifications(!showNotifications);
-  };
-
-  const getPosition = (): Promise<GeolocationPosition> =>
-    new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation not supported by your browser"));
-      } else {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
-        });
-      }
-    });
-
-  const handleClockIn = async () => {
-    try {
-      MySwal.fire({
-        title: "Clocking in...",
-        allowOutsideClick: false,
-        didOpen: () => MySwal.showLoading(),
-      });
-
-      const pos = await getPosition();
-      const { latitude, longitude, accuracy } = pos.coords;
-
-      if (accuracy > 100) {
-        throw new Error(
-          "Geolocation accuracy too low. Please ensure a stronger GPS signal."
-        );
-      }
-
-      if (
-        latitude < -90 ||
-        latitude > 90 ||
-        longitude < -180 ||
-        longitude > 180
-      ) {
-        throw new Error("Invalid coordinates provided");
-      }
-
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        navigate("/login", { replace: true });
-        throw new Error("Please log in to continue");
-      }
-
-      const res = await Api.post(
-        "/api/v1/attendance/clock-in",
-        {
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          consent: true,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      MySwal.close();
-      MySwal.fire({
-        title: "Success",
-        text: res.data.message,
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      setAttendance("ClockIn");
-    } catch (err: any) {
-      MySwal.close();
-      MySwal.fire({
-        title: "Clock-In Failed",
-        text:
-          err.response?.data?.message ||
-          err.message ||
-          "An unexpected error occurred",
-        icon: "error",
-        timer: 3000,
-        showConfirmButton: true,
-      });
-      console.error("Clock-in error:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      });
-    }
-  };
-
-  const handleClockOut = async () => {
-    try {
-      MySwal.fire({
-        title: "Clocking out...",
-        allowOutsideClick: false,
-        didOpen: () => MySwal.showLoading(),
-      });
-
-      const pos = await getPosition();
-      const { latitude, longitude, accuracy } = pos.coords;
-
-      if (accuracy > 100) {
-        throw new Error(
-          "Geolocation accuracy too low. Please ensure a stronger GPS signal."
-        );
-      }
-
-      if (
-        latitude < -90 ||
-        latitude > 90 ||
-        longitude < -180 ||
-        longitude > 180
-      ) {
-        throw new Error("Invalid coordinates provided");
-      }
-
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        navigate("/login", { replace: true });
-        throw new Error("Please log in to continue");
-      }
-
-      const res = await Api.post(
-        "/api/v1/attendance/clock-out",
-        {
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          consent: true,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      MySwal.close();
-      MySwal.fire({
-        title: "Success",
-        text: res.data.message,
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      setAttendance("ClockOut");
-    } catch (err: any) {
-      MySwal.close();
-      MySwal.fire({
-        title: "Clock-Out Failed",
-        text:
-          err.response?.data?.message ||
-          err.message ||
-          "An unexpected error occurred",
-        icon: "error",
-        timer: 3000,
-        showConfirmButton: true,
-      });
-      console.error("Clock-out error:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-      });
-    }
   };
 
   const submitLeaveRequest = async (e: FormEvent) => {
@@ -705,7 +753,7 @@ const EmployeeDashboard = () => {
       setLeaveRequests((prev) => [
         ...prev,
         {
-          id: res.data.leave?._id || Date.now().toString(), // Use backend-provided ID if available
+          id: res.data.leave?._id || Date.now().toString(),
           type: leaveType,
           reason: leaveReason,
           startDate: new Date(startDate).toISOString().split("T")[0],
