@@ -123,7 +123,7 @@ const Payroll: React.FC = () => {
   const fetchBonuses = async (): Promise<void> => {
     try {
       setLoading(true);
-      const response = await Api.get<Bonus[]>("/api/v1/bonuses/all");
+      const response = await Api.get<Bonus[]>("/api/v1/bonus/all");
       const data = response.data;
       setBonuses(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
@@ -228,7 +228,7 @@ const Payroll: React.FC = () => {
           reason: confirmData.reason,
         };
         console.log("Sending Bonus Payload:", payload);
-        await Api.post("/api/v1/bonuses", payload);
+        await Api.post("/api/v1/bonus", payload);
         setFormData((prev) => ({
           ...prev,
           employeeId: "",
