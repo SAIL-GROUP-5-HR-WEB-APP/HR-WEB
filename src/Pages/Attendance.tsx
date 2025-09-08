@@ -1,7 +1,7 @@
 // src/pages/AdminAttendancePage.tsx
 import React, { useEffect, useState } from "react";
 import Api from "../Components/Reuseable/Api";
-import { MapPin, Clock, User } from "lucide-react";
+import { Clock, User } from "lucide-react";
 
 interface Attendance {
   _id: string;
