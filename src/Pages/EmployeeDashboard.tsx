@@ -265,7 +265,7 @@ const EmployeeDashboard = () => {
           status: err.response?.status,
         });
         setPayrollHistory([]);
-        Swal.fire({
+        MySwal.fire({
           title: "Error",
           text:
             err.response?.data?.message || "Failed to fetch payroll history",
@@ -304,7 +304,7 @@ const EmployeeDashboard = () => {
           status: err.response?.status,
         });
         setBonuses([]);
-        Swal.fire({
+        MySwal.fire({
           title: "Error",
           text: err.response?.data?.message || "Failed to fetch bonuses",
           icon: "error",
@@ -353,8 +353,23 @@ const EmployeeDashboard = () => {
           }
         });
         setLeaveRequests(updatedRequests);
-      } catch (err) {
-        console.error("Failed to poll leave requests:", err);
+      } catch (err: any) {
+        console.error("Failed to poll leave requests:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
+          localStorage.removeItem("readNotifications");
+          navigate("/login", { replace: true });
+          MySwal.fire(
+            "Session expired",
+            "Your session has expired. Please log in again.",
+            "error"
+          );
+        }
       }
     };
 
@@ -394,8 +409,12 @@ const EmployeeDashboard = () => {
         ).length;
         setDaysPresent(presentCount);
         setDaysAbsent(absentCount);
-      } catch (err) {
-        console.error("Failed to fetch attendance summary:", err);
+      } catch (err: any) {
+        console.error("Failed to fetch attendance summary:", {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
         setDaysPresent(0);
         setDaysAbsent(0);
       }
@@ -498,10 +517,10 @@ const EmployeeDashboard = () => {
 
   const handleClockIn = async () => {
     try {
-      Swal.fire({
+      MySwal.fire({
         title: "Clocking in...",
         allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
+        didOpen: () => MySwal.showLoading(),
       });
 
       const pos = await getPosition();
@@ -524,6 +543,7 @@ const EmployeeDashboard = () => {
 
       const token = localStorage.getItem("authToken");
       if (!token) {
+        navigate("/login", { replace: true });
         throw new Error("Please log in to continue");
       }
 
@@ -537,8 +557,8 @@ const EmployeeDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Swal.close();
-      Swal.fire({
+      MySwal.close();
+      MySwal.fire({
         title: "Success",
         text: res.data.message,
         icon: "success",
@@ -547,8 +567,8 @@ const EmployeeDashboard = () => {
       });
       setAttendance("ClockIn");
     } catch (err: any) {
-      Swal.close();
-      Swal.fire({
+      MySwal.close();
+      MySwal.fire({
         title: "Clock-In Failed",
         text:
           err.response?.data?.message ||
@@ -558,16 +578,20 @@ const EmployeeDashboard = () => {
         timer: 3000,
         showConfirmButton: true,
       });
-      console.error("Clock-in error:", err);
+      console.error("Clock-in error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
   };
 
   const handleClockOut = async () => {
     try {
-      Swal.fire({
+      MySwal.fire({
         title: "Clocking out...",
         allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
+        didOpen: () => MySwal.showLoading(),
       });
 
       const pos = await getPosition();
@@ -590,6 +614,7 @@ const EmployeeDashboard = () => {
 
       const token = localStorage.getItem("authToken");
       if (!token) {
+        navigate("/login", { replace: true });
         throw new Error("Please log in to continue");
       }
 
@@ -603,8 +628,8 @@ const EmployeeDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Swal.close();
-      Swal.fire({
+      MySwal.close();
+      MySwal.fire({
         title: "Success",
         text: res.data.message,
         icon: "success",
@@ -613,8 +638,8 @@ const EmployeeDashboard = () => {
       });
       setAttendance("ClockOut");
     } catch (err: any) {
-      Swal.close();
-      Swal.fire({
+      MySwal.close();
+      MySwal.fire({
         title: "Clock-Out Failed",
         text:
           err.response?.data?.message ||
@@ -624,28 +649,41 @@ const EmployeeDashboard = () => {
         timer: 3000,
         showConfirmButton: true,
       });
-      console.error("Clock-out error:", err);
+      console.error("Clock-out error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
     }
   };
 
   const submitLeaveRequest = async (e: FormEvent) => {
     e.preventDefault();
-    if (!leaveReason || !startDate || !endDate)
+    if (!leaveReason || !startDate || !endDate) {
       return MySwal.fire(
         "Missing fields",
         "Please fill all fields.",
         "warning"
       );
-    if (new Date(endDate) < new Date(startDate))
+    }
+    if (new Date(endDate) < new Date(startDate)) {
       return MySwal.fire(
         "Invalid dates",
         "End date cannot be before start date.",
         "warning"
       );
+    }
 
     try {
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Auth token missing");
+      if (!token) {
+        navigate("/login", { replace: true });
+        return MySwal.fire(
+          "Session expired",
+          "Please log in again to continue.",
+          "error"
+        );
+      }
 
       const res = await Api.post(
         "/api/v1/leave/request",
@@ -660,18 +698,18 @@ const EmployeeDashboard = () => {
 
       MySwal.fire(
         "Success",
-        res.data.message || "Leave request submitted",
+        res.data.message || "Leave request submitted successfully",
         "success"
       );
 
       setLeaveRequests((prev) => [
         ...prev,
         {
-          id: Date.now().toString(),
+          id: res.data.leave?._id || Date.now().toString(), // Use backend-provided ID if available
           type: leaveType,
           reason: leaveReason,
-          startDate,
-          endDate,
+          startDate: new Date(startDate).toISOString().split("T")[0],
+          endDate: new Date(endDate).toISOString().split("T")[0],
           status: "pending",
         },
       ]);
@@ -680,10 +718,29 @@ const EmployeeDashboard = () => {
       setStartDate("");
       setEndDate("");
     } catch (err: any) {
-      Swal.fire({
+      console.error("Submit leave request error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("readNotifications");
+        navigate("/login", { replace: true });
+        return MySwal.fire(
+          "Session expired",
+          "Your session has expired. Please log in again.",
+          "error"
+        );
+      }
+      MySwal.fire({
         title: "Error",
         text:
-          err.response?.data?.message || err.message || "Leave request failed",
+          err.response?.data?.message ||
+          err.response?.data?.details ||
+          err.message ||
+          "Failed to submit leave request",
         icon: "error",
       });
     }
@@ -691,22 +748,31 @@ const EmployeeDashboard = () => {
 
   const submitKudo = async (e: FormEvent) => {
     e.preventDefault();
-    if (!kudoReceiverId || !kudoMessage)
+    if (!kudoReceiverId || !kudoMessage) {
       return MySwal.fire(
         "Missing fields",
         "Please select a recipient and enter a message.",
         "warning"
       );
-    if (kudoReceiverId === user?.id)
+    }
+    if (kudoReceiverId === user?.id) {
       return MySwal.fire(
         "Invalid recipient",
         "You cannot send a kudo to yourself.",
         "warning"
       );
+    }
 
     try {
       const token = localStorage.getItem("authToken");
-      if (!token) throw new Error("Authentication token missing");
+      if (!token) {
+        navigate("/login", { replace: true });
+        return MySwal.fire(
+          "Session expired",
+          "Please log in again to continue.",
+          "error"
+        );
+      }
 
       await Api.post(
         "/api/v1/kudos",
@@ -745,12 +811,23 @@ const EmployeeDashboard = () => {
         response: err.response?.data,
         status: err.response?.status,
       });
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("readNotifications");
+        navigate("/login", { replace: true });
+        return MySwal.fire(
+          "Session expired",
+          "Your session has expired. Please log in again.",
+          "error"
+        );
+      }
       const errorMessage =
         err.response?.data?.errors?.map((e: any) => e.msg).join(", ") ||
         err.response?.data?.message ||
         err.message ||
         "Failed to send kudo";
-      Swal.fire({
+      MySwal.fire({
         title: "Error",
         text: errorMessage,
         icon: "error",
@@ -773,7 +850,7 @@ const EmployeeDashboard = () => {
     MySwal.fire({
       title: "Logging out...",
       allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
+      didOpen: () => MySwal.showLoading(),
     });
     try {
       const token = localStorage.getItem("authToken");
@@ -785,11 +862,19 @@ const EmployeeDashboard = () => {
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       localStorage.removeItem("readNotifications");
-      Swal.close();
+      MySwal.close();
       MySwal.fire("Logged out!", "You have been logged out.", "success");
       navigate("/login", { replace: true });
     } catch (err: any) {
-      Swal.fire({
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        localStorage.removeItem("readNotifications");
+        navigate("/login", { replace: true });
+        MySwal.fire("Logged out!", "You have been logged out.", "success");
+        return;
+      }
+      MySwal.fire({
         title: "Error",
         text: err.response?.data?.message || "Logout failed",
         icon: "error",
@@ -879,7 +964,7 @@ const EmployeeDashboard = () => {
                         </h3>
                         {notifications.length === 0 ? (
                           <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            No notifications available.
+                            No Notifications Available.
                           </p>
                         ) : (
                           <ul className="space-y-2">
