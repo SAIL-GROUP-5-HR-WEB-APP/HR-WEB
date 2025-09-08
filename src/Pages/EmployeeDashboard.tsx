@@ -966,7 +966,7 @@ const EmployeeDashboard = () => {
                         </h3>
                         {notifications.length === 0 ? (
                           <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            No notifications available.
+                            No Notifications Available.
                           </p>
                         ) : (
                           <ul className="space-y-2">
