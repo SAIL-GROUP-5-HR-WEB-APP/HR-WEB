@@ -36,8 +36,8 @@ interface User {
   firstName: string;
   lastName: string;
   profile: {
-    bankAccount?: string; // Optional to handle missing data
-    bankCode?: string; // Optional to handle missing data
+    bankAccount?: string;
+    bankCode?: string;
   };
 }
 
@@ -71,7 +71,9 @@ const Payroll: React.FC = () => {
   const [bonuses, setBonuses] = useState<Bonus[]>([]);
   const [employees, setEmployees] = useState<User[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingPayrolls, setLoadingPayrolls] = useState<boolean>(false);
+  const [loadingBonuses, setLoadingBonuses] = useState<boolean>(false);
+  const [loadingEmployees, setLoadingEmployees] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -92,45 +94,111 @@ const Payroll: React.FC = () => {
   // Fetch employees for dropdown
   const fetchEmployees = async (): Promise<void> => {
     try {
+      setLoadingEmployees(true);
       const response = await Api.get<User[]>("/api/v1/users/all");
       const data = response.data;
       console.log("Fetched Employees:", data);
       setEmployees(Array.isArray(data) ? data : []);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch employees"
-      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to fetch employees";
+      console.error("Fetch Employees Error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setError(errorMessage);
       setEmployees([]);
+      setIsErrorModalOpen(true);
+    } finally {
+      setLoadingEmployees(false);
     }
   };
 
   // Fetch all payrolls (HR view)
   const fetchPayrolls = async (): Promise<void> => {
     try {
-      setLoading(true);
+      setLoadingPayrolls(true);
       const response = await Api.get<Payroll[]>("/api/v1/payroll/all");
-      const data = response.data;
-      setPayrolls(Array.isArray(data) ? data : []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to fetch payrolls");
+      const data = (Array.isArray(response.data) ? response.data : []).map(
+        (p: any) => ({
+          _id: p._id || `temp-${Date.now()}`,
+          userId: p.userId || "",
+          amount: Number(p.amount) || 0,
+          month: p.month || "Unknown",
+          transactionId: p.transactionId,
+          recipientCode: p.recipientCode,
+          status: p.status || "pending",
+          createdAt: p.createdAt || new Date().toISOString(),
+        })
+      );
+      setPayrolls(
+        data.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to fetch payrolls";
+      console.error("Fetch Payrolls Error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setError(errorMessage);
       setPayrolls([]);
+      setIsErrorModalOpen(true);
     } finally {
-      setLoading(false);
+      setLoadingPayrolls(false);
     }
   };
 
   // Fetch all bonuses (HR view)
   const fetchBonuses = async (): Promise<void> => {
     try {
-      setLoading(true);
+      setLoadingBonuses(true);
       const response = await Api.get<Bonus[]>("/api/v1/bonus/all");
-      const data = response.data;
-      setBonuses(Array.isArray(data) ? data : []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to fetch bonuses");
+      const data = (Array.isArray(response.data) ? response.data : []).map(
+        (b: any) => ({
+          _id: b._id || `temp-${Date.now()}`,
+          employeeId: b.employeeId || "",
+          amount: Number(b.amount) || 0,
+          reason: b.reason || "No reason provided",
+          awardedBy: {
+            _id: b.awardedBy?._id || "",
+            firstName: b.awardedBy?.firstName || "Unknown",
+            lastName: b.awardedBy?.lastName || "",
+          },
+          transactionId: b.transactionId,
+          recipientCode: b.recipientCode,
+          status: b.status || "pending",
+          createdAt: b.createdAt || new Date().toISOString(),
+        })
+      );
+      setBonuses(
+        data.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || err.message || "Failed to fetch bonuses";
+      console.error("Fetch Bonuses Error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setError(errorMessage);
       setBonuses([]);
+      setIsErrorModalOpen(true);
     } finally {
-      setLoading(false);
+      setLoadingBonuses(false);
     }
   };
 
@@ -185,6 +253,11 @@ const Payroll: React.FC = () => {
       setIsErrorModalOpen(true);
       return;
     }
+    if (type === "bonus" && !formData.reason) {
+      setError("Please provide a reason for the bonus");
+      setIsErrorModalOpen(true);
+      return;
+    }
     setConfirmData({
       type,
       employeeName: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
@@ -201,7 +274,8 @@ const Payroll: React.FC = () => {
   const handleConfirmYes = async (): Promise<void> => {
     if (!confirmData) return;
     try {
-      setLoading(true);
+      setLoadingPayrolls(confirmData.type === "payroll");
+      setLoadingBonuses(confirmData.type === "bonus");
       setError(null);
       if (confirmData.type === "payroll") {
         const payload = {
@@ -245,15 +319,21 @@ const Payroll: React.FC = () => {
       }
       setSelectedEmployee(null);
       setIsSuccessModalOpen(true);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error && err.message.includes("zyraHR")
-          ? err.message
-          : `Failed to process ${confirmData.type}. Please check the input data.`;
-      setError(message);
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        `Failed to process ${confirmData.type}. Please check the input data.`;
+      console.error(`Process ${confirmData.type} Error:`, {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      setError(errorMessage);
       setIsErrorModalOpen(true);
     } finally {
-      setLoading(false);
+      setLoadingPayrolls(false);
+      setLoadingBonuses(false);
       setIsConfirmOpen(false);
       setConfirmData(null);
     }
@@ -323,15 +403,8 @@ const Payroll: React.FC = () => {
         </div>
       )}
 
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-6">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
-        </div>
-      )}
-
       {/* Payroll Tab */}
-      {activeTab === "payroll" && !loading && (
+      {activeTab === "payroll" && (
         <div className="space-y-8">
           {/* Make Payment Button */}
           <div className="flex justify-end">
@@ -345,46 +418,60 @@ const Payroll: React.FC = () => {
 
           {/* Payroll Table */}
           <div className="rounded-2xl overflow-x-auto bg-white shadow-lg">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100 text-sm sm:text-base">
-                  <th className="text-left px-4 py-3">Employee</th>
-                  <th className="text-left px-4 py-3">Month</th>
-                  <th className="text-right px-4 py-3">Amount (₦)</th>
-                  <th className="text-right px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payrolls.map((payroll) => (
-                  <tr key={payroll._id} className="border-b">
-                    <td className="px-4 py-3">
-                      {getEmployeeName(payroll.userId)}
-                    </td>
-                    <td className="px-4 py-3">{payroll.month}</td>
-                    <td className="px-4 py-3 text-right">
-                      ₦{payroll.amount.toLocaleString()}
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right capitalize ${
-                        payroll.status === "success"
-                          ? "text-green-600"
-                          : payroll.status === "failed"
-                          ? "text-red-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      {payroll.status}
-                    </td>
+            {loadingPayrolls ? (
+              <div className="text-center py-6">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+              </div>
+            ) : payrolls.length === 0 ? (
+              <p className="text-center py-6 text-gray-600">
+                No payroll records available.
+              </p>
+            ) : (
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 text-sm sm:text-base">
+                    <th className="text-left px-4 py-3">Employee</th>
+                    <th className="text-left px-4 py-3">Month</th>
+                    <th className="text-right px-4 py-3">Amount (₦)</th>
+                    <th className="text-right px-4 py-3">Status</th>
+                    <th className="text-right px-4 py-3">Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {payrolls.map((payroll) => (
+                    <tr key={payroll._id} className="border-b">
+                      <td className="px-4 py-3">
+                        {getEmployeeName(payroll.userId)}
+                      </td>
+                      <td className="px-4 py-3">{payroll.month}</td>
+                      <td className="px-4 py-3 text-right">
+                        ₦{payroll.amount.toLocaleString()}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right capitalize ${
+                          payroll.status === "success"
+                            ? "text-green-600"
+                            : payroll.status === "failed"
+                            ? "text-red-600"
+                            : "text-yellow-600"
+                        }`}
+                      >
+                        {payroll.status}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {new Date(payroll.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
 
       {/* Bonus Tab */}
-      {activeTab === "bonus" && !loading && (
+      {activeTab === "bonus" && (
         <div className="space-y-8">
           {/* Award Bonus Button */}
           <div className="flex justify-end">
@@ -398,44 +485,58 @@ const Payroll: React.FC = () => {
 
           {/* Bonus Table */}
           <div className="rounded-2xl overflow-x-auto bg-white shadow-lg">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100 text-sm sm:text-base">
-                  <th className="text-left px-4 py-3">Employee</th>
-                  <th className="text-left px-4 py-3">Reason</th>
-                  <th className="text-right px-4 py-3">Amount (₦)</th>
-                  <th className="text-left px-4 py-3">Awarded By</th>
-                  <th className="text-right px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bonuses.map((bonus) => (
-                  <tr key={bonus._id} className="border-b">
-                    <td className="px-4 py-3">
-                      {getEmployeeName(bonus.employeeId)}
-                    </td>
-                    <td className="px-4 py-3">{bonus.reason}</td>
-                    <td className="px-4 py-3 text-right">
-                      ₦{bonus.amount.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      {bonus.awardedBy?.firstName} {bonus.awardedBy?.lastName}
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right capitalize ${
-                        bonus.status === "success"
-                          ? "text-green-600"
-                          : bonus.status === "failed"
-                          ? "text-red-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      {bonus.status}
-                    </td>
+            {loadingBonuses ? (
+              <div className="text-center py-6">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+              </div>
+            ) : bonuses.length === 0 ? (
+              <p className="text-center py-6 text-gray-600">
+                No bonus records available.
+              </p>
+            ) : (
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 text-sm sm:text-base">
+                    <th className="text-left px-4 py-3">Employee</th>
+                    <th className="text-left px-4 py-3">Reason</th>
+                    <th className="text-right px-4 py-3">Amount (₦)</th>
+                    <th className="text-left px-4 py-3">Awarded By</th>
+                    <th className="text-right px-4 py-3">Status</th>
+                    <th className="text-right px-4 py-3">Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {bonuses.map((bonus) => (
+                    <tr key={bonus._id} className="border-b">
+                      <td className="px-4 py-3">
+                        {getEmployeeName(bonus.employeeId)}
+                      </td>
+                      <td className="px-4 py-3">{bonus.reason}</td>
+                      <td className="px-4 py-3 text-right">
+                        ₦{bonus.amount.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        {bonus.awardedBy?.firstName} {bonus.awardedBy?.lastName}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right capitalize ${
+                          bonus.status === "success"
+                            ? "text-green-600"
+                            : bonus.status === "failed"
+                            ? "text-red-600"
+                            : "text-yellow-600"
+                        }`}
+                      >
+                        {bonus.status}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {new Date(bonus.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
@@ -455,6 +556,7 @@ const Payroll: React.FC = () => {
                 className="text-sm"
                 isClearable
                 isSearchable
+                isLoading={loadingEmployees}
                 required
               />
               <input
@@ -541,6 +643,7 @@ const Payroll: React.FC = () => {
                 className="text-sm"
                 isClearable
                 isSearchable
+                isLoading={loadingEmployees}
                 required
               />
               <input
