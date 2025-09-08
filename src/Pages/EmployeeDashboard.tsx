@@ -1,4 +1,3 @@
-
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import {
   LuClipboardList,
@@ -883,7 +882,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex flex-col">
       <ToastContainer />
@@ -1189,7 +1187,7 @@ const EmployeeDashboard = () => {
                     className="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     End Date
-                  </label 
+                  </label>
                   <input
                     id="endDate"
                     type="date"
@@ -1257,7 +1255,7 @@ const EmployeeDashboard = () => {
                   </li>
                 ))}
               </ul>
-              )}
+            )}
           </section>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
@@ -1278,9 +1276,7 @@ const EmployeeDashboard = () => {
                   id="kudoReceiver"
                   className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-4 py-3 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-1"
                   value={kudoReceiverId}
-                  onChange={(e
-
-: ChangeEvent<HTMLSelectElement>) =>
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                     setKudoReceiverId(e.target.value)
                   }
                 >
