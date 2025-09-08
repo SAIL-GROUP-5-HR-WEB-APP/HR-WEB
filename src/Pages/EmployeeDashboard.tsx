@@ -1377,7 +1377,7 @@ const EmployeeDashboard = () => {
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          Amount: ${payroll.amount.toFixed(2)}
+                          Amount: ₦{payroll.amount.toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           Date: {payroll.date}
@@ -1432,7 +1432,7 @@ const EmployeeDashboard = () => {
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          Amount: ${bonus.amount.toFixed(2)}
+                          Amount: ₦{bonus.amount.toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           {bonus.description}
