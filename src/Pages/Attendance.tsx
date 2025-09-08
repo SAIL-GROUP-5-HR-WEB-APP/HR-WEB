@@ -89,20 +89,7 @@ const Attendance: React.FC = () => {
             </div>
 
             {/* Location + Status */}
-            <div className="mt-4 flex items-center justify-between">
-              {/* <span
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                  log.location?.isWithinGeofence
-                    ? "bg-green-800 text-white"
-                    : "bg-red-800 text-white"
-                }`}
-              >
-                <MapPin size={14} />
-                {log.location?.isWithinGeofence
-                  ? "Within Zone"
-                  : "Outside Zone"}
-              </span> */}
-
+            <div className="mt-4 flex items-center ">
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   log.status === "present"
