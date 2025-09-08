@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { LuDollarSign, LuGift } from "react-icons/lu";
 import Select from "react-select";
+import io from "socket.io-client";
 import Api from "../Components/Reuseable/Api";
 
 // Define interfaces for Payroll, Bonus, and User
 interface Payroll {
-  _id: string;
+  id: string;
   userId: string;
   amount: number;
   month: string;
@@ -13,22 +14,37 @@ interface Payroll {
   recipientCode?: string;
   status: "pending" | "success" | "failed";
   createdAt: string;
+  updatedAt?: string;
+  employee: {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string;
+  } | null;
 }
 
 interface Bonus {
-  _id: string;
+  id: string;
   employeeId: string;
   amount: number;
   reason: string;
   awardedBy: {
-    _id: string;
-    firstName: string;
-    lastName: string;
+    id: string;
+    name: string;
+    email?: string;
+    role?: string;
   };
   transactionId?: string;
   recipientCode?: string;
   status: "pending" | "success" | "failed";
   createdAt: string;
+  updatedAt?: string;
+  employee: {
+    id: string;
+    name: string;
+    email?: string;
+    role?: string;
+  } | null;
 }
 
 interface User {
@@ -65,6 +81,9 @@ interface ConfirmData {
   reason?: string;
 }
 
+// Initialize Socket.IO client
+const socket = io("https://zyrahr-backend.onrender.com");
+
 const Payroll: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"payroll" | "bonus">("payroll");
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
@@ -96,9 +115,9 @@ const Payroll: React.FC = () => {
     try {
       setLoadingEmployees(true);
       const response = await Api.get<User[]>("/api/v1/users/all");
-      const data = response.data;
+      const data = Array.isArray(response.data) ? response.data : [];
       console.log("Fetched Employees:", data);
-      setEmployees(Array.isArray(data) ? data : []);
+      setEmployees(data);
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message ||
@@ -121,28 +140,37 @@ const Payroll: React.FC = () => {
   const fetchPayrolls = async (): Promise<void> => {
     try {
       setLoadingPayrolls(true);
-      const response = await Api.get<Payroll[]>("/api/v1/payroll/all");
-      const data = (Array.isArray(response.data) ? response.data : []).map(
-        (p: any) => ({
-          _id: p._id || `temp-${Date.now()}`,
-          userId: p.userId || "",
-          amount: Number(p.amount) || 0,
-          month: p.month || "Unknown",
-          transactionId: p.transactionId,
-          recipientCode: p.recipientCode,
-          status: p.status || "pending",
-          createdAt: p.createdAt || new Date().toISOString(),
-        })
-      );
-      setPayrolls(
-        data.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-      );
+      const response = await Api.get<{
+        message: string;
+        count: number;
+        payrolls: any[];
+      }>("/api/v1/payroll/all");
+      const data = (
+        Array.isArray(response.data.payrolls) ? response.data.payrolls : []
+      ).map((p: any) => ({
+        id: p.id || p._id || `temp-${Date.now()}`,
+        userId: p.employee?.id || p.userId || "",
+        amount: Number(p.amount) || 0,
+        month: p.month || "Unknown",
+        transactionId: p.transactionId,
+        recipientCode: p.recipientCode,
+        status: p.status || "pending",
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt,
+        employee: p.employee
+          ? {
+              id: p.employee.id || "",
+              name: p.employee.name || "Unknown",
+              email: p.employee.email,
+              role: p.employee.role,
+            }
+          : null,
+      }));
+      setPayrolls(data);
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message ||
+        err.response?.data?.details ||
         err.message ||
         "Failed to fetch payrolls";
       console.error("Fetch Payrolls Error:", {
@@ -162,33 +190,49 @@ const Payroll: React.FC = () => {
   const fetchBonuses = async (): Promise<void> => {
     try {
       setLoadingBonuses(true);
-      const response = await Api.get<Bonus[]>("/api/v1/bonus/all");
-      const data = (Array.isArray(response.data) ? response.data : []).map(
-        (b: any) => ({
-          _id: b._id || `temp-${Date.now()}`,
-          employeeId: b.employeeId || "",
-          amount: Number(b.amount) || 0,
-          reason: b.reason || "No reason provided",
-          awardedBy: {
-            _id: b.awardedBy?._id || "",
-            firstName: b.awardedBy?.firstName || "Unknown",
-            lastName: b.awardedBy?.lastName || "",
-          },
-          transactionId: b.transactionId,
-          recipientCode: b.recipientCode,
-          status: b.status || "pending",
-          createdAt: b.createdAt || new Date().toISOString(),
-        })
-      );
-      setBonuses(
-        data.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-      );
+      const response = await Api.get<{
+        message: string;
+        count: number;
+        bonuses: any[];
+      }>("/api/v1/bonus/all");
+      const data = (
+        Array.isArray(response.data.bonuses) ? response.data.bonuses : []
+      ).map((b: any) => ({
+        id: b.id || b._id || `temp-${Date.now()}`,
+        employeeId: b.employee?.id || b.employeeId || "",
+        amount: Number(b.amount) || 0,
+        reason: b.reason || "No reason provided",
+        awardedBy: {
+          id: b.awardedBy?.id || b.awardedBy?._id || "",
+          name:
+            b.awardedBy?.name ||
+            `${b.awardedBy?.firstName || "Unknown"} ${
+              b.awardedBy?.lastName || ""
+            }`,
+          email: b.awardedBy?.email,
+          role: b.awardedBy?.role,
+        },
+        transactionId: b.transactionId,
+        recipientCode: b.recipientCode,
+        status: b.status || "pending",
+        createdAt: b.createdAt || new Date().toISOString(),
+        updatedAt: b.updatedAt,
+        employee: b.employee
+          ? {
+              id: b.employee.id || "",
+              name: b.employee.name || "Unknown",
+              email: b.employee.email,
+              role: b.employee.role,
+            }
+          : null,
+      }));
+      setBonuses(data);
     } catch (err: any) {
       const errorMessage =
-        err.response?.data?.message || err.message || "Failed to fetch bonuses";
+        err.response?.data?.message ||
+        err.response?.data?.details ||
+        err.message ||
+        "Failed to fetch bonuses";
       console.error("Fetch Bonuses Error:", {
         message: err.message,
         response: err.response?.data,
@@ -289,7 +333,6 @@ const Payroll: React.FC = () => {
         await Api.post("/api/v1/payroll", payload);
         setFormData((prev) => ({ ...prev, userId: "", amount: "", month: "" }));
         setIsPayrollModalOpen(false);
-        await fetchPayrolls();
         setSuccessMessage(
           `Payroll of ₦${confirmData.amount.toLocaleString()} processed successfully for ${
             confirmData.employeeName
@@ -310,7 +353,6 @@ const Payroll: React.FC = () => {
           reason: "",
         }));
         setIsBonusModalOpen(false);
-        await fetchBonuses();
         setSuccessMessage(
           `Bonus of ₦${confirmData.amount.toLocaleString()} awarded successfully to ${
             confirmData.employeeName
@@ -322,7 +364,7 @@ const Payroll: React.FC = () => {
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message ||
-        err.message ||
+        err.response?.data?.details ||
         `Failed to process ${confirmData.type}. Please check the input data.`;
       console.error(`Process ${confirmData.type} Error:`, {
         message: err.message,
@@ -339,6 +381,25 @@ const Payroll: React.FC = () => {
     }
   };
 
+  // Socket.IO listeners for real-time updates
+  useEffect(() => {
+    socket.on("payrollProcessed", () => {
+      if (activeTab === "payroll") {
+        fetchPayrolls();
+      }
+    });
+    socket.on("bonusAwarded", () => {
+      if (activeTab === "bonus") {
+        fetchBonuses();
+      }
+    });
+    return () => {
+      socket.off("payrollProcessed");
+      socket.off("bonusAwarded");
+    };
+  }, [activeTab]);
+
+  // Fetch initial data
   useEffect(() => {
     fetchEmployees();
     if (activeTab === "payroll") fetchPayrolls();
@@ -351,9 +412,16 @@ const Payroll: React.FC = () => {
     label: `${employee.firstName} ${employee.lastName}`,
   }));
 
-  // Get employee name by ID
-  const getEmployeeName = (id: string): string => {
-    const employee = employees.find((emp) => emp._id === id);
+  // Get employee name by ID or from payroll/bonus employee field
+  const getEmployeeName = (payrollOrBonus: Payroll | Bonus): string => {
+    if (payrollOrBonus.employee?.name) {
+      return payrollOrBonus.employee.name;
+    }
+    const employee = employees.find(
+      (emp) =>
+        emp._id === (payrollOrBonus as any).userId ||
+        emp._id === (payrollOrBonus as any).employeeId
+    );
     return employee ? `${employee.firstName} ${employee.lastName}` : "Unknown";
   };
 
@@ -439,10 +507,8 @@ const Payroll: React.FC = () => {
                 </thead>
                 <tbody>
                   {payrolls.map((payroll) => (
-                    <tr key={payroll._id} className="border-b">
-                      <td className="px-4 py-3">
-                        {getEmployeeName(payroll.userId)}
-                      </td>
+                    <tr key={payroll.id} className="border-b">
+                      <td className="px-4 py-3">{getEmployeeName(payroll)}</td>
                       <td className="px-4 py-3">{payroll.month}</td>
                       <td className="px-4 py-3 text-right">
                         ₦{payroll.amount.toLocaleString()}
@@ -507,17 +573,13 @@ const Payroll: React.FC = () => {
                 </thead>
                 <tbody>
                   {bonuses.map((bonus) => (
-                    <tr key={bonus._id} className="border-b">
-                      <td className="px-4 py-3">
-                        {getEmployeeName(bonus.employeeId)}
-                      </td>
+                    <tr key={bonus.id} className="border-b">
+                      <td className="px-4 py-3">{getEmployeeName(bonus)}</td>
                       <td className="px-4 py-3">{bonus.reason}</td>
                       <td className="px-4 py-3 text-right">
                         ₦{bonus.amount.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3">
-                        {bonus.awardedBy?.firstName} {bonus.awardedBy?.lastName}
-                      </td>
+                      <td className="px-4 py-3">{bonus.awardedBy.name}</td>
                       <td
                         className={`px-4 py-3 text-right capitalize ${
                           bonus.status === "success"
