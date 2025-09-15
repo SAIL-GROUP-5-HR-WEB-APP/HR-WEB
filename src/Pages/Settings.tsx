@@ -16,7 +16,7 @@ interface ProfileData {
   dateOfBirth: string;
   bankAccount: string; // Added for bank account
   bankCode: string; // Added for bank code
-  avatar: File | null; // File input for Cloudinary upload
+  avatar: File | null; 
 }
 
 const Setting: React.FC = () => {
@@ -42,7 +42,7 @@ const Setting: React.FC = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // Store fetched avatarUrl
 
   // Cloudinary configuration
-  const CLOUDINARY_UPLOAD_PRESET = "ml_default"; // Replace with your Cloudinary upload preset
+  const CLOUDINARY_UPLOAD_PRESET = "ml_default"; 
   const CLOUDINARY_UPLOAD_URL =
     "https://api.cloudinary.com/v1_1/db4ra5gcl/image/upload";
 
@@ -181,7 +181,7 @@ const Setting: React.FC = () => {
         dateOfBirth: profile.dateOfBirth,
         bankAccount: profile.bankAccount, // Added
         bankCode: profile.bankCode, // Added
-        avatarUrl: newAvatarUrl || undefined, // Send undefined if no new URL
+        avatarUrl: newAvatarUrl || undefined, 
       };
 
       await Api.put(`/api/v1/users/profile`, profileData, {
