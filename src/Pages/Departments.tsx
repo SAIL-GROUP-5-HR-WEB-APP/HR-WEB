@@ -33,7 +33,7 @@ const Departments = () => {
         );
 
         // 2) For each department, fetch its users to compute a count
-        //    If your backend is large, consider adding an aggregation endpoint instead.
+
         const counts = await Promise.all(
           depts.map(async (d) => {
             try {
