@@ -11,7 +11,7 @@ const HowItWorks = () => {
         <h1 className="max-w-[350px] mx-auto text-5xl font-bold text-center">
           How it{" "}
           <span>
-            <i>works</i>
+            <p>works</p>
           </span>{" "}
           in simple way
         </h1>
